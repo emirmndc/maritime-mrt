@@ -1,4 +1,6 @@
-<img src="maritime.png" alt="MARITIME Logo" width="220" />
+<p align="center">
+  <img src="maritime.png" alt="MARITIME Logo" width="220" />
+</p>
 
 # MARITIME (MRT)
 
