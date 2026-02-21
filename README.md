@@ -22,11 +22,6 @@ The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.
 - No mint function after deployment.
 - No owner/admin controls (no pausing, blacklists, or taxes).
 
-## Official Links
-
-- **Polygonscan (Verified Contract):** add your Polygonscan link here
-- **Twitter/X:** add your profile link here
-
 ## Disclaimer
 
 This repository is provided for transparency and informational purposes only.
