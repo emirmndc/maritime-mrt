@@ -16,6 +16,12 @@ MARITIME (MRT) is a fixed-supply ERC-20 token deployed on **Polygon PoS**.
 
 The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.sol).
 
+## Official Links
+- **Polygonscan:** https://polygonscan.com/token/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE
+- **GitHub:** https://github.com/emirmndc/maritime-mrt
+- **Whitepaper:** https://github.com/emirmndc/maritime-mrt/blob/main/MARITIME_WHITEPAPER_v1.3.pdf
+- **X (Twitter):** https://x.com/maritime_coin
+
 ## Security Notes (High-level)
 
 - Fixed supply minted **once** at deployment (constructor).
