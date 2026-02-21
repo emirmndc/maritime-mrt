@@ -1,3 +1,5 @@
+![MARITIME Logo](assets/maritime.png)
+
 # MARITIME (MRT)
 
 MARITIME (MRT) is a fixed-supply ERC-20 token deployed on **Polygon PoS**.
