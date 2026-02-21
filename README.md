@@ -1,4 +1,4 @@
-![MARITIME Logo](maritime.png)
+<img src="maritime.png" alt="MARITIME Logo" width="220" />
 
 # MARITIME (MRT)
 
