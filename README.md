@@ -1,4 +1,4 @@
-![MARITIME Logo](assets/maritime.png)
+![MARITIME Logo](maritime.png)
 
 # MARITIME (MRT)
 
