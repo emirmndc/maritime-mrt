@@ -22,6 +22,7 @@ The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.
 - **Whitepaper:** https://github.com/maritime-mrt/maritime-mrt/blob/main/MARITIME_MRT_Whitepaper_v1.4_clean.pdf
 - **X (Twitter):** https://x.com/maritime_coin
 - **QuickSwap dApp:** https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE
+- **DEX Screener:** https://dexscreener.com/polygon/0x3c959fd489cbf4060edf4c4b7133895c1e78edde
 
 ## Security Notes (High-level)
 
