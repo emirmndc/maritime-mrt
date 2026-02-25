@@ -52,6 +52,23 @@ No entries yet. The log will populate automatically after the first qualifying D
 
 ---
 
+## Genesis Phase Structure
+
+The Genesis archive progresses in structured phases.
+
+Phase 1: Genesis 25  
+The first 25 independent qualifying entries mark the completion of the initial market formation phase.
+
+Upon completion of Genesis 25, Phase 1 will be considered closed.
+
+Phase 2: Genesis 100  
+Phase 2 will be formally opened through an official announcement.  
+This phase will extend the archive to the first 100 independent qualifying entries.
+
+Each phase reflects a documented stage in MRT's market development.
+
+---
+
 ## Notes
 
 - Wallet addresses are abbreviated for readability.
