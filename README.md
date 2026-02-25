@@ -29,6 +29,13 @@ The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.
 - **Transparency Notes:** [TRANSPARENCY.md](./TRANSPARENCY.md)
 - **Tokenomics & Wallet Roles:** [TOKENOMICS.md](./TOKENOMICS.md)
 
+## Genesis Logbook
+
+The MRT Genesis Logbook records independent on-chain DEX buy transactions as the market forms.
+
+- Logbook: [GENESIS_LOGBOOK.md](./GENESIS_LOGBOOK.md)
+- Update time: 21:00 (UTC+3)
+
 ## Security Notes (High-level)
 
 - Fixed supply minted **once** at deployment (constructor).
