@@ -13,7 +13,6 @@ This document summarizes the current transparency and token-level security postu
 - **Verified contract:** Yes (source code verified on PolygonScan)
 
 ## Ownership / Control Status
-- **Ownership status:** Renounced (if applicable – confirm on PolygonScan before publishing)
 - The token contract is designed to be minimal and does not include privileged admin controls for tax/blacklist/pause behavior.
 
 ## Liquidity & Market Access
