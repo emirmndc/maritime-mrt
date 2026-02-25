@@ -1,75 +1,72 @@
-How to Buy MARITIME (MRT) on Polygon
+# How to Buy MARITIME (MRT)
 
-This guide explains how to purchase MARITIME (MRT) using QuickSwap on the Polygon network.
+This document explains the official process for acquiring MRT on the Polygon network.
 
-1. Install a Wallet
+---
 
-Install MetaMask (browser extension or mobile application).
+## Network
 
-Create a wallet and securely store your seed phrase offline. Never share your seed phrase with anyone.
+Polygon PoS (Mainnet)
 
-2. Switch to Polygon Network
+---
 
-Inside MetaMask:
+## Official Contract
 
-Open the network selector
+Token Name: MARITIME  
+Symbol: MRT  
+Decimals: 18  
 
-Select Polygon PoS
+Contract Address:  
+0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE  
 
-If Polygon is not visible, add the Polygon network manually.
+Always verify the contract address before executing any swap.
 
-3. Add POL for Gas Fees
+---
 
-Transactions on Polygon require a small amount of POL (formerly MATIC) to cover gas fees.
+## Requirements
 
-Ensure your wallet holds a small balance of POL before attempting to swap.
+1. MetaMask or compatible EVM wallet  
+2. Polygon network selected  
+3. Small amount of POL for gas fees  
+4. USDC on Polygon network  
 
-4. Obtain USDC on Polygon
+---
 
-Acquire USDC on the Polygon network.
+## Purchase Steps
 
-Important: Make sure your USDC is on Polygon, not Ethereum or another chain.
+Step 1  
+Install MetaMask and secure your seed phrase offline.
 
-5. Use the Official QuickSwap Pair
+Step 2  
+Switch wallet network to Polygon PoS.
 
-Navigate to the official MRT trading pair on QuickSwap.
+Step 3  
+Ensure POL balance is available for transaction fees.
 
-Only use links provided through official project channels.
+Step 4  
+Acquire USDC on Polygon.
 
-6. Swap USDC for MRT
+Step 5  
+Navigate to the official QuickSwap MRT/USDC pair.
 
-On QuickSwap:
+Step 6  
+Swap USDC → MRT.
 
-Select USDC as the input token
+Step 7  
+Confirm the transaction in your wallet.
 
-Select MRT as the output token
+---
 
-Enter the amount
+## Security Reminder
 
-Approve the transaction
+• Never share your seed phrase  
+• Never trade using an unverified contract address  
+• Only use official project links  
+• Early-stage liquidity may result in higher price impact  
 
-Confirm the swap in MetaMask
+---
 
-After confirmation, MRT will appear in your wallet.
+## Status
 
-7. Verify the Official Contract Address
-
-Before swapping, always verify the token contract address:
-
-MARITIME (MRT)
-Network: Polygon PoS
-
-Official Contract Address:
-0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE
-
-Do not trade using any other contract address.
-
-Important Risk Notice
-
-Early-stage liquidity may be limited
-
-Price impact may be higher in low-liquidity pools
-
-Always verify official links
-
-Never share your private key or seed phrase
+MRT is an open-market ERC-20 token with live DEX liquidity.  
+Utility modules described in the whitepaper are roadmap items unless explicitly announced as deployed.
