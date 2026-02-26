@@ -61,11 +61,21 @@ Notes:
 - Any wallet providing liquidity to the MRT/USDC pool at snapshot time is eligible.
 - Owner/Team wallets (if any) are excluded from receiving rewards to avoid unfair advantage.
 
+### Registration (Required Info for Payout)
+To receive rewards, participants must provide:
+1) **Polygon wallet address (0x...)** — rewards will be paid to this address  
+2) **QuickSwap v3 Position NFT ID (tokenId)** for the MRT/USDC position
+
+Notes:
+- The **tokenId is required** for daily on-chain position valuation and points calculation.
+- A **position link is optional** (tokenId is sufficient).
+- If a participant has multiple positions, they should submit **each tokenId** (one per line).
+
 ---
 
 ## Transparency
 - Reward Wallet (Polygon): 0xD48D424146E61806b18E7262218358f19f9e9317
-- Funding transaction (PolygonScan): [FUNDING_TX_HASH](https://polygonscan.com/tx/0x08eb8a0066eb0505cc1f9cb88666aded84deeaab0979f8804bb6fca9e7038387)
+- Funding transaction (PolygonScan): https://polygonscan.com/tx/0x08eb8a0066eb0505cc1f9cb88666aded84deeaab0979f8804bb6fca9e7038387
 - Rewards are funded from the Community allocation.
 - All payouts will be published as on-chain transactions after the program ends.
 
