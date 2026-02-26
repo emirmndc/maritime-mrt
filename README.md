@@ -12,6 +12,9 @@ MARITIME (MRT) is a fixed-supply ERC-20 token deployed on **Polygon PoS**.
 - **Decimals:** 18
 - **Total Supply:** 100,000,000 MRT (fixed)
 
+  ## Programs
+- **LP Rewards (v1):** [LP_REWARDS_v1.md](./LP_REWARDS_v1.md)
+
 ## Source Code
 
 The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.sol).
