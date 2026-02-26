@@ -63,8 +63,10 @@ Notes:
 
 ### Registration (Required Info for Payout)
 To receive rewards, participants must provide:
-1) **Polygon wallet address (0x...)** — rewards will be paid to this address  
-2) **QuickSwap v3 Position NFT ID (tokenId)** for the MRT/USDC position
+1) Polygon wallet address (0x...) — rewards will be paid to this address
+2) QuickSwap v3 MRT/USDC position **tokenId (NFT ID)** — you can share either:
+   - the numeric tokenId, or
+   - the position link/URL that contains the tokenId
 
 Notes:
 - The **tokenId is required** for daily on-chain position valuation and points calculation.
