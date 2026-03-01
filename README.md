@@ -11,6 +11,7 @@ MARITIME (MRT) is a fixed-supply ERC-20 token deployed on **Polygon PoS**.
 - **Name / Symbol:** MARITIME / MRT
 - **Decimals:** 18
 - **Total Supply:** 100,000,000 MRT (fixed)
+- **Contact:** maritime.coin@outlook.com
 
 ## Official Wallet Addresses (Polygon)
 
