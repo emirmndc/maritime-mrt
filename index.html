@@ -27,12 +27,12 @@
       color:var(--text);
       line-height:1.55;
     }
-    a{color:rgba(255,255,255,.92); text-decoration:none}
+    a{color:var(--text); text-decoration:none}
     a:hover{opacity:.9; text-decoration:underline}
-    .wrap{max-width:980px; margin:48px auto; padding:0 18px}
+    .wrap{max-width:980px; margin:42px auto; padding:0 18px}
     .top{
-      display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
-      margin-bottom:18px;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      margin-bottom:14px;
     }
     .brand{display:flex; align-items:center; gap:14px}
     .logo{
@@ -45,8 +45,28 @@
       flex:0 0 auto;
     }
     .logo img{width:100%; height:100%; object-fit:contain}
-    .title{font-size:32px; letter-spacing:.2px; margin:0}
+    .title{font-size:32px; margin:0}
     .subtitle{margin:4px 0 0 0; color:var(--muted); font-size:14px}
+    .lang{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px 12px;
+      display:flex; align-items:center; gap:10px;
+      min-width:240px;
+      justify-content:space-between;
+    }
+    .lang label{color:var(--muted); font-size:13px}
+    .lang select{
+      background:rgba(0,0,0,.15);
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 10px;
+      font-weight:600;
+      outline:none;
+      min-width:140px;
+    }
     .badges{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
     .badge{
       display:inline-flex; align-items:center; gap:8px;
@@ -54,15 +74,16 @@
       background:rgba(255,255,255,.03);
       border-radius:999px;
       color:var(--muted);
-      font-size:13px; white-space:nowrap;
+      font-size:13px;
+      white-space:nowrap;
     }
     .dot{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.55)}
     .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:14px}
     @media (max-width: 860px){
       .grid{grid-template-columns:1fr}
+      .top{flex-direction:column}
+      .lang{width:100%}
       .title{font-size:28px}
-      .top{flex-direction:column; align-items:stretch}
-      .lang{align-self:flex-end}
     }
     .card{
       border:1px solid var(--border);
@@ -71,34 +92,23 @@
       box-shadow:var(--shadow);
       padding:18px;
     }
-    .card h2{margin:0 0 10px 0; font-size:16px; letter-spacing:.2px}
+    .card h2{margin:0 0 10px 0; font-size:16px}
     .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
-      padding:12px 14px;
-      border-radius:14px;
+      padding:12px 14px; border-radius:14px;
       border:1px solid var(--border);
-      background:transparent;
-      color:var(--text);
-      font-weight:600;
-      font-size:14px;
-      min-height:44px;
+      background:transparent; color:var(--text);
+      font-weight:700; font-size:14px; min-height:44px;
     }
     .btn:hover{background:rgba(255,255,255,.06); text-decoration:none}
-    .btn.primary{
-      background:var(--accent);
-      color:#0b0f14;
-      border-color:transparent;
-    }
+    .btn.primary{background:var(--accent); color:#0b0f14; border-color:transparent}
     .btn.primary:hover{background:rgba(255,255,255,.92)}
     .note{
-      margin-top:14px;
-      padding:12px 14px;
-      border-radius:14px;
-      border:1px solid var(--border);
+      margin-top:14px; padding:12px 14px;
+      border-radius:14px; border:1px solid var(--border);
       background:rgba(255,255,255,.03);
-      color:var(--muted);
-      font-size:13px;
+      color:var(--muted); font-size:13px;
     }
     .steps{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
     .steps li{margin:8px 0}
@@ -112,41 +122,14 @@
       word-break:break-all;
       color:rgba(255,255,255,.86);
     }
-    .row{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px}
     .small{color:var(--muted); font-size:12.5px}
-
-    /* Language selector */
-    .lang{
-      display:flex; align-items:center; gap:10px;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:rgba(255,255,255,.03);
-      box-shadow:0 10px 30px rgba(0,0,0,.15);
-      min-height:44px;
-    }
-    .lang label{color:var(--muted); font-size:13px}
-    .lang select{
-      appearance:none;
-      background:rgba(0,0,0,.25);
-      color:var(--text);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:14px;
-      outline:none;
-      cursor:pointer;
-      min-width:150px;
-    }
-
-    .footer{
-      margin-top:18px;
+    .hr{height:1px; background:var(--soft); margin:14px 0}
+    .disclaimer{
+      margin-top:16px;
       color:var(--muted);
       font-size:12px;
       opacity:.95;
     }
-    .footer strong{color:rgba(255,255,255,.82)}
-    .hr{height:1px; background:var(--soft); margin:14px 0}
   </style>
 </head>
 
@@ -159,20 +142,20 @@
             <img src="./maritime.png" alt="MARITIME (MRT) logo" />
           </div>
           <div>
-            <h1 class="title" data-i18n="title">MARITIME (MRT)</h1>
+            <h1 class="title">MARITIME (MRT)</h1>
             <p class="subtitle" data-i18n="subtitle">Polygon PoS • ERC-20 • Open-market asset</p>
           </div>
         </div>
 
         <div class="badges">
-          <span class="badge"><span class="dot"></span><span data-i18n="badge_verified">Contract verified (Polygon)</span></span>
-          <span class="badge"><span class="dot"></span><span data-i18n="badge_notax">No tax • No blacklist • No pause</span></span>
-          <span class="badge"><span class="dot"></span><span data-i18n="badge_fixed">Fixed supply</span></span>
+          <span class="badge"><span class="dot"></span><span data-i18n="b1">Contract verified (Polygon)</span></span>
+          <span class="badge"><span class="dot"></span><span data-i18n="b2">No tax • No blacklist • No pause</span></span>
+          <span class="badge"><span class="dot"></span><span data-i18n="b3">Fixed supply</span></span>
         </div>
       </div>
 
       <div class="lang">
-        <label for="langSelect" data-i18n="lang_label">Language</label>
+        <label for="langSelect" data-i18n="languageLabel">Language</label>
         <select id="langSelect" aria-label="Language selector">
           <option value="en">English</option>
           <option value="tr">Türkçe</option>
@@ -185,87 +168,150 @@
     </div>
 
     <div class="grid">
-      <!-- Left: Primary action -->
       <div class="card">
-        <h2 data-i18n="card_buy_title">Buy / Rewards</h2>
-
+        <h2 data-i18n="cardLeftTitle">Buy / Rewards</h2>
         <div class="actions">
-          <a class="btn primary" href="https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE" target="_blank" rel="noreferrer">
-            <span data-i18n="btn_buy">Buy MRT on QuickSwap</span>
-          </a>
-          <a class="btn" href="https://github.com/maritime-mrt/maritime-mrt/blob/main/LP_REWARDS_v1.md" target="_blank" rel="noreferrer">
-            <span data-i18n="btn_lp">LP Rewards Program</span>
-          </a>
-          <a class="btn" href="https://github.com/maritime-mrt/maritime-mrt" target="_blank" rel="noreferrer">
-            <span data-i18n="btn_repo">GitHub Repository</span>
-          </a>
+          <a class="btn primary" data-i18n="btnBuy" href="https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE" target="_blank" rel="noreferrer">Buy MRT on QuickSwap</a>
+          <a class="btn" data-i18n="btnLP" href="https://github.com/maritime-mrt/maritime-mrt/blob/main/LP_REWARDS_v1.md" target="_blank" rel="noreferrer">LP Rewards Program</a>
+          <a class="btn" data-i18n="btnGH" href="https://github.com/maritime-mrt/maritime-mrt" target="_blank" rel="noreferrer">GitHub Repository</a>
         </div>
 
         <div class="note">
-          <b data-i18n="fee_title">Network fee notice:</b>
-          <span data-i18n="fee_body">You’ll need a tiny amount of POL in your wallet to pay Polygon network fees (gas). This is normal for on-chain swaps and is usually small.</span>
+          <b data-i18n="feeTitle">Network fee notice:</b>
+          <span data-i18n="feeText">You’ll need a tiny amount of POL in your wallet to pay Polygon network fees (gas). This is normal for on-chain swaps and is usually small.</span>
         </div>
 
         <div class="hr"></div>
 
-        <div class="row">
-          <div>
-            <div class="small" data-i18n="contract_label">Contract address</div>
-            <div class="mono">0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE</div>
-          </div>
-        </div>
+        <div class="small" data-i18n="contractLabel">Contract address</div>
+        <div class="mono">0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE</div>
       </div>
 
-      <!-- Right: Beginner steps -->
       <div class="card">
-        <h2 data-i18n="card_steps_title">New to crypto (simple steps)</h2>
-
+        <h2 data-i18n="cardRightTitle">New to crypto (simple steps)</h2>
         <ol class="steps">
-          <li data-i18n="step1">Install a wallet (MetaMask or Rabby).</li>
-          <li data-i18n="step2">Use Polygon network.</li>
-          <li data-i18n="step3">Send USDC (Polygon) to your wallet.</li>
-          <li data-i18n="step4">Send a tiny amount of POL for gas.</li>
-          <li data-i18n="step5">Click “Buy MRT on QuickSwap” and swap USDC → MRT.</li>
+          <li data-i18n="s1">Install a wallet (MetaMask or Rabby).</li>
+          <li data-i18n="s2">Use Polygon network.</li>
+          <li data-i18n="s3">Send USDC (Polygon) to your wallet.</li>
+          <li data-i18n="s4">Send a tiny amount of POL for gas.</li>
+          <li data-i18n="s5">Click “Buy MRT on QuickSwap” and swap USDC → MRT.</li>
         </ol>
 
         <div class="note" style="margin-top:14px;">
-          <b data-i18n="safety_title">Safety:</b>
-          <span data-i18n="safety_body">Always verify the token contract address before swapping.</span>
+          <b data-i18n="safetyTitle">Safety:</b>
+          <span data-i18n="safetyText">Always verify the token contract address before swapping.</span>
         </div>
       </div>
     </div>
 
-    <div class="footer">
-      <div>
-        <strong data-i18n="disc_title">Disclaimer:</strong>
-        <span data-i18n="disc_body">
-          This page is provided for informational purposes only and does not constitute financial, legal, or tax advice.
-          MRT is a crypto asset and may be volatile. Using decentralized exchanges involves risk, including smart contract
-          risk, liquidity risk, and market risk. Always do your own research and verify addresses before interacting.
-        </span>
-      </div>
+    <div class="disclaimer" data-i18n="disclaimer">
+      Disclaimer: This page is provided for informational purposes only and does not constitute financial, legal, or tax advice. MRT is a crypto asset and may be volatile. Using decentralized exchanges involves risk, including smart contract risk, liquidity risk, and market risk. Always do your own research and verify addresses before interacting.
     </div>
   </div>
 
   <script>
-    // i18n dictionary
     const I18N = {
       en: {
-        lang_label: "Language",
-        title: "MARITIME (MRT)",
+        languageLabel: "Language",
         subtitle: "Polygon PoS • ERC-20 • Open-market asset",
-        badge_verified: "Contract verified (Polygon)",
-        badge_notax: "No tax • No blacklist • No pause",
-        badge_fixed: "Fixed supply",
-        card_buy_title: "Buy / Rewards",
-        btn_buy: "Buy MRT on QuickSwap",
-        btn_lp: "LP Rewards Program",
-        btn_repo: "GitHub Repository",
-        fee_title: "Network fee notice:",
-        fee_body: "You’ll need a tiny amount of POL in your wallet to pay Polygon network fees (gas). This is normal for on-chain swaps and is usually small.",
-        contract_label: "Contract address",
-        card_steps_title: "New to crypto (simple steps)",
-        step1: "Install a wallet (MetaMask or Rabby).",
-        step2: "Use Polygon network.",
-        step3: "Send USDC (Polygon) to your wallet.",
-        step4: "Send a
+        b1: "Contract verified (Polygon)",
+        b2: "No tax • No blacklist • No pause",
+        b3: "Fixed supply",
+        cardLeftTitle: "Buy / Rewards",
+        btnBuy: "Buy MRT on QuickSwap",
+        btnLP: "LP Rewards Program",
+        btnGH: "GitHub Repository",
+        feeTitle: "Network fee notice:",
+        feeText: "You’ll need a tiny amount of POL in your wallet to pay Polygon network fees (gas). This is normal for on-chain swaps and is usually small.",
+        contractLabel: "Contract address",
+        cardRightTitle: "New to crypto (simple steps)",
+        s1: "Install a wallet (MetaMask or Rabby).",
+        s2: "Use Polygon network.",
+        s3: "Send USDC (Polygon) to your wallet.",
+        s4: "Send a tiny amount of POL for gas.",
+        s5: "Click “Buy MRT on QuickSwap” and swap USDC → MRT.",
+        safetyTitle: "Safety:",
+        safetyText: "Always verify the token contract address before swapping.",
+        disclaimer: "Disclaimer: This page is provided for informational purposes only and does not constitute financial, legal, or tax advice. MRT is a crypto asset and may be volatile. Using decentralized exchanges involves risk, including smart contract risk, liquidity risk, and market risk. Always do your own research and verify addresses before interacting."
+      },
+
+      tr: {
+        languageLabel: "Dil",
+        subtitle: "Polygon PoS • ERC-20 • Açık piyasa varlığı",
+        b1: "Kontrat doğrulandı (Polygon)",
+        b2: "Vergi yok • Kara liste yok • Durdurma yok",
+        b3: "Sabit arz",
+        cardLeftTitle: "Alım / Ödüller",
+        btnBuy: "QuickSwap’te MRT Al",
+        btnLP: "LP Ödül Programı",
+        btnGH: "GitHub Deposu",
+        feeTitle: "Ağ ücreti notu:",
+        feeText: "Polygon ağ ücretlerini (gas) ödemek için cüzdanınızda çok küçük bir miktar POL bulunması gerekir. Bu zincir üzeri takaslarda normaldir ve genellikle düşüktür.",
+        contractLabel: "Kontrat adresi",
+        cardRightTitle: "Kriptoya yeni misiniz? (basit adımlar)",
+        s1: "Bir cüzdan kurun (MetaMask veya Rabby).",
+        s2: "Polygon ağını kullanın.",
+        s3: "Cüzdanınıza USDC (Polygon) gönderin.",
+        s4: "Gas için çok küçük bir miktar POL gönderin.",
+        s5: "“QuickSwap’te MRT Al” butonuna tıklayın ve USDC → MRT takası yapın.",
+        safetyTitle: "Güvenlik:",
+        safetyText: "Takas yapmadan önce token kontrat adresini mutlaka doğrulayın.",
+        disclaimer: "Yasal Uyarı: Bu sayfa yalnızca bilgilendirme amaçlıdır; finansal, hukuki veya vergisel tavsiye değildir. MRT bir kripto varlıktır ve volatil olabilir. Merkeziyetsiz borsaları kullanmak; akıllı kontrat riski, likidite riski ve piyasa riski dahil olmak üzere risk içerir. İşlem yapmadan önce kendi araştırmanızı yapın ve etkileşime geçmeden önce adresleri doğrulayın."
+      },
+
+      fr: {
+        languageLabel: "Langue",
+        subtitle: "Polygon PoS • ERC-20 • Actif de marché ouvert",
+        b1: "Contrat vérifié (Polygon)",
+        b2: "Pas de taxe • Pas de liste noire • Pas de pause",
+        b3: "Offre fixe",
+        cardLeftTitle: "Achat / Récompenses",
+        btnBuy: "Acheter MRT sur QuickSwap",
+        btnLP: "Programme de Récompenses LP",
+        btnGH: "Dépôt GitHub",
+        feeTitle: "Note sur les frais réseau :",
+        feeText: "Vous aurez besoin d’une très petite quantité de POL dans votre portefeuille pour payer les frais réseau Polygon (gas). C’est normal pour les swaps on-chain et c’est généralement faible.",
+        contractLabel: "Adresse du contrat",
+        cardRightTitle: "Nouveau dans la crypto ? (étapes simples)",
+        s1: "Installez un portefeuille (MetaMask ou Rabby).",
+        s2: "Utilisez le réseau Polygon.",
+        s3: "Envoyez des USDC (Polygon) vers votre portefeuille.",
+        s4: "Envoyez une très petite quantité de POL pour le gas.",
+        s5: "Cliquez sur « Acheter MRT sur QuickSwap » et échangez USDC → MRT.",
+        safetyTitle: "Sécurité :",
+        safetyText: "Vérifiez toujours l’adresse du contrat du token avant d’échanger.",
+        disclaimer: "Avertissement : Cette page est fournie à titre informatif uniquement et ne constitue pas un conseil financier, juridique ou fiscal. MRT est un crypto-actif et peut être volatil. L’utilisation d’échanges décentralisés comporte des risques, notamment des risques liés aux smart contracts, à la liquidité et au marché. Faites toujours vos propres recherches et vérifiez les adresses avant toute interaction."
+      },
+
+      es: {
+        languageLabel: "Idioma",
+        subtitle: "Polygon PoS • ERC-20 • Activo de mercado abierto",
+        b1: "Contrato verificado (Polygon)",
+        b2: "Sin impuestos • Sin lista negra • Sin pausa",
+        b3: "Suministro fijo",
+        cardLeftTitle: "Compra / Recompensas",
+        btnBuy: "Comprar MRT en QuickSwap",
+        btnLP: "Programa de Recompensas LP",
+        btnGH: "Repositorio de GitHub",
+        feeTitle: "Aviso de tarifa de red:",
+        feeText: "Necesitarás una cantidad muy pequeña de POL en tu billetera para pagar las tarifas de red de Polygon (gas). Esto es normal en los swaps on-chain y normalmente es bajo.",
+        contractLabel: "Dirección del contrato",
+        cardRightTitle: "¿Nuevo en cripto? (pasos simples)",
+        s1: "Instala una billetera (MetaMask o Rabby).",
+        s2: "Usa la red de Polygon.",
+        s3: "Envía USDC (Polygon) a tu billetera.",
+        s4: "Envía una cantidad muy pequeña de POL para el gas.",
+        s5: "Haz clic en “Comprar MRT en QuickSwap” e intercambia USDC → MRT.",
+        safetyTitle: "Seguridad:",
+        safetyText: "Verifica siempre la dirección del contrato del token antes de intercambiar.",
+        disclaimer: "Aviso: Esta página se ofrece solo con fines informativos y no constituye asesoramiento financiero, legal ni fiscal. MRT es un criptoactivo y puede ser volátil. El uso de exchanges descentralizados implica riesgos, incluidos riesgos de contratos inteligentes, liquidez y mercado. Investiga por tu cuenta y verifica las direcciones antes de interactuar."
+      },
+
+      zh: {
+        languageLabel: "语言",
+        subtitle: "Polygon PoS • ERC-20 • 开放市场资产",
+        b1: "合约已验证（Polygon）",
+        b2: "无税费 • 无黑名单 • 无暂停功能",
+        b3: "固定供应量",
+        cardLeftTitle: "购买 / 奖励",
+        btn
