@@ -7,7 +7,7 @@ The MRT Genesis Logbook documents the early formation of the MRT open market.
 This archive records independent, on-chain buy transactions as liquidity forms organically.  
 The objective is transparency — not hype, not price promotion, and not financial advice.
 
-The Genesis Logbook serves as a permanent public record of early market participants.
+The Genesis Logbook serves as a permanent public record of early market activity.
 
 ---
 
@@ -22,13 +22,13 @@ To maintain integrity and transparency, entries must meet the following criteria
 - No internal transfers
 - No wash trading
 
-All qualifying transactions will be reviewed and archived once per day.
+All qualifying transactions are reviewed and archived manually once per day (21:00 UTC+3) using publicly verifiable on-chain data.
 
 ---
 
 ## Genesis Entries
 
-No entries yet. First qualifying entry will be published in the next 21:00 (UTC+3) update.
+No entries yet. The first qualifying entry will be published after verification in the next scheduled update.
 
 ---
 
@@ -39,16 +39,16 @@ The Genesis archive is structured in milestones:
 - Milestone 1: Genesis 25 (initial market formation)
 - Milestone 2: Genesis 100 (extended archive)
 
-Milestones help document the market formation process in a structured way.
+Milestones document structured stages of early market participation.
 
 ---
 
-## Genesis Entries
-
-No entries yet. The log will populate automatically after the first qualifying DEX buy.
+## Genesis Entries Table
 
 | # | Date (UTC+3) | Wallet | USDC Spent | MRT Received | Transaction |
 |---|--------------|--------|------------|--------------|-------------|
+
+Entries are appended only after independent verification via PolygonScan.
 
 ---
 
@@ -65,12 +65,13 @@ Phase 2: Genesis 100
 Phase 2 will be formally opened through an official announcement.  
 This phase will extend the archive to the first 100 independent qualifying entries.
 
-Each phase reflects a documented stage in MRT's market development.
+Each phase reflects a documented stage in MRT's early liquidity development.
 
 ---
 
 ## Notes
 
 - Wallet addresses are abbreviated for readability.
-- All entries can be independently verified on PolygonScan.
-- The Genesis phase will remain open until the first 100 independent entries are recorded.
+- All entries are independently verifiable on PolygonScan.
+- The Genesis phase remains open until 100 independent qualifying entries are recorded.
+- The Logbook is an archival transparency document and does not constitute endorsement or investment guidance.
