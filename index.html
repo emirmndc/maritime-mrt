@@ -37,18 +37,27 @@
       margin-bottom:18px;
     }
     .brand{
-      display:flex; flex-direction:column; gap:10px;
+      display:flex; align-items:center; gap:14px;
     }
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      padding:8px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .logo img{width:100%; height:100%; object-fit:contain}
     .title{
-      font-size:34px; letter-spacing:.2px; margin:0;
+      font-size:32px; letter-spacing:.2px; margin:0;
     }
     .subtitle{
-      margin:0;
+      margin:4px 0 0 0;
       color:var(--muted);
       font-size:14px;
     }
     .badges{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;
     }
     .badge{
       display:inline-flex; align-items:center; gap:8px;
@@ -67,6 +76,7 @@
     }
     @media (max-width: 860px){
       .grid{grid-template-columns:1fr}
+      .title{font-size:28px}
     }
     .card{
       border:1px solid var(--border);
@@ -151,9 +161,16 @@
 <body>
   <div class="wrap">
     <div class="top">
-      <div class="brand">
-        <h1 class="title">MARITIME (MRT)</h1>
-        <p class="subtitle">Polygon PoS • ERC-20 • Open-market asset</p>
+      <div>
+        <div class="brand">
+          <div class="logo" aria-label="MARITIME logo">
+            <img src="./maritime.png" alt="MARITIME (MRT) logo" />
+          </div>
+          <div>
+            <h1 class="title">MARITIME (MRT)</h1>
+            <p class="subtitle">Polygon PoS • ERC-20 • Open-market asset</p>
+          </div>
+        </div>
 
         <div class="badges">
           <span class="badge"><span class="dot"></span>Contract verified (Polygon)</span>
