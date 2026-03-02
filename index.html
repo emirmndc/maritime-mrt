@@ -4,63 +4,216 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MARITIME (MRT) — Polygon</title>
-  <meta name="description" content="MARITIME (MRT) on Polygon PoS. Buy on QuickSwap and learn about the LP Rewards program." />
+  <meta name="description" content="MARITIME (MRT) on Polygon PoS. Buy on QuickSwap and review LP Rewards program details." />
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;max-width:820px;margin:40px auto;padding:0 16px;line-height:1.55}
-    .muted{color:#555;font-size:14px}
-    .card{border:1px solid #e6e6e6;border-radius:16px;padding:18px;margin:14px 0}
-    a.btn{display:inline-block;padding:12px 14px;border-radius:12px;border:1px solid #111;text-decoration:none;color:#111;margin:8px 10px 0 0}
-    a.btn.primary{background:#111;color:#fff}
-    code{background:#f5f5f5;padding:3px 7px;border-radius:8px}
-    ul{margin:10px 0 0 18px}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .pill{border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:13px;color:#333;background:#fafafa}
-    hr{border:none;border-top:1px solid #eee;margin:18px 0}
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --border:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --soft:rgba(255,255,255,.08);
+      --accent:#ffffff;
+      --link:rgba(255,255,255,.92);
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1000px 500px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(900px 450px at 85% 15%, rgba(255,255,255,.06), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--link); text-decoration:none}
+    a:hover{opacity:.9; text-decoration:underline}
+    .wrap{max-width:980px; margin:48px auto; padding:0 18px}
+    .top{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+      margin-bottom:18px;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .title{
+      font-size:34px; letter-spacing:.2px; margin:0;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .badges{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .dot{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.55)}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .card h2{
+      margin:0 0 10px 0;
+      font-size:16px;
+      letter-spacing:.2px;
+    }
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      font-weight:600;
+      font-size:14px;
+      min-height:44px;
+    }
+    .btn:hover{background:rgba(255,255,255,.06); text-decoration:none}
+    .btn.primary{
+      background:var(--accent);
+      color:#0b0f14;
+      border-color:transparent;
+    }
+    .btn.primary:hover{background:rgba(255,255,255,.92)}
+    .note{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .steps{
+      margin:0;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .steps li{margin:8px 0}
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:13px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.25);
+      word-break:break-all;
+      color:rgba(255,255,255,.86);
+    }
+    .row{
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .small{color:var(--muted); font-size:12.5px}
+    .footer{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:left;
+      opacity:.9;
+    }
+    .hr{
+      height:1px; background:var(--soft);
+      margin:14px 0;
+    }
   </style>
 </head>
+
 <body>
-  <h1>MARITIME (MRT)</h1>
-  <p class="muted">Polygon PoS • ERC-20 • Open-market asset</p>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <h1 class="title">MARITIME (MRT)</h1>
+        <p class="subtitle">Polygon PoS • ERC-20 • Open-market asset</p>
 
-  <div class="card">
-    <a class="btn primary" href="https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE" target="_blank" rel="noreferrer">Buy MRT on QuickSwap</a>
-    <a class="btn" href="https://github.com/maritime-mrt/maritime-mrt/blob/main/LP_REWARDS_v1.md" target="_blank" rel="noreferrer">LP Rewards Program</a>
-
-    <div class="kpi">
-      <span class="pill">Contract verified (Polygon)</span>
-      <span class="pill">No tax • No blacklist • No pause</span>
-      <span class="pill">Fixed supply</span>
+        <div class="badges">
+          <span class="badge"><span class="dot"></span>Contract verified (Polygon)</span>
+          <span class="badge"><span class="dot"></span>No tax • No blacklist • No pause</span>
+          <span class="badge"><span class="dot"></span>Fixed supply</span>
+        </div>
+      </div>
     </div>
 
-    <hr />
+    <div class="grid">
+      <!-- Left: Primary action -->
+      <div class="card">
+        <h2>Buy / Rewards</h2>
+        <div class="actions">
+          <a class="btn primary" href="https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE" target="_blank" rel="noreferrer">
+            Buy MRT on QuickSwap
+          </a>
+          <a class="btn" href="https://github.com/maritime-mrt/maritime-mrt/blob/main/LP_REWARDS_v1.md" target="_blank" rel="noreferrer">
+            LP Rewards Program
+          </a>
+          <a class="btn" href="https://github.com/maritime-mrt/maritime-mrt" target="_blank" rel="noreferrer">
+            GitHub Repository
+          </a>
+        </div>
 
-    <p><b>Important:</b> You need a tiny amount of <b>POL</b> in your wallet to pay network fees (gas). It’s usually small.</p>
+        <div class="note">
+          <b>Network fee notice:</b> You’ll need a tiny amount of <b>POL</b> in your wallet to pay Polygon network fees (gas).
+          This is normal for on-chain swaps and is usually small.
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div>
+            <div class="small">Contract address</div>
+            <div class="mono">0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Beginner steps -->
+      <div class="card">
+        <h2>New to crypto (simple steps)</h2>
+        <ol class="steps">
+          <li>Install a wallet (MetaMask or Rabby).</li>
+          <li>Use <b>Polygon</b> network.</li>
+          <li>Send <b>USDC (Polygon)</b> to your wallet.</li>
+          <li>Send a tiny amount of <b>POL</b> for gas.</li>
+          <li>Click “Buy MRT on QuickSwap” and swap <b>USDC → MRT</b>.</li>
+        </ol>
+
+        <div class="note" style="margin-top:14px;">
+          <b>Safety:</b> Always verify the token contract address before swapping.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Disclaimer: This page is informational only and does not constitute financial advice. Crypto assets are volatile.
+    </div>
   </div>
-
-  <div class="card">
-    <h2 style="margin:0 0 8px 0;font-size:18px;">New to crypto? (simple steps)</h2>
-    <ol style="margin:8px 0 0 18px;">
-      <li>Install a wallet (MetaMask / Rabby).</li>
-      <li>Add the Polygon network.</li>
-      <li>Send <b>USDC (Polygon)</b> to your wallet.</li>
-      <li>Send a tiny amount of <b>POL</b> to your wallet for gas.</li>
-      <li>Open QuickSwap and swap <b>USDC → MRT</b> using the button above.</li>
-    </ol>
-    <p class="muted" style="margin-top:10px;">
-      Tip: Always double-check the token contract address before swapping.
-    </p>
-  </div>
-
-  <div class="card">
-    <h2 style="margin:0 0 8px 0;font-size:18px;">Contract</h2>
-    <p><code>0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE</code></p>
-    <p class="muted" style="margin-top:8px;">
-      Official docs & source: <a href="https://github.com/maritime-mrt/maritime-mrt" target="_blank" rel="noreferrer">GitHub Repository</a>
-    </p>
-  </div>
-
-  <p class="muted">
-    Disclaimer: This page is informational only and does not constitute financial advice. Crypto assets are volatile.
-  </p>
 </body>
 </html>
