@@ -15,6 +15,21 @@ This document explains how official MARITIME (MRT) wallets are used and how move
   - `TRANSPARENCY.md` (summary), and
   - a link to the transaction on PolygonScan.
 
+## Maritime Treasury (Multisig Safe)
+
+Treasury is secured by a Safe (formerly Gnosis Safe) multisig wallet.
+
+Network: Polygon  
+Safe Address: 0xa660454663f30c7EbcE6f90BA0D5F139f5D7789  
+
+Policy:
+2 / 3 confirmations required for execution.
+
+Signers:
+- DEPLOY / MAIN
+- OWNER HOLD
+- MRT BACKUP SIGNER
+
 ## Usage Policy (High-level)
 - **Owner Hold:** intended for long-term alignment; any sale/transfer policy will be disclosed before execution.
 - **Liquidity Pool Wallet:** used only for DEX liquidity provisioning and management.
