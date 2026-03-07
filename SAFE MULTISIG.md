@@ -8,10 +8,6 @@ MARITIME treasury has been upgraded to a **Safe multisig wallet** on Polygon.
 - This means no single signer can move treasury funds alone.
 - Any treasury execution requires **2 out of 3 signer confirmations**.
 
-### Safe Treasury
-- **Network:** Polygon PoS
-- **Safe Address:** `0xa660454663f30c7EbcE6f90BA0D5F139f5D7789`
-
 ### Signers
 - **DEPLOY / MAIN**
 - **OWNER HOLD**
