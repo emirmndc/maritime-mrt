@@ -47,15 +47,13 @@ Ensure you have a small **POL** balance available for transaction fees.
 Acquire **USDC on Polygon**.
 
 ### Step 5
-Navigate to the official **QuickSwap MRT/USDC pair**.
+Open the official **QuickSwap MRT/USDC pair**.  
+This can be done directly through the **MetaMask in-app/browser flow** or any compatible wallet browser connected to Polygon.
 
 ### Step 6
-Swap **USDC → MRT**.
+Swap **USDC → MRT** and confirm the transaction in your wallet.
 
 ### Step 7
-Confirm the transaction in your wallet.
-
-### Step 8
 If MRT does not appear automatically in your wallet after the swap, add it manually as a **custom token** using the official contract address:
 
 `0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE`
@@ -64,6 +62,7 @@ If MRT does not appear automatically in your wallet after the swap, add it manua
 
 ## Important Note
 
+MRT can be purchased through the official QuickSwap pair while using **MetaMask on Polygon**.  
 Adding MRT as a custom token in MetaMask is only required for wallet display.  
 It is **not necessary before the swap** if you are using the official MRT/USDC pair.
 
