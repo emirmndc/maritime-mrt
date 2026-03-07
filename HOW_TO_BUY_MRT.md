@@ -32,39 +32,64 @@ Always verify the contract address before executing any swap.
 
 ---
 
-## Purchase Steps
+## Purchase Methods
+
+MRT can be acquired directly through **MetaMask Swap on Polygon** or through the official **QuickSwap MRT/USDC pair**.  
+If the token does not appear automatically after purchase, it can be added manually in MetaMask using the official contract address. :contentReference[oaicite:1]{index=1}
+
+---
+
+## Method 1 — MetaMask
 
 ### Step 1
-Install MetaMask (or a compatible EVM wallet) and secure your seed phrase offline.
+Install MetaMask and secure your seed phrase offline.
 
 ### Step 2
 Switch your wallet network to **Polygon PoS**.
 
 ### Step 3
-Ensure you have a small **POL** balance available for transaction fees.
+Ensure you have a small **POL** balance available for gas fees.
 
 ### Step 4
-Acquire **USDC on Polygon**.
+Hold **USDC on Polygon** in your wallet.
 
 ### Step 5
-Open the official **QuickSwap MRT/USDC pair**.  
-This can be done directly through the **MetaMask in-app/browser flow** or any compatible wallet browser connected to Polygon.
+Open the **Swap** function inside MetaMask.
 
 ### Step 6
-Swap **USDC → MRT** and confirm the transaction in your wallet.
+Select **USDC** as the token you want to swap from.
 
 ### Step 7
-If MRT does not appear automatically in your wallet after the swap, add it manually as a **custom token** using the official contract address:
+Search for **MRT**.  
+If it does not appear automatically, add MRT manually using the official contract address:
 
 `0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE`
+
+### Step 8
+Enter the amount, review the quote, and confirm the swap in MetaMask.
+
+---
+
+## Method 2 — QuickSwap
+
+### Step 1
+Open the official **QuickSwap MRT/USDC pair** on Polygon.
+
+### Step 2
+Connect MetaMask or another compatible wallet.
+
+### Step 3
+Swap **USDC → MRT**.
+
+### Step 4
+Confirm the transaction in your wallet.
 
 ---
 
 ## Important Note
 
-MRT can be purchased through the official QuickSwap pair while using **MetaMask on Polygon**.  
-Adding MRT as a custom token in MetaMask is only required for wallet display.  
-It is **not necessary before the swap** if you are using the official MRT/USDC pair.
+Adding MRT as a custom token in MetaMask may be required for wallet display.  
+This does **not** necessarily need to be done before purchase if the asset is already detected during the swap flow. :contentReference[oaicite:2]{index=2}
 
 ---
 
