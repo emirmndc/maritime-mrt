@@ -223,13 +223,11 @@ const resourceGroups = [
 
 function MaritimeLogo({ className = "h-16 w-16" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <circle cx="50" cy="50" r="50" fill="#3373B7" />
-      <path
-        fill="#F3F4F6"
-        d="M25 24h16l10 28 9-28h16v52H64V47l-8 23H45l-8-23v29H25z"
-      />
-    </svg>
+    <img
+      src="/maritime-logo.png"
+      alt="MARITIME logo"
+      className={className}
+    />
   );
 }
 
@@ -727,6 +725,7 @@ export default function MaritimeMRTWebsite() {
     </div>
   );
 }
+
 
 
 
