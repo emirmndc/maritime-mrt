@@ -34,8 +34,9 @@ Always verify the contract address before executing any swap.
 
 ## Purchase Methods
 
-MRT can be acquired directly through **MetaMask Swap on Polygon** or through the official **QuickSwap MRT/USDC pair**.  
-If the token does not appear automatically after purchase, it can be added manually in MetaMask using the official contract address. :contentReference[oaicite:1]{index=1}
+MRT can be acquired through **MetaMask on Polygon** or through the official **QuickSwap MRT/USDC pair**.
+
+If the token does not appear automatically after purchase, it can be added manually in MetaMask using the official contract address.
 
 ---
 
@@ -54,18 +55,29 @@ Ensure you have a small **POL** balance available for gas fees.
 Hold **USDC on Polygon** in your wallet.
 
 ### Step 5
-Open the **Swap** function inside MetaMask.
+In MetaMask, use the **Import Tokens** / **Add Custom Token** function.
 
 ### Step 6
-Select **USDC** as the token you want to swap from.
-
-### Step 7
-Search for **MRT**.  
-If it does not appear automatically, add MRT manually using the official contract address:
+Paste the official MRT contract address:
 
 `0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE`
 
+MetaMask should detect the token details automatically.
+
+### Step 7
+Confirm and add **MRT** as a custom token so it becomes visible in your wallet.
+
 ### Step 8
+Open the **Swap** function inside MetaMask.
+
+### Step 9
+Select **USDC** as the token you want to swap from.
+
+### Step 10
+Select **MRT** as the token you want to receive.  
+Since MRT was already added as a custom token, it should now be easier to locate in MetaMask.
+
+### Step 11
 Enter the amount, review the quote, and confirm the swap in MetaMask.
 
 ---
@@ -88,8 +100,8 @@ Confirm the transaction in your wallet.
 
 ## Important Note
 
-Adding MRT as a custom token in MetaMask may be required for wallet display.  
-This does **not** necessarily need to be done before purchase if the asset is already detected during the swap flow. :contentReference[oaicite:2]{index=2}
+Adding MRT as a custom token in MetaMask helps the token appear correctly in your wallet interface.  
+Even if purchase is completed successfully, manual token import may still be required for display.
 
 ---
 
