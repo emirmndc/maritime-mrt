@@ -720,11 +720,26 @@ export default function MaritimeMRTWebsite() {
               </Surface>
             </div>
           </section>
+          <section className="pb-16 pt-6">
+            <div className="border-t border-white/10 pt-6">
+              <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#88c4ff]">
+                Disclaimer
+              </div>
+              <p className="mt-4 max-w-5xl text-sm leading-8 text-white/58 md:text-[15px]">
+                MARITIME (MRT) is an open-market digital token. Any references on this website to roadmap phases, future
+                utility, settlement infrastructure, reporting systems, or protocol expansion are forward-looking in nature and
+                do not represent live, guaranteed, or deployed functionality unless expressly confirmed through official
+                project channels. All materials are provided for informational and transparency purposes only and do not
+                constitute financial, legal, or investment advice.
+              </p>
+            </div>
+          </section>
         </main>
       </div>
     </div>
   );
 }
+
 
 
 
