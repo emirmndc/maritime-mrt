@@ -139,8 +139,8 @@ const roadmapItems = [
 const buySteps = [
   "Set up MetaMask or another EVM wallet.",
   "Switch to Polygon and keep a small amount of POL for gas.",
-  "Acquire USDC on Polygon.",
-  "Use the official MRT route on QuickSwap.",
+  "Add MRT as a custom token using the official contract.",
+  "Acquire MRT via MetaMask Swap or the official QuickSwap route.",
 ];
 
 const resourceGroups = [
@@ -739,6 +739,7 @@ export default function MaritimeMRTWebsite() {
     </div>
   );
 }
+
 
 
 
