@@ -670,10 +670,10 @@ export default function MaritimeMRTWebsite() {
             <div className="mb-8 max-w-3xl">
               <SectionLabel>How to Buy</SectionLabel>
               <h2 className="mt-3 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white md:text-6xl xl:text-[72px]">
-                A cleaner flow for first-time visitors.
+                A simpler path to acquire MRT.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                Buy guidance is now supported by a formal document, not only by interface buttons.
+                New visitors can follow a direct, structured purchase flow from wallet setup to swap execution on Polygon.
               </p>
             </div>
 
@@ -725,6 +725,7 @@ export default function MaritimeMRTWebsite() {
     </div>
   );
 }
+
 
 
 
