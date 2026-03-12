@@ -49,7 +49,7 @@ The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.
 
 ## Documentation
 
-- **Whitepaper:** https://github.com/maritime-mrt/maritime-mrt/blob/main/MARITIME_MRT_Whitepaper_v1.4_clean.pdf
+- **Whitepaper:** [https://github.com/maritime-mrt/maritime-mrt/blob/main/MARITIME_MRT_Whitepaper_v1.4_clean.pdf](https://github.com/maritime-mrt/maritime-mrt/blob/main/MARITIME_MRT_Whitepaper_v1.5.pdf)
 - **Transparency Notes:** [TRANSPARENCY.md](./TRANSPARENCY.md)
 - **Tokenomics & Wallet Roles:** [TOKENOMICS.md](./TOKENOMICS.md)
 
