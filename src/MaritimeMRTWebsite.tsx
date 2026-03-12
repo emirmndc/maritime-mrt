@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -42,105 +42,117 @@ const quickFacts = [
   ["Network", "Polygon PoS"],
   ["Token", "MARITIME / MRT"],
   ["Supply", "100,000,000 fixed"],
-  ["Status", "Live market phase"],
+  ["Status", "Token layer live"],
 ];
 
 const overviewItems = [
   {
     title: "What MRT is",
-    text: "MARITIME (MRT) is a fixed-supply ERC-20 token deployed on Polygon PoS, designed with a market-first rollout and a public documentation layer around it.",
+    text: "MARITIME (MRT) is a fixed-supply ERC-20 token on Polygon PoS. In v1.5, it should be read as an openly tradable crypto asset associated with a developing maritime workflow thesis, not as a deployed settlement token with mandatory utility.",
   },
   {
     title: "What is live now",
-    text: "The live stack today is verified token contract, open-market access, wallet disclosures, and project documentation. Settlement and reporting modules remain staged roadmap items.",
+    text: "The live surface today is the verified ERC-20 contract, open-market access, wallet proofs, transparency materials, and public documentation. Utility modules remain roadmap items until they are separately demonstrated and announced.",
   },
   {
     title: "Security stance",
-    text: "Fixed supply, one-time mint at deployment, no admin mint, no tax, no blacklist, and no pause logic. The token layer is intentionally minimal.",
+    text: "The token layer is intentionally minimal: one-time mint at deployment, fixed supply, no admin mint, no tax, no blacklist, and no pause logic. The exposed interface remains standard ERC-20 functionality only.",
   },
   {
     title: "Transparency posture",
-    text: "Wallet roles, verification parameters, network strategy, LP rewards, genesis tracking, and buy guidance are published so visitors can understand the project without guesswork.",
+    text: "Wallet roles, verification parameters, tokenomics, how-to-buy guidance, and scope boundaries are published to reduce ambiguity and keep the distinction between live infrastructure and roadmap items clear.",
   },
 ];
 
 const narrativeItems = [
   {
-    title: "Market first, infrastructure later",
-    text: "MRT does not overclaim live utility. The site now shows the actual order of operations: token launch, verification, liquidity, transparency, then settlement-oriented product layers.",
+    title: "Market-first means credibility-first",
+    text: "In v1.5, market-first does not mean price-first. It means publish the token layer, clarify status, maintain public proofs, and create open market discoverability before claiming a broader utility stack.",
   },
   {
-    title: "Polygon is the canonical base",
-    text: "Polygon PoS is the sole native execution environment today. Any later expansion is conditional, documented, and constrained by a 1:1 supply integrity model.",
+    title: "Scope is intentionally narrower",
+    text: "The near-term target is not a broad maritime infrastructure rollout. The roadmap is deliberately narrowed toward one controlled workflow proof that can be inspected, criticized, and iterated without overstating maturity.",
   },
   {
-    title: "Public docs are part of the product",
-    text: "Whitepaper, roadmap, wallet policy, tokenomics, verification notes, and buy guidance are not side materials. They form the trust surface of the project.",
+    title: "Public artifacts are part of the system",
+    text: "Website copy, wallet proofs, market links, tokenomics, transparency notes, and status updates are not side materials. In v1.5 they are part of the credibility layer that helps visitors verify what exists today and what does not.",
   },
 ];
 
 const trustItems = [
   {
     title: "Verified exact-match contract",
-    text: "PolygonScan verification is published with compiler version, contract name, and verification format so technical visitors can check exact-match provenance.",
+    text: "The ERC-20 contract is deployed on Polygon PoS and source code is verified, making the live token layer easier to inspect and verify in public.",
   },
   {
     title: "Wallet disclosure and usage policy",
-    text: "Official deploy, treasury, community, liquidity, founder, and LP reward wallets are documented alongside operational usage rules and disclosure expectations.",
+    text: "Official wallets, wallet roles, and disclosure materials are published so visitors can review the public project surface without relying on vague claims.",
   },
   {
     title: "Fixed-supply integrity",
-    text: "Total supply remains fixed at 100,000,000 MRT. If network expansion ever happens, the stated model is lock-and-mint on a 1:1 basis rather than supply inflation.",
+    text: "MRT supply remains fixed at 100,000,000. The token contract is intentionally minimal and does not include hidden admin controls or token-level utility assumptions.",
   },
   {
-    title: "Open-market documentation",
-    text: "How-to-buy notes, genesis logbook rules, liquidity rewards notes, and transparency updates give non-technical users a direct way to understand market status.",
+    title: "Evidence integrity model",
+    text: "The narrower goal is not to claim that blockchain proves a document is true. The goal is to preserve sequencing, role attribution, and auditability once evidence enters the workflow.",
   },
 ];
 
 const docItems = [
   {
     title: "Security notes",
-    text: "One-time mint in constructor, 100,000,000 fixed supply, and no token-level admin controls such as tax, pause, blacklist, or extra mint paths.",
+    text: "Token-layer security relies on a minimal ERC-20 design: one-time constructor mint, fixed supply, and no token-level admin controls such as tax, pause, blacklist, or extra mint paths.",
   },
   {
-    title: "Network strategy",
-    text: "Polygon PoS is the canonical base layer. Cross-chain or dedicated execution expansion is described as a conditional architecture option rather than a hype claim.",
+    title: "Current scope",
+    text: "The live scope is the token layer, market access, and credibility artifacts. There is no live mainnet settlement workflow, no dispute-vault system, and no claim of automated production release logic.",
   },
   {
-    title: "Tokenomics",
-    text: "Community 40%, Treasury 25%, Owner Hold 20%, Liquidity Pool Wallet 15%, with wallet-role clarification and future transparency improvements described publicly.",
+    title: "Utility MVP spec",
+    text: "The first utility target is a narrow MVP specification built around Deal Ledger, Evidence Vault, Disputed Portion Vault, and Settlement Workflow rather than a full shipping stack.",
   },
   {
-    title: "Verification status",
-    text: "The contract is published as an exact-match verified source on PolygonScan using Solidity standard JSON input parameters.",
+    title: "First narrow use case",
+    text: "The preferred first proof is a Port Cost Vault case. It is intentionally narrower than full freight or full hire escrow and is meant to demonstrate a bounded workflow with a compact evidence pack.",
   },
 ];
 
 const roadmapItems = [
   {
-    title: "Phase 1 - Markets",
-    text: "Visibility, verification, wallet disclosures, market access, profile completeness, and transparent documentation.",
+    title: "Phase 0 — Token layer live",
+    text: "Deploy, verify, publish, and document the token layer.",
   },
   {
-    title: "Phase 2 - Settlement MVP",
-    text: "Deal Ledger, Evidence Vault, allowlist logic, and dispute-oriented settlement structure for maritime use cases.",
+    title: "Phase 1 — Market credibility",
+    text: "Transparency, guides, wallet proofs, metadata, and clear public positioning.",
   },
   {
-    title: "Phase 3 - Charter Modules",
-    text: "Off-hire, bunker, commission, and war-risk compatible flows after the settlement base proves itself in actual use.",
+    title: "Phase 2 — Utility MVP spec",
+    text: "Define Deal Ledger, Evidence Vault, Disputed Portion Vaults, and Settlement Workflow.",
   },
   {
-    title: "Phase 4 - Reporting",
-    text: "Audit artifacts, export layers, and integrations after real usage justifies the reporting surface.",
+    title: "Phase 3 — First workflow demo",
+    text: "Launch one narrow case, beginning with a Port Cost Vault or similar bounded proof.",
+  },
+  {
+    title: "Phase 4 — Operator feedback loop",
+    text: "Collect real feedback, refine evidence rules, and tighten the flow design.",
+  },
+  {
+    title: "Phase 5 — Off-mainnet prototype",
+    text: "Prototype minimal vault logic and execution roles in a controlled test environment.",
+  },
+  {
+    title: "Phase 6 — Expansion modules",
+    text: "Only after proof: broader modules such as laytime, freight milestones, cargo claims, reporting, or integrations.",
   },
 ];
 
 const buySteps = [
-  "Set up MetaMask or another EVM wallet.",
-  "Switch to Polygon and keep a small amount of POL for gas.",
-  "Add MRT as a custom token using the official contract.",
-  "Acquire MRT via MetaMask Swap or the official QuickSwap route.",
+  "Set up MetaMask or another compatible EVM wallet.",
+  "Switch to Polygon PoS and keep a small amount of POL for gas.",
+  "Import MRT as a custom token using the official contract address.",
+  "Acquire MRT through MetaMask Swap or the official QuickSwap route.",
 ];
 
 const resourceGroups = [
@@ -149,17 +161,17 @@ const resourceGroups = [
     items: [
       {
         label: "Whitepaper",
-        description: "Project thesis, token structure, and long-form narrative.",
+        description: "Current positioning, scope boundaries, and phased workflow thesis.",
         href: documentLinks.whitepaper,
       },
       {
         label: "Roadmap PDF",
-        description: "Settlement rail direction and staged product progression.",
+        description: "Narrow settlement workflow direction and staged progression.",
         href: documentLinks.roadmap,
       },
       {
         label: "Project README",
-        description: "On-chain details, official links, wallets, and repo overview.",
+        description: "Official links, token references, wallets, and repository overview.",
         href: documentLinks.readme,
       },
     ],
@@ -169,22 +181,22 @@ const resourceGroups = [
     items: [
       {
         label: "Security Notes",
-        description: "Token-level security posture and verification checklist.",
+        description: "Minimal token-layer security posture and control boundaries.",
         href: documentLinks.security,
       },
       {
         label: "Verification",
-        description: "Exact-match PolygonScan verification parameters.",
+        description: "Verified contract details and public verification references.",
         href: documentLinks.verification,
       },
       {
         label: "Transparency",
-        description: "What is live now, what is not, and how disclosures work.",
+        description: "What is live now, what is not, and how scope is disclosed.",
         href: documentLinks.transparency,
       },
       {
         label: "Wallet Proofs",
-        description: "Official wallets, multisig posture, and usage policy.",
+        description: "Official wallets, role visibility, and disclosure policy.",
         href: documentLinks.wallets,
       },
     ],
@@ -194,27 +206,27 @@ const resourceGroups = [
     items: [
       {
         label: "Tokenomics",
-        description: "Allocation structure and wallet role clarification.",
+        description: "Allocation structure and wallet-role clarification.",
         href: documentLinks.tokenomics,
       },
       {
         label: "Network Strategy",
-        description: "Why Polygon now and what future expansion would require.",
+        description: "Why Polygon now and what later expansion would require.",
         href: documentLinks.networkStrategy,
       },
       {
         label: "How To Buy MRT",
-        description: "Official buy route, requirements, and safety notes.",
+        description: "Official buy route, requirements, and safety reminders.",
         href: documentLinks.howToBuy,
       },
       {
         label: "Genesis Logbook",
-        description: "Rules for independently verified early market entries.",
+        description: "Documented early market activity and public archive rules.",
         href: documentLinks.genesis,
       },
       {
         label: "LP Rewards v1",
-        description: "Liquidity program structure, timelines, and reward method.",
+        description: "Liquidity program structure and disclosed reward method.",
         href: documentLinks.lpRewards,
       },
     ],
@@ -444,14 +456,15 @@ export default function MaritimeMRTWebsite() {
               </div>
 
               <h1 className="max-w-5xl text-5xl font-bold leading-[0.9] tracking-[-0.04em] text-white md:text-7xl xl:text-[108px]">
-                Maritime token infrastructure
+                Transparent token layer
                 <br />
-                with a <span className="font-[Georgia] font-normal italic text-[#dcecff]">documented public layer</span>.
+                with a <span className="font-[Georgia] font-normal italic text-[#dcecff]">narrower workflow roadmap</span>.
               </h1>
 
               <p className="mt-8 max-w-3xl text-xl leading-9 text-white/72 md:text-[26px] md:leading-[1.6]">
-                MRT now presents not just the token and market links, but the material that explains what the project is,
-                how it is structured, what is already live, and where the roadmap is trying to go.
+                MRT is live today as a fixed-supply ERC-20 on Polygon PoS with verified infrastructure, open-market access,
+                and public documentation. The token layer is live; the utility layer remains roadmap scope until separately
+                demonstrated.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -488,7 +501,7 @@ export default function MaritimeMRTWebsite() {
                   <div>
                     <div className="text-base text-white/45 md:text-lg">Project Snapshot</div>
                     <div className="mt-1 text-3xl font-bold md:text-4xl">
-                      Live token, public docs, staged roadmap
+                      Live token layer, public proofs, narrow roadmap
                     </div>
                   </div>
                 </div>
@@ -501,10 +514,10 @@ export default function MaritimeMRTWebsite() {
             <div className="mb-8 max-w-3xl">
               <SectionLabel>Project Narrative</SectionLabel>
               <h2 className="mt-3 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white md:text-6xl xl:text-[72px]">
-                People should understand the project before they ever swap into it.
+                Credibility first, then one narrow workflow proof.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                The site now carries the public explanation layer directly, instead of hiding the important context outside the experience.
+                The public message should make one distinction obvious: what is live today is the token layer and credibility surface, while workflow utility remains a staged roadmap item.
               </p>
             </div>
             <AccordionList items={narrativeItems} />
@@ -517,7 +530,7 @@ export default function MaritimeMRTWebsite() {
                 Verification, wallet policy, and supply integrity are visible on the surface.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                The point is not hype. It is legibility. Visitors should be able to inspect the structure and verify claims quickly.
+                The point is not hype. It is clarity: what exists, what does not, and what would need to be proven before deeper utility claims become credible.
               </p>
             </div>
 
@@ -567,7 +580,7 @@ export default function MaritimeMRTWebsite() {
                 The site explains the live token layer and links the underlying documents.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                Visitors should be able to move from overview to evidence without leaving the brand experience empty-handed.
+                Visitors should be able to move from overview to evidence quickly, while keeping the boundary between live infrastructure and roadmap scope explicit.
               </p>
             </div>
 
@@ -617,7 +630,7 @@ export default function MaritimeMRTWebsite() {
                 The project materials are now part of the site, not hidden behind a repo search.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                Long-form documents, operational notes, and market guidance are grouped so visitors can move from curiosity to verification fast.
+                These materials are grouped to make public verification easier and to prevent overstatement about what the project already delivers today.
               </p>
             </div>
 
@@ -649,10 +662,10 @@ export default function MaritimeMRTWebsite() {
             <div className="mb-8 max-w-3xl">
               <SectionLabel>Roadmap</SectionLabel>
               <h2 className="mt-3 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white md:text-6xl xl:text-[72px]">
-                From visibility to settlement-oriented infrastructure.
+                From live token layer to one bounded workflow proof.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                The roadmap reads as a staged transition from public market formation into real settlement and reporting layers.
+                v1.5 narrows the sequence: first token-layer clarity, then market credibility, then one compact workflow demo, then feedback, and only afterwards deeper expansion.
               </p>
             </div>
             <AccordionList items={roadmapItems} />
@@ -673,7 +686,7 @@ export default function MaritimeMRTWebsite() {
                 A simpler path to acquire MRT.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                New visitors can follow a direct, structured purchase flow from wallet setup to swap execution on Polygon.
+                MRT remains openly accessible on Polygon through public market routes. Visitors should use only verified addresses and official links.
               </p>
             </div>
 
@@ -726,11 +739,7 @@ export default function MaritimeMRTWebsite() {
                 Disclaimer
               </div>
               <p className="mt-4 max-w-5xl text-sm leading-8 text-white/58 md:text-[15px]">
-                MARITIME (MRT) is an open-market digital token. Any references on this website to roadmap phases, future
-                utility, settlement infrastructure, reporting systems, or protocol expansion are forward-looking in nature and
-                do not represent live, guaranteed, or deployed functionality unless expressly confirmed through official
-                project channels. All materials are provided for informational and transparency purposes only and do not
-                constitute financial, legal, or investment advice.
+                MARITIME (MRT) is a crypto asset presented with public documentation, wallet disclosures, and market references for transparency purposes. Roadmap items described on this website are strategic intent statements only, not guaranteed deliverables, and they may be modified, delayed, narrowed, or discontinued depending on execution, legal, technical, market, or resource conditions. Unless explicitly stated otherwise, MRT does not represent equity, debt, profit-sharing rights, or a direct claim on project assets. Public market presence does not by itself prove utility, adoption, or commercial success. Nothing on this website constitutes financial, legal, tax, or investment advice.
               </p>
             </div>
           </section>
@@ -739,12 +748,3 @@ export default function MaritimeMRTWebsite() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
