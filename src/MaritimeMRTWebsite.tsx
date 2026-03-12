@@ -24,7 +24,7 @@ const externalLinks = {
 };
 
 const documentLinks = {
-  whitepaper: "/docs/MARITIME_MRT_Whitepaper_v1.4_clean-1.pdf",
+  whitepaper: "/docs/MARITIME_MRT_Whitepaper_v1.5.pdf",
   roadmap: "/docs/MRT_Payment_Rail_Roadmap_v0.4_REWRITE.pdf",
   readme: "/docs/README.pdf",
   security: "/docs/SECURITY.pdf",
@@ -739,6 +739,7 @@ export default function MaritimeMRTWebsite() {
     </div>
   );
 }
+
 
 
 
