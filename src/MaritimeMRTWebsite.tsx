@@ -25,7 +25,7 @@ const externalLinks = {
 
 const documentLinks = {
   whitepaper: "/docs/MARITIME_MRT_Whitepaper_v1.5.pdf",
-  roadmap: "/docs/MRT_Payment_Rail_Roadmap_v0.4_REWRITE.pdf",
+  roadmap: "/docs/MRT_Payment_Rail_Roadmap_v1.5.pdf",
   readme: "/docs/README.pdf",
   security: "/docs/SECURITY.pdf",
   tokenomics: "/docs/TOKENOMICS.pdf",
@@ -67,15 +67,15 @@ const overviewItems = [
 const narrativeItems = [
   {
     title: "Market-first means credibility-first",
-    text: "In v1.5, market-first does not mean price-first. It means publish the token layer, clarify status, maintain public proofs, and create open market discoverability before claiming a broader utility stack.",
+    text: "In roadmap v1.5, market-first does not mean price-first. It means transparent token infrastructure first, inspectable workflow proof second, and deeper utility only after evidence and operator feedback.",
   },
   {
     title: "Scope is intentionally narrower",
-    text: "The near-term target is not a broad maritime infrastructure rollout. The roadmap is deliberately narrowed toward one controlled workflow proof that can be inspected, criticized, and iterated without overstating maturity.",
+    text: "The near-term objective is no longer a broad infrastructure rollout. The roadmap now narrows delivery toward one shipping-compatible workflow proof built around a Deal Ledger, an off-chain Evidence Vault, a neutral Disputed Portion Vault, and a controlled Settlement Workflow.",
   },
   {
-    title: "Public artifacts are part of the system",
-    text: "Website copy, wallet proofs, market links, tokenomics, transparency notes, and status updates are not side materials. In v1.5 they are part of the credibility layer that helps visitors verify what exists today and what does not.",
+    title: "One bounded workflow comes before expansion",
+    text: "The first preferred demo is a Port Cost Vault case rather than full freight or full hire escrow. Only after one compact proof, exportable case file, and operator feedback does the roadmap move toward broader modules.",
   },
 ];
 
@@ -105,15 +105,15 @@ const docItems = [
   },
   {
     title: "Current scope",
-    text: "The live scope is the token layer, market access, and credibility artifacts. There is no live mainnet settlement workflow, no dispute-vault system, and no claim of automated production release logic.",
+    text: "The live scope is the token layer, market access, and credibility artifacts. There is no mainnet settlement workflow, no live evidence network or dispute-vault system, and no claim of automated production releases.",
   },
   {
     title: "Utility MVP spec",
-    text: "The first utility target is a narrow MVP specification built around Deal Ledger, Evidence Vault, Disputed Portion Vault, and Settlement Workflow rather than a full shipping stack.",
+    text: "The first utility target is a narrow workflow specification built around Deal Ledger, Evidence Vault, Disputed Portion Vault, and Settlement Workflow before any production-level claim is made.",
   },
   {
     title: "First narrow use case",
-    text: "The preferred first proof is a Port Cost Vault case. It is intentionally narrower than full freight or full hire escrow and is meant to demonstrate a bounded workflow with a compact evidence pack.",
+    text: "The preferred first proof is a Port Cost Vault scenario. It is intentionally narrower than full freight or full hire escrow and is designed as one bounded operational case with a compact evidence pack and exportable case file.",
   },
 ];
 
@@ -124,7 +124,7 @@ const roadmapItems = [
   },
   {
     title: "Phase 1 — Market credibility",
-    text: "Transparency, guides, wallet proofs, metadata, and clear public positioning.",
+    text: "Transparency, guides, wallet proofs, metadata, pair links, and clear public positioning.",
   },
   {
     title: "Phase 2 — Utility MVP spec",
@@ -166,7 +166,7 @@ const resourceGroups = [
       },
       {
         label: "Roadmap PDF",
-        description: "Narrow settlement workflow direction and staged progression.",
+        description: "Roadmap v1.5: one bounded workflow proof before broader expansion.",
         href: documentLinks.roadmap,
       },
       {
@@ -662,10 +662,10 @@ export default function MaritimeMRTWebsite() {
             <div className="mb-8 max-w-3xl">
               <SectionLabel>Roadmap</SectionLabel>
               <h2 className="mt-3 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.03em] text-white md:text-6xl xl:text-[72px]">
-                From live token layer to one bounded workflow proof.
+                From transparent token layer to one inspectable workflow proof.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68 md:text-[22px] md:leading-9">
-                v1.5 narrows the sequence: first token-layer clarity, then market credibility, then one compact workflow demo, then feedback, and only afterwards deeper expansion.
+                Roadmap v1.5 reorders delivery around a narrower path: maintain a transparent token layer and public market surface first, then prove one shipping-compatible dispute workflow, then gather feedback before any broader expansion.
               </p>
             </div>
             <AccordionList items={roadmapItems} />
