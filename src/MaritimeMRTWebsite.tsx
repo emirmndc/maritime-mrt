@@ -1,4 +1,5 @@
 import React from "react";
+import { navigateTo } from "./app/router";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -430,12 +431,26 @@ export default function MaritimeMRTWebsite() {
               <NavLink label="Library" id="library" />
               <NavLink label="Roadmap" id="roadmap" />
               <NavLink label="How to Buy" id="buy" />
+              <button
+                type="button"
+                onClick={() => navigateTo("/app")}
+                className="text-[#b8dcff] transition hover:text-white"
+              >
+                App
+              </button>
             </nav>
 
             <div className="flex flex-wrap gap-3">
               <GlowButton href={documentLinks.whitepaper} secondary>
                 Whitepaper
               </GlowButton>
+              <button
+                type="button"
+                onClick={() => navigateTo("/app")}
+                className="relative z-20 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-6 py-3 text-sm font-semibold tracking-[0.02em] text-[#06111f] shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_14px_34px_rgba(51,115,183,0.35)] transition-all duration-300 hover:translate-y-[-1px] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_20px_40px_rgba(51,115,183,0.42)]"
+              >
+                Open App
+              </button>
               <GlowButton href={externalLinks.quickswap}>Trade MRT</GlowButton>
             </div>
           </div>
