@@ -6,7 +6,7 @@ export function VoyageListPage() {
     <AppShell
       eyebrow="Voyages"
       title="Operational voyages at a glance."
-      description="This list is the future home for real recap-backed voyages. For now it shows seeded examples with route, freight status, next deadline, and risk posture."
+      description="This list is the future home for real recap-backed voyages. For now it shows seeded examples with route, stage, next trigger, deadline, and risk posture."
     >
       <div className="grid gap-5">
         {voyages.map((voyage) => (
@@ -20,11 +20,12 @@ export function VoyageListPage() {
                 <p className="mt-2 text-white/65">
                   {voyage.cargo} • {voyage.owner} vs {voyage.charterer}
                 </p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <InfoCard label="Freight" value={voyage.freight} />
-                  <InfoCard label="Status" value={voyage.status} />
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  <InfoCard label="Status" value={voyage.stage} />
+                  <InfoCard label="Next trigger" value={voyage.nextTrigger} />
                   <InfoCard label="Next deadline" value={voyage.nextDeadline} />
-                  <InfoCard label="Risk" value={voyage.riskLevel} />
+                  <InfoCard label="Freight" value={voyage.freight} />
+                  <InfoCard label="Risk" value={voyage.health.label} />
                 </div>
               </div>
               <div className="flex shrink-0 items-start">
