@@ -31,7 +31,7 @@ export function AppHomePage() {
     <AppShell
       eyebrow="MVP Workspace"
       title="Recap in, tasks out, deadlines visible."
-      description="This app section turns a voyage recap into an operational dashboard. The current build is a production-shaped MVP with mock voyage data and Supabase wiring ready for real records."
+      description="This app section turns a voyage recap into an operational dashboard. The current build now surfaces parser output, voyage health, next trigger, and action-led workflow cards."
     >
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <Surface>
@@ -41,8 +41,8 @@ export function AppHomePage() {
           </div>
           <h2 className="mt-5 text-3xl font-bold">Start with one bounded workflow proof.</h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-8 text-white/70">
-            The first app pass focuses on one voyage dashboard: recap analysis, owner and charterer task lists, trigger tracking,
-            documents, message drafts, and risk notes. Payments and legal decisioning remain out of scope.
+            The first app pass focuses on one voyage dashboard: voyage status, owner and charterer actions, trigger tracking,
+            parser output, documents, message drafts, and risk flags. Payments and legal decisioning remain out of scope.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <CTAButton route="/app/voyages">Open voyage list</CTAButton>
@@ -55,12 +55,10 @@ export function AppHomePage() {
           <div className="mt-3 text-3xl font-bold">{demoVoyage.route}</div>
           <div className="mt-2 text-white/65">{demoVoyage.cargo}</div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {demoVoyage.summary.slice(0, 6).map(([label, value]) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-                <div className="mt-2 font-semibold">{value}</div>
-              </div>
-            ))}
+            <InfoCard label="Voyage status" value={demoVoyage.stage} />
+            <InfoCard label="Next trigger" value={demoVoyage.nextTrigger} />
+            <InfoCard label="Voyage health" value={demoVoyage.health.label} />
+            <InfoCard label="Top flag" value={demoVoyage.flags[0]?.title ?? "No active flag"} />
           </div>
         </Surface>
       </div>
@@ -80,5 +78,14 @@ export function AppHomePage() {
         })}
       </div>
     </AppShell>
+  );
+}
+
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
+      <div className="mt-2 font-semibold">{value}</div>
+    </div>
   );
 }
