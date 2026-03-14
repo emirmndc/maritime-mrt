@@ -45,6 +45,7 @@ export function AppHomePage() {
             parser output, documents, message drafts, and review-oriented flags. Payments and legal decisioning remain out of scope.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
+            <CTAButton route="/app/try-demo">Try the demo</CTAButton>
             <CTAButton route="/app/voyages">Open voyage list</CTAButton>
             <CTAButton route="/app/voyages/demo">Open demo dashboard</CTAButton>
           </div>
