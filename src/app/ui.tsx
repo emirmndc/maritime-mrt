@@ -30,6 +30,7 @@ export function AppShell({
             </button>
             <nav className="flex flex-wrap gap-3 text-sm text-white/70">
               <NavButton route="/app">App Home</NavButton>
+              <NavButton route="/app/try-demo">Try Demo</NavButton>
               <NavButton route="/app/voyages">Voyages</NavButton>
               <NavButton route="/app/voyages/demo">Demo Dashboard</NavButton>
             </nav>
