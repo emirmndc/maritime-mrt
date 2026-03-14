@@ -1,12 +1,13 @@
-import { AlertTriangle, FileSearch, FileStack, Mail, Activity, Siren, TimerReset, TriangleAlert, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertTriangle, FileSearch, FileStack, Mail, Activity, Siren, TimerReset, TriangleAlert, Upload, Clock3, Filter } from "lucide-react";
 import { demoVoyage } from "./data";
 import { AppShell, Surface, StatusPill } from "./ui";
-import type { TaskItem } from "./types";
+import type { TaskItem, VoyageDocumentStatus } from "./types";
 
 const healthTone = {
-  low: "border-emerald-400/20 bg-emerald-500/10 text-emerald-200",
-  medium: "border-amber-400/20 bg-amber-500/10 text-amber-200",
-  high: "border-rose-400/20 bg-rose-500/10 text-rose-200",
+  on_track: "border-emerald-400/20 bg-emerald-500/10 text-emerald-200",
+  at_risk: "border-amber-400/20 bg-amber-500/10 text-amber-200",
+  delayed: "border-rose-400/20 bg-rose-500/10 text-rose-200",
 } as const;
 
 const flagTone = {
@@ -14,12 +15,34 @@ const flagTone = {
   high: "border-rose-400/20 bg-rose-500/10 text-rose-100",
 } as const;
 
+const documentTone: Record<VoyageDocumentStatus, string> = {
+  uploaded: "border-sky-400/20 bg-sky-500/10 text-sky-100",
+  missing: "border-rose-400/20 bg-rose-500/10 text-rose-100",
+  awaiting_review: "border-amber-400/20 bg-amber-500/10 text-amber-100",
+  draft_only: "border-violet-400/20 bg-violet-500/10 text-violet-100",
+  confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
+};
+
+const filterOptions = ["All", "My tasks", "Owner", "Charterer", "Today", "Docs missing"] as const;
+type FilterOption = (typeof filterOptions)[number];
+
 export function DemoVoyagePage() {
+  const [taskFilter, setTaskFilter] = useState<FilterOption>("All");
+
+  const filteredOwnerTasks = useMemo(
+    () => filterTasks(demoVoyage.ownerTasks, taskFilter, "Owner"),
+    [taskFilter],
+  );
+  const filteredChartererTasks = useMemo(
+    () => filterTasks(demoVoyage.chartererTasks, taskFilter, "Charterer"),
+    [taskFilter],
+  );
+
   return (
     <AppShell
       eyebrow="Demo Dashboard"
       title="Single voyage, single dashboard."
-      description="This demo maps a fictional voyage into one operational view: status, health, parser output, actions, documents, message drafts, and risk notes."
+      description="This demo maps a fictional voyage into one operational view: status, health, parser output, actions, document states, change log, and review-oriented cautions."
     >
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
@@ -32,16 +55,21 @@ export function DemoVoyagePage() {
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <TopMetric label="Voyage status" value={demoVoyage.stage} />
-            <TopMetric label="Next trigger" value={demoVoyage.nextTrigger} />
+            <TopMetric label="Upcoming trigger" value={demoVoyage.upcomingTrigger} />
             <TopMetric label="Next deadline" value={demoVoyage.nextDeadline} />
-            <TopMetric label="Risk" value={demoVoyage.riskLevel} />
+            <TopMetric label="Commercial risk" value={demoVoyage.commercialRisk} />
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <InfoStrip label="Last event recorded" value={demoVoyage.lastEventRecorded} />
+            <InfoStrip label="Last updated by" value={demoVoyage.lastUpdatedBy} />
+            <InfoStrip label="Last updated time" value={demoVoyage.lastUpdatedAt} />
           </div>
         </Surface>
 
         <Surface>
           <SectionTitle icon={Activity} label="Voyage health" subtitle={demoVoyage.health.label} />
           <div className={`mt-5 rounded-2xl border px-4 py-4 ${healthTone[demoVoyage.health.tone]}`}>
-            <div className="text-sm font-semibold">Voyage health: {demoVoyage.health.label}</div>
+            <div className="text-sm font-semibold">Operational health: {demoVoyage.health.label}</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
               {demoVoyage.health.reasons.map((reason) => (
                 <div key={reason}>- {reason}</div>
@@ -50,9 +78,12 @@ export function DemoVoyagePage() {
           </div>
           <div className="mt-5 grid gap-3">
             {demoVoyage.flags.map((flag) => (
-              <div key={flag.title} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
-                <TriangleAlert className="h-4 w-4" />
-                <span>⚠ {flag.title}</span>
+              <div key={flag.title} className={`rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
+                <div className="flex items-center gap-3 font-semibold">
+                  <TriangleAlert className="h-4 w-4" />
+                  <span>⚠ {flag.title}</span>
+                </div>
+                <div className="mt-2 leading-7 opacity-90">{flag.guidance}</div>
               </div>
             ))}
           </div>
@@ -73,25 +104,52 @@ export function DemoVoyagePage() {
         </Surface>
 
         <Surface>
-          <SectionTitle icon={Siren} label="Critical triggers" subtitle="Clause-linked milestones" />
-          <div className="mt-5 grid gap-3">
-            {demoVoyage.triggers.map((trigger) => (
-              <div key={trigger} className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/80">
-                {trigger}
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="What changed" />
+          <div className="mt-5 space-y-4">
+            {demoVoyage.changesSinceLastUpdate.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-semibold">{item.title}</div>
+                  <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
               </div>
             ))}
           </div>
         </Surface>
       </div>
 
+      <Surface className="mt-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <SectionTitle icon={Filter} label="Task filters" subtitle="All or focused views" />
+          <div className="flex flex-wrap gap-2">
+            {filterOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setTaskFilter(option)}
+                className={[
+                  "rounded-full border px-4 py-2 text-xs font-semibold transition",
+                  taskFilter === option
+                    ? "border-[#4f97e8]/35 bg-[#3373B7]/15 text-[#cfe7ff]"
+                    : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.06]",
+                ].join(" ")}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Surface>
+
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <TaskColumn title="Owner tasks" items={demoVoyage.ownerTasks} />
-        <TaskColumn title="Charterer tasks" items={demoVoyage.chartererTasks} />
+        <TaskColumn title="Owner tasks" items={filteredOwnerTasks} />
+        <TaskColumn title="Charterer tasks" items={filteredChartererTasks} />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
-          <SectionTitle icon={TimerReset} label="Timeline" subtitle="Event and document flow" />
+          <SectionTitle icon={TimerReset} label="Recorded events and upcoming triggers" subtitle="Timeline flow" />
           <div className="mt-5 space-y-4">
             {demoVoyage.timeline.map((item) => (
               <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -108,18 +166,21 @@ export function DemoVoyagePage() {
 
         <div className="grid gap-5">
           <Surface>
-            <SectionTitle icon={FileStack} label="Pending documents" subtitle="Evidence and support pack" />
+            <SectionTitle icon={FileStack} label="Evidence pack" subtitle="Document status visible" />
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {demoVoyage.documents.map((document) => (
-                <div key={document} className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/80">
-                  {document}
+                <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-sm font-semibold text-white/90">{document.title}</div>
+                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                    {formatDocumentStatus(document.status)}
+                  </div>
                 </div>
               ))}
             </div>
           </Surface>
 
           <Surface>
-            <SectionTitle icon={AlertTriangle} label="System flags" subtitle="Operational cautions" />
+            <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Assistive language only" />
             <div className="mt-5 space-y-3">
               {demoVoyage.riskNotes.map((note) => (
                 <div key={note} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
@@ -139,6 +200,12 @@ export function DemoVoyagePage() {
               <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">{draft.audience}</div>
               <div className="mt-2 text-xl font-semibold">{draft.subject}</div>
               <p className="mt-4 text-[15px] leading-8 text-white/68">{draft.body}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <DraftButton label="Copy" />
+                <DraftButton label="Open email draft" />
+                <DraftButton label="Regenerate" />
+                <DraftButton label="Neutral tone" />
+              </div>
             </div>
           ))}
         </div>
@@ -156,11 +223,25 @@ function TopMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function InfoStrip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
+      <div className="mt-2 text-sm leading-6 text-white/90">{value}</div>
+    </div>
+  );
+}
+
 function TaskColumn({ title, items }: { title: string; items: TaskItem[] }) {
   return (
     <Surface>
       <h2 className="text-2xl font-bold">{title}</h2>
       <div className="mt-5 space-y-4">
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
+            No tasks in this filter.
+          </div>
+        ) : null}
         {items.map((item) => (
           <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -168,6 +249,21 @@ function TaskColumn({ title, items }: { title: string; items: TaskItem[] }) {
               <StatusPill status={item.status} />
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
+            <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm text-white/72">
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
+                <div className="mt-2 font-semibold text-white/88">{item.clauseSource.title}</div>
+                <div className="mt-1 leading-7">{item.clauseSource.text}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+                <div className="mt-2 leading-7">{item.whyMatters}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                <div className="mt-2 leading-7">{item.riskIfMissed}</div>
+              </div>
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {item.actions.map((action) => (
                 <button
@@ -214,6 +310,49 @@ function SectionTitle({
   );
 }
 
+function DraftButton({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/[0.06]"
+    >
+      {label}
+    </button>
+  );
+}
+
+function formatDocumentStatus(status: VoyageDocumentStatus) {
+  switch (status) {
+    case "uploaded":
+      return "Uploaded";
+    case "missing":
+      return "Missing";
+    case "awaiting_review":
+      return "Awaiting review";
+    case "draft_only":
+      return "Draft only";
+    case "confirmed":
+      return "Confirmed";
+  }
+}
+
+function filterTasks(items: TaskItem[], filter: FilterOption, owner: "Owner" | "Charterer") {
+  switch (filter) {
+    case "My tasks":
+      return owner === "Owner" ? items : [];
+    case "Owner":
+      return owner === "Owner" ? items : [];
+    case "Charterer":
+      return owner === "Charterer" ? items : [];
+    case "Today":
+      return items.filter((item) => item.today);
+    case "Docs missing":
+      return items.filter((item) => item.actions.some((action) => action.label.toLowerCase().includes("upload")));
+    default:
+      return items;
+  }
+}
+
 type ActivityIcon =
   | typeof Activity
   | typeof FileSearch
@@ -221,4 +360,6 @@ type ActivityIcon =
   | typeof TimerReset
   | typeof FileStack
   | typeof AlertTriangle
-  | typeof Mail;
+  | typeof Mail
+  | typeof Clock3
+  | typeof Filter;
