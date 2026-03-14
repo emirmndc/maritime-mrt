@@ -31,7 +31,7 @@ export function AppHomePage() {
     <AppShell
       eyebrow="MVP Workspace"
       title="Recap in, tasks out, deadlines visible."
-      description="This app section turns a voyage recap into an operational dashboard. The current build now surfaces parser output, voyage health, next trigger, and action-led workflow cards."
+      description="This app section turns a voyage recap into an operational dashboard. The current build now surfaces parser output, voyage health, commercial risk, upcoming trigger, and action-led workflow cards."
     >
       <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <Surface>
@@ -42,7 +42,7 @@ export function AppHomePage() {
           <h2 className="mt-5 text-3xl font-bold">Start with one bounded workflow proof.</h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-8 text-white/70">
             The first app pass focuses on one voyage dashboard: voyage status, owner and charterer actions, trigger tracking,
-            parser output, documents, message drafts, and risk flags. Payments and legal decisioning remain out of scope.
+            parser output, documents, message drafts, and review-oriented flags. Payments and legal decisioning remain out of scope.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <CTAButton route="/app/voyages">Open voyage list</CTAButton>
@@ -56,9 +56,9 @@ export function AppHomePage() {
           <div className="mt-2 text-white/65">{demoVoyage.cargo}</div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <InfoCard label="Voyage status" value={demoVoyage.stage} />
-            <InfoCard label="Next trigger" value={demoVoyage.nextTrigger} />
+            <InfoCard label="Upcoming trigger" value={demoVoyage.upcomingTrigger} />
             <InfoCard label="Voyage health" value={demoVoyage.health.label} />
-            <InfoCard label="Top flag" value={demoVoyage.flags[0]?.title ?? "No active flag"} />
+            <InfoCard label="Commercial risk" value={demoVoyage.commercialRisk} />
           </div>
         </Surface>
       </div>
