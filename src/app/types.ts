@@ -5,12 +5,21 @@ export type TaskAction = {
   tone?: "primary" | "secondary";
 };
 
+export type ClauseReference = {
+  title: string;
+  text: string;
+};
+
 export type TaskItem = {
   title: string;
   owner: "Owner" | "Charterer";
   detail: string;
   status: TaskStatus;
   actions: TaskAction[];
+  clauseSource: ClauseReference;
+  whyMatters: string;
+  riskIfMissed: string;
+  today?: boolean;
 };
 
 export type TimelineEvent = {
@@ -34,12 +43,31 @@ export type ParserField = {
 export type VoyageFlag = {
   title: string;
   severity: "medium" | "high";
+  guidance: string;
 };
 
 export type VoyageHealth = {
   label: string;
-  tone: "low" | "medium" | "high";
+  tone: "on_track" | "at_risk" | "delayed";
   reasons: string[];
+};
+
+export type VoyageDocumentStatus =
+  | "uploaded"
+  | "missing"
+  | "awaiting_review"
+  | "draft_only"
+  | "confirmed";
+
+export type VoyageDocument = {
+  title: string;
+  status: VoyageDocumentStatus;
+};
+
+export type ChangeLogItem = {
+  title: string;
+  detail: string;
+  stamp: string;
 };
 
 export type VoyageRecord = {
@@ -54,17 +82,21 @@ export type VoyageRecord = {
   paymentTerm: string;
   status: string;
   stage: string;
-  nextTrigger: string;
+  upcomingTrigger: string;
   nextDeadline: string;
-  riskLevel: string;
+  commercialRisk: string;
   health: VoyageHealth;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+  lastEventRecorded: string;
   parserSummary: ParserField[];
   flags: VoyageFlag[];
+  changesSinceLastUpdate: ChangeLogItem[];
   summary: Array<[string, string]>;
   ownerTasks: TaskItem[];
   chartererTasks: TaskItem[];
   triggers: string[];
-  documents: string[];
+  documents: VoyageDocument[];
   riskNotes: string[];
   timeline: TimelineEvent[];
   drafts: MessageDraft[];
