@@ -47,7 +47,7 @@ export function AppHomePage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <CTAButton route="/app/try-demo">Try the demo</CTAButton>
             <CTAButton route="/app/voyages">Open voyage list</CTAButton>
-            <CTAButton route="/app/voyages/demo">Open demo dashboard</CTAButton>
+            <CTAButton route="/app/generated-dashboard">Open generated dashboard</CTAButton>
           </div>
         </Surface>
 
