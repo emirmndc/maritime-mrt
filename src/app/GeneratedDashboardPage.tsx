@@ -66,36 +66,35 @@ export function GeneratedDashboardPage() {
     <AppShell
       eyebrow="Generated Dashboard"
       title="AI-generated voyage dashboard."
-      description="This screen shows the result of the recap you just parsed. Treat it as assistive output and review the recap wording before relying on it."
+      description="This is an AI-assisted draft. Extracted items come directly from the recap. Inferred items are model suggestions. Review-required items need human confirmation before operational use."
     >
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-3xl font-bold">
-              {(generated.route || `${generated.loadport || "Unknown"} › ${generated.disport || "Unknown"}`)}
-            </h2>
-            <StatusPill status="active" />
-          </div>
+          <HeaderTag label="Extracted + Inferred" tone="mixed" />
+          <h2 className="mt-4 text-3xl font-bold">
+            {generated.route || `${generated.loadport || "Unknown"} › ${generated.disport || "Unknown"}`}
+          </h2>
           <p className="mt-3 text-white/68">
             {generated.cargo || "Cargo pending review"} • Broker: {generated.broker || "Pending review"}
           </p>
+
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <TopMetric label="Voyage status" value={generated.voyage_status || "Pending review"} />
-            <TopMetric label="Upcoming trigger" value={generated.upcoming_trigger || "Pending review"} />
-            <TopMetric label="Next deadline" value={generated.next_deadline || "Pending review"} />
-            <TopMetric label="Commercial risk" value={generated.commercial_risk || "Pending review"} />
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <InfoStrip label="Owner" value={generated.owner || "Not found"} />
-            <InfoStrip label="Charterer" value={generated.charterer || "Not found"} />
-            <InfoStrip label="Claim deadline" value={generated.claim_deadline || "Not found"} />
+            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Not found"} tone="extracted" />
+            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Not found"} tone="extracted" />
+            <LabeledMetric tag="Extracted" label="Cargo" value={generated.cargo || "Not found"} tone="extracted" />
+            <LabeledMetric tag="Extracted" label="Route" value={generated.route || "Pending review"} tone="extracted" />
+            <LabeledMetric tag="AI Inferred" label="Voyage status" value={generated.voyage_status || "Pending review"} tone="inferred" />
+            <LabeledMetric tag="AI Inferred" label="Upcoming trigger" value={generated.upcoming_trigger || "Pending review"} tone="inferred" />
+            <LabeledMetric tag="Review Required" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
+            <LabeledMetric tag="AI Inferred" label="Commercial risk" value={generated.commercial_risk || "Pending review"} tone="inferred" />
           </div>
         </Surface>
 
         <Surface>
+          <HeaderTag label="AI Inferred" tone="inferred" />
           <SectionTitle icon={Activity} label="Voyage health" subtitle={generated.voyage_health || "Pending review"} />
           <div className={`mt-5 rounded-2xl border px-4 py-4 ${healthClass}`}>
-            <div className="text-sm font-semibold">Operational health: {generated.voyage_health || "Pending review"}</div>
+            <div className="text-sm font-semibold">Operational health is AI-inferred</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
               {(generated.health_reasons?.length ? generated.health_reasons : ["No health reasons returned"]).map((reason) => (
                 <div key={reason}>- {reason}</div>
@@ -118,7 +117,8 @@ export function GeneratedDashboardPage() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
-          <SectionTitle icon={FileSearch} label="Recap parser" subtitle="AI extraction visible" />
+          <HeaderTag label="Extracted" tone="extracted" />
+          <SectionTitle icon={FileSearch} label="Recap parser" subtitle="Directly extracted terms" />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(generated.parser_summary?.length ? generated.parser_summary : []).map((item) => (
               <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -130,24 +130,32 @@ export function GeneratedDashboardPage() {
         </Surface>
 
         <Surface>
-          <SectionTitle icon={Clock3} label="Since last update" subtitle="What changed" />
+          <HeaderTag label="Review Required" tone="review" />
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="Needs real event tracking" />
           <div className="mt-5 space-y-4">
-            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).map((item) => (
-              <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="font-semibold">{item.title}</div>
-                  <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
+            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
+              generated.changes_since_last_update.map((item) => (
+                <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-semibold">{item.title}</div>
+                    <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
                 </div>
-                <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+                No real activity history exists yet. This section becomes meaningful only after event logging is added.
               </div>
-            ))}
+            )}
           </div>
         </Surface>
       </div>
 
       <Surface className="mt-5">
+        <HeaderTag label="AI Inferred" tone="inferred" />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <SectionTitle icon={Filter} label="Task filters" subtitle="Generated task views" />
+          <SectionTitle icon={Filter} label="Task filters" subtitle="AI-generated task draft" />
           <div className="flex flex-wrap gap-2">
             {filterOptions.map((option) => (
               <button
@@ -175,7 +183,8 @@ export function GeneratedDashboardPage() {
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
-          <SectionTitle icon={FileStack} label="Evidence pack" subtitle="Document status visible" />
+          <HeaderTag label="Review Required" tone="review" />
+          <SectionTitle icon={FileStack} label="Evidence pack" subtitle="Document status draft" />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(generated.documents?.length ? generated.documents : []).map((document) => (
               <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -189,24 +198,82 @@ export function GeneratedDashboardPage() {
         </Surface>
 
         <Surface>
+          <HeaderTag label="AI Inferred" tone="inferred" />
           <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Assistive language only" />
           <div className="mt-5 space-y-3">
-            {(generated.risk_notes?.length ? generated.risk_notes : []).map((note) => (
-              <div key={note} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
-                {note}
+            {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
+              generated.risk_notes.map((note) => (
+                <div key={note} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
+                  {note}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+                No cautions were returned.
               </div>
-            ))}
+            )}
           </div>
         </Surface>
       </div>
 
       <Surface className="mt-5">
-        <SectionTitle icon={Mail} label="Reminder drafts" subtitle="AI-generated tasks first, drafts later" />
+        <HeaderTag label="Future Layer" tone="mixed" />
+        <SectionTitle icon={Mail} label="Reminder drafts" subtitle="Not generated yet" />
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-white/70">
-          Draft generation can be added next once you are happy with recap parsing and task quality.
+          Draft generation should come after task quality and extraction quality are stable.
         </div>
       </Surface>
     </AppShell>
+  );
+}
+
+function HeaderTag({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "extracted" | "inferred" | "review" | "mixed";
+}) {
+  const toneClass =
+    tone === "extracted"
+      ? "border-sky-400/20 bg-sky-500/10 text-sky-200"
+      : tone === "inferred"
+        ? "border-amber-400/20 bg-amber-500/10 text-amber-200"
+        : tone === "review"
+          ? "border-rose-400/20 bg-rose-500/10 text-rose-200"
+          : "border-white/15 bg-white/10 text-white/85";
+
+  return (
+    <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${toneClass}`}>
+      {label}
+    </div>
+  );
+}
+
+function LabeledMetric({
+  tag,
+  label,
+  value,
+  tone,
+}: {
+  tag: string;
+  label: string;
+  value: string;
+  tone: "extracted" | "inferred" | "review";
+}) {
+  const toneClass =
+    tone === "extracted"
+      ? "text-sky-200"
+      : tone === "inferred"
+        ? "text-amber-200"
+        : "text-rose-200";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
+      <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
+      <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{value}</div>
+    </div>
   );
 }
 
@@ -245,13 +312,18 @@ function TaskColumn({
 }) {
   return (
     <Surface>
-      <h2 className="text-2xl font-bold">{title}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <HeaderTag label="AI Inferred" tone="inferred" />
+      </div>
+
       <div className="mt-5 space-y-4">
         {items.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
             No tasks returned for this section.
           </div>
         ) : null}
+
         {items.map((item) => (
           <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -259,6 +331,7 @@ function TaskColumn({
               <StatusPill status={item.status} />
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
+
             <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm text-white/72">
               <div>
                 <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
@@ -274,6 +347,7 @@ function TaskColumn({
                 <div className="mt-2 leading-7">{item.risk_if_missed}</div>
               </div>
             </div>
+
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
