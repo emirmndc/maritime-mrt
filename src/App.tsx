@@ -3,7 +3,6 @@ import MaritimeMRTWebsite from "./MaritimeMRTWebsite";
 import { AppHomePage } from "./app/AppHomePage";
 import { GeneratedDashboardPage } from "./app/GeneratedDashboardPage";
 import { TryDemoPage } from "./app/TryDemoPage";
-import { DemoVoyagePage } from "./app/DemoVoyagePage";
 import { VoyageListPage } from "./app/VoyageListPage";
 import { appRoutes, type AppRoute } from "./app/router";
 
@@ -24,10 +23,6 @@ function getCurrentRoute(): AppRoute {
 
   if (path === "/app/voyages") {
     return "/app/voyages";
-  }
-
-  if (path.startsWith("/app/voyages/demo")) {
-    return "/app/voyages/demo";
   }
 
   return "/";
@@ -58,8 +53,6 @@ function App() {
         return <GeneratedDashboardPage />;
       case "/app/voyages":
         return <VoyageListPage />;
-      case "/app/voyages/demo":
-        return <DemoVoyagePage />;
       default:
         return <MaritimeMRTWebsite />;
     }
