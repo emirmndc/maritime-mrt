@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import MaritimeMRTWebsite from "./MaritimeMRTWebsite";
 import { AppHomePage } from "./app/AppHomePage";
+import { GeneratedDashboardPage } from "./app/GeneratedDashboardPage";
 import { TryDemoPage } from "./app/TryDemoPage";
 import { DemoVoyagePage } from "./app/DemoVoyagePage";
 import { VoyageListPage } from "./app/VoyageListPage";
@@ -15,6 +16,10 @@ function getCurrentRoute(): AppRoute {
 
   if (path === "/app/try-demo") {
     return "/app/try-demo";
+  }
+
+  if (path === "/app/generated-dashboard") {
+    return "/app/generated-dashboard";
   }
 
   if (path === "/app/voyages") {
@@ -49,6 +54,8 @@ function App() {
         return <AppHomePage />;
       case "/app/try-demo":
         return <TryDemoPage />;
+      case "/app/generated-dashboard":
+        return <GeneratedDashboardPage />;
       case "/app/voyages":
         return <VoyageListPage />;
       case "/app/voyages/demo":
