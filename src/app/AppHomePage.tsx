@@ -1,5 +1,4 @@
 import { Database, FileText, Route, Sparkles } from "lucide-react";
-import { demoVoyage } from "./data";
 import { CTAButton, AppShell, Surface, StatusPill } from "./ui";
 import { getSupabaseStatusLabel } from "./supabase";
 
@@ -52,14 +51,21 @@ export function AppHomePage() {
         </Surface>
 
         <Surface>
-          <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">Featured voyage</div>
-          <div className="mt-3 text-3xl font-bold">{demoVoyage.route}</div>
-          <div className="mt-2 text-white/65">{demoVoyage.cargo}</div>
+          <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">
+            How it works
+          </div>
+          <div className="mt-3 text-3xl font-bold">Start here before generating anything</div>
+          <div className="mt-2 text-white/65">
+            This demo is designed to turn one voyage recap into a structured review dashboard. Use the flow below so the output makes sense on first pass.
+          </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <InfoCard label="Voyage status" value={demoVoyage.stage} />
-            <InfoCard label="Upcoming trigger" value={demoVoyage.upcomingTrigger} />
-            <InfoCard label="Voyage health" value={demoVoyage.health.label} />
-            <InfoCard label="Commercial risk" value={demoVoyage.commercialRisk} />
+            <InfoCard label="Step 1" value="Open Try Demo and paste your voyage recap text." />
+            <InfoCard label="Step 2" value="Generate the dashboard from the recap using the AI parser." />
+            <InfoCard label="Step 3" value="Review owner tasks, charterer tasks, risks, and deadlines." />
+            <InfoCard label="Step 4" value="Use Voyages to reopen the latest generated result in this session." />
+          </div>
+          <div className="mt-6">
+            <CTAButton route="/app/try-demo">Start with Try Demo</CTAButton>
           </div>
         </Surface>
       </div>
