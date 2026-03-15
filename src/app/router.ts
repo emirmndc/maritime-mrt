@@ -4,7 +4,6 @@ export const appRoutes = {
   "/app/try-demo": { title: "Try Demo | MARITIME App" },
   "/app/generated-dashboard": { title: "Generated Dashboard | MARITIME App" },
   "/app/voyages": { title: "Voyages | MARITIME App" },
-  "/app/voyages/demo": { title: "Demo Voyage | MARITIME App" },
 } as const;
 
 export type AppRoute = keyof typeof appRoutes;
