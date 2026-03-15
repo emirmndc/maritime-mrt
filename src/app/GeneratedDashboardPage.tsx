@@ -277,24 +277,6 @@ function LabeledMetric({
   );
 }
 
-function TopMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{value}</div>
-    </div>
-  );
-}
-
-function InfoStrip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 text-sm leading-6 text-white/90">{value}</div>
-    </div>
-  );
-}
-
 function TaskColumn({
   title,
   items,
