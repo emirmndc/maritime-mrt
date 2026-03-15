@@ -32,7 +32,6 @@ export function AppShell({
               <NavButton route="/app">App Home</NavButton>
               <NavButton route="/app/try-demo">Try Demo</NavButton>
               <NavButton route="/app/voyages">Voyages</NavButton>
-              <NavButton route="/app/voyages/demo">Demo Dashboard</NavButton>
             </nav>
           </div>
         </header>
