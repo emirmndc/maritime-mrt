@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Anchor, ArrowRight, CheckCircle2, CircleDashed, Clock3, ShieldAlert } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDashed, Clock3, ShieldAlert } from "lucide-react";
 import { navigateTo, type AppRoute } from "./router";
 import type { TaskStatus } from "./types";
 
@@ -20,8 +20,8 @@ export function AppShell({
         <header className="sticky top-4 z-30 rounded-[28px] border border-white/10 bg-[#050913]/80 px-5 py-4 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.34)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <button className="flex items-center gap-3 text-left" onClick={() => navigateTo("/")}>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
-                <Anchor className="h-6 w-6" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff] overflow-hidden">
+                <MaritimeMark className="h-10 w-10" />
               </div>
               <div>
                 <div className="text-[11px] uppercase tracking-[0.34em] text-white/45">MARITIME</div>
@@ -46,6 +46,18 @@ export function AppShell({
         </main>
       </div>
     </div>
+  );
+}
+
+function MaritimeMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <circle cx="50" cy="50" r="50" fill="#3373B7" />
+      <path
+        fill="#F5F7FA"
+        d="M21 24h20l13 38 14-38h20v52H73V45L61 74H47L35 45v31H21z"
+      />
+    </svg>
   );
 }
 
