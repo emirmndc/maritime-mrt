@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { navigateTo } from "./router";
+import { saveGeneratedVoyage } from "./generatedVoyage";
 import { AppShell, Surface, StatusPill } from "./ui";
 
 const sampleRecap = `Owner: Northshore Bulk Pte. Ltd.
@@ -14,26 +16,8 @@ SOF, NOR, laytime sheet, and supporting correspondence required for claim review
 Demurrage rate: USD 6,000 PD.
 Claim deadline: 15 business days after discharge.`;
 
-type ParseResult = {
-  owner: string;
-  charterer: string;
-  broker: string;
-  cargo: string;
-  loadport: string;
-  disport: string;
-  freight_term: string;
-  demurrage: string;
-  claim_deadline: string;
-  voyage_status: string;
-  upcoming_trigger: string;
-  voyage_health: string;
-  commercial_risk: string;
-  flags: string[];
-};
-
 export function TryDemoPage() {
   const [recapText, setRecapText] = useState("");
-  const [result, setResult] = useState<ParseResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,10 +41,10 @@ export function TryDemoPage() {
         throw new Error(data?.error || "Parsing failed");
       }
 
-      setResult(data);
+      saveGeneratedVoyage(data);
+      navigateTo("/app/generated-dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
-      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -76,12 +60,12 @@ export function TryDemoPage() {
         <Surface>
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">Experimental demo</div>
-            <StatusPill status={result ? "complete" : recapText.trim() ? "ready" : "pending"} />
+            <StatusPill status={loading ? "active" : recapText.trim() ? "ready" : "pending"} />
           </div>
 
           <h2 className="mt-3 text-2xl font-bold">Paste voyage recap</h2>
           <p className="mt-3 text-white/68">
-            This version sends recap text to a secure server-side Gemini endpoint and renders the extracted result below.
+            This version sends recap text to a secure server-side Gemini endpoint and opens a generated dashboard.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -89,7 +73,6 @@ export function TryDemoPage() {
               type="button"
               onClick={() => {
                 setRecapText(sampleRecap);
-                setResult(null);
                 setError("");
               }}
               className="rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f]"
@@ -101,7 +84,6 @@ export function TryDemoPage() {
               type="button"
               onClick={() => {
                 setRecapText("");
-                setResult(null);
                 setError("");
               }}
               className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/85"
@@ -125,7 +107,6 @@ export function TryDemoPage() {
               value={recapText}
               onChange={(event) => {
                 setRecapText(event.target.value);
-                setResult(null);
                 setError("");
               }}
               placeholder="Paste recap text here..."
@@ -136,11 +117,11 @@ export function TryDemoPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <InfoCard
               label="Demo state"
-              value={result ? "Gemini extraction generated" : recapText.trim() ? "Ready to parse" : "Waiting for recap input"}
+              value={recapText.trim() ? "Ready to generate dashboard" : "Waiting for recap input"}
             />
             <InfoCard
               label="Current mode"
-              value={result ? "Live Gemini server-side parsing" : "Input preparation"}
+              value="Live Gemini server-side parsing"
             />
             <InfoCard
               label="Review note"
@@ -154,43 +135,6 @@ export function TryDemoPage() {
             </div>
           ) : null}
         </Surface>
-
-        {result ? (
-          <Surface>
-            <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">Generated preview</div>
-            <h2 className="mt-3 text-2xl font-bold">Recap parsed into dashboard signals</h2>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <InfoCard label="Owner" value={result.owner || "Not found"} />
-              <InfoCard label="Charterer" value={result.charterer || "Not found"} />
-              <InfoCard label="Broker" value={result.broker || "Not found"} />
-              <InfoCard label="Cargo" value={result.cargo || "Not found"} />
-              <InfoCard label="Loadport" value={result.loadport || "Not found"} />
-              <InfoCard label="Disport" value={result.disport || "Not found"} />
-              <InfoCard label="Voyage status" value={result.voyage_status || "Pending review"} />
-              <InfoCard label="Upcoming trigger" value={result.upcoming_trigger || "Pending review"} />
-              <InfoCard label="Voyage health" value={result.voyage_health || "Pending review"} />
-              <InfoCard label="Commercial risk" value={result.commercial_risk || "Pending review"} />
-              <InfoCard label="Freight term" value={result.freight_term || "Not found"} />
-              <InfoCard label="Demurrage" value={result.demurrage || "Not found"} />
-              <InfoCard label="Claim deadline" value={result.claim_deadline || "Not found"} />
-            </div>
-
-            <div className="mt-5">
-              <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">Flags</div>
-              <div className="mt-3 grid gap-3">
-                {(result.flags?.length ? result.flags : ["No flags returned"]).map((flag) => (
-                  <div
-                    key={flag}
-                    className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-                  >
-                    Warning: {flag}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Surface>
-        ) : null}
       </div>
     </AppShell>
   );
