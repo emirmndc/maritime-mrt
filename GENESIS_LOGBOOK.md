@@ -47,6 +47,7 @@ Milestones document structured stages of early market participation.
 
 | # | Date (UTC+3) | Wallet | USDC Spent | MRT Received | Transaction |
 |---|--------------|--------|------------|--------------|-------------|
+| 1 | 2026-03-21 | 0x7e56...7F76 | 12.17 | 40.792516729062306623 | [Tx1](LINK1), [Tx2](LINK2) |
 
 Entries are appended only after independent verification via PolygonScan.
 
