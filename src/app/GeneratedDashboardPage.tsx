@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import {
-  Activity,
   AlertTriangle,
   Clock3,
   FileSearch,
@@ -10,12 +9,6 @@ import {
 } from "lucide-react";
 import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
 import { loadGeneratedVoyage } from "./generatedVoyage";
-
-const healthTone = {
-  "On track": "border-emerald-400/20 bg-emerald-500/10 text-emerald-200",
-  "At risk": "border-amber-400/20 bg-amber-500/10 text-amber-200",
-  Delayed: "border-rose-400/20 bg-rose-500/10 text-rose-200",
-} as const;
 
 const flagTone = {
   medium: "border-amber-400/20 bg-amber-500/10 text-amber-100",
@@ -56,12 +49,12 @@ export function GeneratedDashboardPage() {
     return (
       <AppShell
         eyebrow="Workflow Draft"
-        title="No structured draft available yet."
-        description="Generate a draft from a voyage recap first. This screen is designed to show a review-required operational draft, not a final decision."
+        title="No operational draft available yet."
+        description="Generate a draft from a voyage recap first. This screen is designed as a review surface, not a final decision engine."
       >
         <Surface>
           <div className="text-sm text-white/70">
-            No structured draft is stored in this session yet.
+            No operational draft is stored in this session yet.
           </div>
           <div className="mt-6">
             <CTAButton route="/app/try-demo">Go to Try Demo</CTAButton>
@@ -71,19 +64,15 @@ export function GeneratedDashboardPage() {
     );
   }
 
-  const healthClass =
-    healthTone[generated.voyage_health as keyof typeof healthTone] ??
-    "border-white/15 bg-white/10 text-white";
-
   return (
     <AppShell
       eyebrow="Workflow Draft"
-      title="Recap to structured operational draft."
-      description="Extracted from recap text. Suggested workflow only. Requires human confirmation before operational or commercial use."
+      title="Recap → Operational Draft Dashboard"
+      description="Extracted from recap text and organized into a review-required workflow draft. This interface does not decide who is right and does not replace human review."
     >
-      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
-          <HeaderTag label="Structured draft" tone="mixed" />
+          <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
             {generated.cargo || "Cargo pending review"} • Broker: {generated.broker || "Pending review"}
@@ -94,6 +83,11 @@ export function GeneratedDashboardPage() {
             <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Pending review"} tone="extracted" />
             <LabeledMetric tag="Suggested" label="Workflow status" value={generated.voyage_status || "Pending review"} tone="suggested" />
             <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/8 p-4 text-sm leading-7 text-white/72">
+            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> credibility-first roadmap:
+            token layer live, workflow utility still in staged proof form.
           </div>
 
           <div className="mt-6">
@@ -113,16 +107,18 @@ export function GeneratedDashboardPage() {
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle
-            icon={Activity}
+            icon={AlertTriangle}
             label="Summary panel"
-            subtitle={generated.voyage_health || "Pending review"}
+            subtitle="Attention required"
           />
-          <div className={`mt-5 rounded-2xl border px-4 py-4 ${healthClass}`}>
-            <div className="text-sm font-semibold">Suggested workflow health</div>
+          <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
+            <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"]).slice(0, 3).map((reason) => (
-                <div key={reason}>- {reason}</div>
-              ))}
+              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"])
+                .slice(0, 3)
+                .map((reason) => (
+                  <div key={reason}>- {reason}</div>
+                ))}
             </div>
           </div>
         </Surface>
@@ -131,10 +127,10 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={TriangleAlert} label="Key risks" subtitle="Top 3 review points" />
+          <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
           <div className="mt-5 space-y-3">
             {keyRisks.length === 0 ? (
-              <EmptyBox text="No highlighted risks were returned." />
+              <EmptyBox text="No highlighted review points were returned." />
             ) : (
               keyRisks.map((flag) => (
                 <div key={flag.title} className={`rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
@@ -148,7 +144,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="Next actions" subtitle="Top 3 workflow actions" />
+          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -172,7 +168,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Requires confirmation" tone="review" />
-          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence matters here" />
+          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence comes first" />
           <div className="mt-5 space-y-3">
             {blockingDocuments.length === 0 ? (
               <EmptyBox text="No blocking document gaps are visible in this draft." />
@@ -206,7 +202,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Demo state" tone="mixed" />
-          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events since last update (demo state)" />
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
             {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
@@ -219,7 +215,7 @@ export function GeneratedDashboardPage() {
                 </div>
               ))
             ) : (
-              <EmptyBox text="No new events since last update (demo state)." />
+              <EmptyBox text="No new events recorded (demo state)." />
             )}
           </div>
         </Surface>
@@ -294,12 +290,6 @@ export function GeneratedDashboardPage() {
           </div>
         </Surface>
       </div>
-
-      <Surface className="mt-5">
-        <div className="text-sm text-white/65">
-          This workflow proof is part of the <span className="font-semibold text-white">MARITIME (MRT)</span> project.
-        </div>
-      </Surface>
     </AppShell>
   );
 }
@@ -395,7 +385,7 @@ function TaskColumn({
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
 
-            <details className="mt-4 group rounded-2xl border border-white/10 bg-black/10 p-4">
+            <details className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
                 Show clause source
               </summary>
@@ -464,10 +454,9 @@ function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review"
 }
 
 type ActivityIcon =
-  | typeof Activity
+  | typeof AlertTriangle
+  | typeof Clock3
   | typeof FileSearch
   | typeof FileStack
-  | typeof AlertTriangle
   | typeof Mail
-  | typeof Clock3
   | typeof TriangleAlert;
