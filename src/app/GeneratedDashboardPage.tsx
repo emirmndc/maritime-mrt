@@ -1,5 +1,13 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, FileSearch, FileStack, Mail, Activity, TimerReset, TriangleAlert, Upload, Clock3, Filter } from "lucide-react";
+import { useMemo } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  Clock3,
+  FileSearch,
+  FileStack,
+  Mail,
+  TriangleAlert,
+} from "lucide-react";
 import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
 import { loadGeneratedVoyage } from "./generatedVoyage";
 
@@ -22,33 +30,38 @@ const documentTone = {
   confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
 } as const;
 
-const filterOptions = ["All", "Owner", "Charterer"] as const;
-type FilterOption = (typeof filterOptions)[number];
-
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
-  const [taskFilter, setTaskFilter] = useState<FilterOption>("All");
 
-  const ownerTasks = useMemo(() => {
-    if (!generated) return [];
-    return taskFilter === "Charterer" ? [] : generated.owner_tasks;
-  }, [generated, taskFilter]);
+  const summaryRoute = generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
 
-  const chartererTasks = useMemo(() => {
+  const keyRisks = useMemo(() => {
     if (!generated) return [];
-    return taskFilter === "Owner" ? [] : generated.charterer_tasks;
-  }, [generated, taskFilter]);
+    return (generated.flags || []).slice(0, 3);
+  }, [generated]);
+
+  const nextActions = useMemo(() => {
+    if (!generated) return [];
+    return [...(generated.owner_tasks || []), ...(generated.charterer_tasks || [])].slice(0, 3);
+  }, [generated]);
+
+  const blockingDocuments = useMemo(() => {
+    if (!generated) return [];
+    return (generated.documents || []).filter(
+      (item) => item.status === "missing" || item.status === "awaiting_review" || item.status === "draft_only",
+    );
+  }, [generated]);
 
   if (!generated) {
     return (
       <AppShell
-        eyebrow="Generated Dashboard"
-        title="No generated voyage found."
-        description="Generate a recap result first, then this screen will show the AI-produced dashboard."
+        eyebrow="Workflow Draft"
+        title="No structured draft available yet."
+        description="Generate a draft from a voyage recap first. This screen is designed to show a review-required operational draft, not a final decision."
       >
         <Surface>
           <div className="text-sm text-white/70">
-            No parsed voyage is stored in this session yet.
+            No structured draft is stored in this session yet.
           </div>
           <div className="mt-6">
             <CTAButton route="/app/try-demo">Go to Try Demo</CTAButton>
@@ -64,61 +77,123 @@ export function GeneratedDashboardPage() {
 
   return (
     <AppShell
-      eyebrow="Generated Dashboard"
-      title="AI-generated voyage dashboard."
-      description="This is an AI-assisted draft. Extracted items come directly from the recap. Inferred items are model suggestions. Review-required items need human confirmation before operational use."
+      eyebrow="Workflow Draft"
+      title="Recap to structured operational draft."
+      description="Extracted from recap text. Suggested workflow only. Requires human confirmation before operational or commercial use."
     >
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <Surface>
-          <HeaderTag label="Extracted + Inferred" tone="mixed" />
-          <h2 className="mt-4 text-3xl font-bold">
-            {generated.route || `${generated.loadport || "Unknown"} › ${generated.disport || "Unknown"}`}
-          </h2>
+          <HeaderTag label="Structured draft" tone="mixed" />
+          <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
             {generated.cargo || "Cargo pending review"} • Broker: {generated.broker || "Pending review"}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Not found"} tone="extracted" />
-            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Not found"} tone="extracted" />
-            <LabeledMetric tag="Extracted" label="Cargo" value={generated.cargo || "Not found"} tone="extracted" />
-            <LabeledMetric tag="Extracted" label="Route" value={generated.route || "Pending review"} tone="extracted" />
-            <LabeledMetric tag="AI Inferred" label="Voyage status" value={generated.voyage_status || "Pending review"} tone="inferred" />
-            <LabeledMetric tag="AI Inferred" label="Upcoming trigger" value={generated.upcoming_trigger || "Pending review"} tone="inferred" />
-            <LabeledMetric tag="Review Required" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
-            <LabeledMetric tag="AI Inferred" label="Commercial risk" value={generated.commercial_risk || "Pending review"} tone="inferred" />
+            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
+            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Pending review"} tone="extracted" />
+            <LabeledMetric tag="Suggested" label="Workflow status" value={generated.voyage_status || "Pending review"} tone="suggested" />
+            <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
+          </div>
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("full-breakdown");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.06]"
+            >
+              View full breakdown
+            </button>
           </div>
         </Surface>
 
         <Surface>
-          <HeaderTag label="AI Inferred" tone="inferred" />
-          <SectionTitle icon={Activity} label="Voyage health" subtitle={generated.voyage_health || "Pending review"} />
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle
+            icon={Activity}
+            label="Summary panel"
+            subtitle={generated.voyage_health || "Pending review"}
+          />
           <div className={`mt-5 rounded-2xl border px-4 py-4 ${healthClass}`}>
-            <div className="text-sm font-semibold">Operational health is AI-inferred</div>
+            <div className="text-sm font-semibold">Suggested workflow health</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {(generated.health_reasons?.length ? generated.health_reasons : ["No health reasons returned"]).map((reason) => (
+              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"]).slice(0, 3).map((reason) => (
                 <div key={reason}>- {reason}</div>
               ))}
             </div>
           </div>
-          <div className="mt-5 grid gap-3">
-            {(generated.flags?.length ? generated.flags : []).map((flag) => (
-              <div key={flag.title} className={`rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
-                <div className="flex items-center gap-3 font-semibold">
-                  <TriangleAlert className="h-4 w-4" />
-                  <span>{flag.title}</span>
+        </Surface>
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-3">
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={TriangleAlert} label="Key risks" subtitle="Top 3 review points" />
+          <div className="mt-5 space-y-3">
+            {keyRisks.length === 0 ? (
+              <EmptyBox text="No highlighted risks were returned." />
+            ) : (
+              keyRisks.map((flag) => (
+                <div key={flag.title} className={`rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
+                  <div className="font-semibold">{flag.title}</div>
+                  <div className="mt-2 leading-7 opacity-90">{flag.guidance}</div>
                 </div>
-                <div className="mt-2 leading-7 opacity-90">{flag.guidance}</div>
-              </div>
-            ))}
+              ))
+            )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={Clock3} label="Next actions" subtitle="Top 3 workflow actions" />
+          <div className="mt-5 space-y-3">
+            {nextActions.length === 0 ? (
+              <EmptyBox text="No next actions were returned." />
+            ) : (
+              nextActions.map((task) => (
+                <div key={task.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-semibold">{task.title}</div>
+                    <StatusPill status={task.status} />
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
+                    Why this matters
+                  </div>
+                  <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Requires confirmation" tone="review" />
+          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence matters here" />
+          <div className="mt-5 space-y-3">
+            {blockingDocuments.length === 0 ? (
+              <EmptyBox text="No blocking document gaps are visible in this draft." />
+            ) : (
+              blockingDocuments.map((document) => (
+                <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="font-semibold text-white/90">{document.title}</div>
+                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                    {formatDocumentStatus(document.status)}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Surface>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <div id="full-breakdown" className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <Surface>
           <HeaderTag label="Extracted" tone="extracted" />
-          <SectionTitle icon={FileSearch} label="Recap parser" subtitle="Directly extracted terms" />
+          <SectionTitle icon={FileSearch} label="Recap summary" subtitle="Directly extracted terms" />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(generated.parser_summary?.length ? generated.parser_summary : []).map((item) => (
               <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -130,8 +205,8 @@ export function GeneratedDashboardPage() {
         </Surface>
 
         <Surface>
-          <HeaderTag label="Review Required" tone="review" />
-          <SectionTitle icon={Clock3} label="Since last update" subtitle="Needs real event tracking" />
+          <HeaderTag label="Demo state" tone="mixed" />
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events since last update (demo state)" />
           <div className="mt-5 space-y-4">
             {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
@@ -144,62 +219,60 @@ export function GeneratedDashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
-                No real activity history exists yet. This section becomes meaningful only after event logging is added.
-              </div>
+              <EmptyBox text="No new events since last update (demo state)." />
             )}
           </div>
         </Surface>
       </div>
 
-      <Surface className="mt-5">
-        <HeaderTag label="AI Inferred" tone="inferred" />
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <SectionTitle icon={Filter} label="Task filters" subtitle="AI-generated task draft" />
-          <div className="flex flex-wrap gap-2">
-            {filterOptions.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setTaskFilter(option)}
-                className={[
-                  "rounded-full border px-4 py-2 text-xs font-semibold transition",
-                  taskFilter === option
-                    ? "border-[#4f97e8]/35 bg-[#3373B7]/15 text-[#cfe7ff]"
-                    : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.06]",
-                ].join(" ")}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Surface>
-
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <TaskColumn title="Owner tasks" items={ownerTasks} />
-        <TaskColumn title="Charterer tasks" items={chartererTasks} />
+        <details className="group">
+          <summary className="list-none">
+            <Surface>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <HeaderTag label="Suggested" tone="suggested" />
+                  <div className="mt-3 text-2xl font-bold">View Owner tasks</div>
+                  <div className="mt-2 text-sm text-white/65">
+                    Suggested responsibilities extracted from the recap and organized for review.
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
+                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+              </div>
+            </Surface>
+          </summary>
+          <div className="mt-4">
+            <TaskColumn title="Owner tasks" items={generated.owner_tasks || []} />
+          </div>
+        </details>
+
+        <details className="group">
+          <summary className="list-none">
+            <Surface>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <HeaderTag label="Suggested" tone="suggested" />
+                  <div className="mt-3 text-2xl font-bold">View Charterer tasks</div>
+                  <div className="mt-2 text-sm text-white/65">
+                    Suggested responsibilities extracted from the recap and organized for review.
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
+                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+              </div>
+            </Surface>
+          </summary>
+          <div className="mt-4">
+            <TaskColumn title="Charterer tasks" items={generated.charterer_tasks || []} />
+          </div>
+        </details>
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
-          <HeaderTag label="Review Required" tone="review" />
-          <SectionTitle icon={FileStack} label="Evidence pack" subtitle="Document status draft" />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {(generated.documents?.length ? generated.documents : []).map((document) => (
-              <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-sm font-semibold text-white/90">{document.title}</div>
-                <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
-                  {formatDocumentStatus(document.status)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Surface>
-
-        <Surface>
-          <HeaderTag label="AI Inferred" tone="inferred" />
-          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Assistive language only" />
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
           <div className="mt-5 space-y-3">
             {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
               generated.risk_notes.map((note) => (
@@ -208,19 +281,23 @@ export function GeneratedDashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
-                No cautions were returned.
-              </div>
+              <EmptyBox text="No suggested cautions were returned." />
             )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Future layer" tone="mixed" />
+          <SectionTitle icon={Mail} label="Reminder drafts" subtitle="Not generated yet" />
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-white/70">
+            Draft generation should come after extraction quality and task quality are stable.
           </div>
         </Surface>
       </div>
 
       <Surface className="mt-5">
-        <HeaderTag label="Future Layer" tone="mixed" />
-        <SectionTitle icon={Mail} label="Reminder drafts" subtitle="Not generated yet" />
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-white/70">
-          Draft generation should come after task quality and extraction quality are stable.
+        <div className="text-sm text-white/65">
+          This workflow proof is part of the <span className="font-semibold text-white">MARITIME (MRT)</span> project.
         </div>
       </Surface>
     </AppShell>
@@ -232,12 +309,12 @@ function HeaderTag({
   tone,
 }: {
   label: string;
-  tone: "extracted" | "inferred" | "review" | "mixed";
+  tone: "extracted" | "suggested" | "review" | "mixed";
 }) {
   const toneClass =
     tone === "extracted"
       ? "border-sky-400/20 bg-sky-500/10 text-sky-200"
-      : tone === "inferred"
+      : tone === "suggested"
         ? "border-amber-400/20 bg-amber-500/10 text-amber-200"
         : tone === "review"
           ? "border-rose-400/20 bg-rose-500/10 text-rose-200"
@@ -259,12 +336,12 @@ function LabeledMetric({
   tag: string;
   label: string;
   value: string;
-  tone: "extracted" | "inferred" | "review";
+  tone: "extracted" | "suggested" | "review";
 }) {
   const toneClass =
     tone === "extracted"
       ? "text-sky-200"
-      : tone === "inferred"
+      : tone === "suggested"
         ? "text-amber-200"
         : "text-rose-200";
 
@@ -296,14 +373,12 @@ function TaskColumn({
     <Surface>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-2xl font-bold">{title}</h2>
-        <HeaderTag label="AI Inferred" tone="inferred" />
+        <HeaderTag label="Suggested" tone="suggested" />
       </div>
 
       <div className="mt-5 space-y-4">
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/60">
-            No tasks returned for this section.
-          </div>
+          <EmptyBox text="No tasks returned for this section." />
         ) : null}
 
         {items.map((item) => (
@@ -312,33 +387,30 @@ function TaskColumn({
               <div className="font-semibold">{item.title}</div>
               <StatusPill status={item.status} />
             </div>
+
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
 
-            <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm text-white/72">
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
-                <div className="mt-2 font-semibold text-white/88">{item.clause_source_title}</div>
-                <div className="mt-1 leading-7">{item.clause_source_text}</div>
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
-                <div className="mt-2 leading-7">{item.why_matters}</div>
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
-                <div className="mt-2 leading-7">{item.risk_if_missed}</div>
-              </div>
+            <div className="mt-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+              <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-semibold text-white/85 transition hover:bg-white/[0.06]"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                Review task
-              </button>
-            </div>
+            <details className="mt-4 group rounded-2xl border border-white/10 bg-black/10 p-4">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
+                Show clause source
+              </summary>
+              <div className="mt-4 grid gap-3 text-sm text-white/72">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
+                  <div className="mt-2 font-semibold text-white/88">{item.clause_source_title}</div>
+                  <div className="mt-1 leading-7">{item.clause_source_text}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                  <div className="mt-2 leading-7">{item.risk_if_missed}</div>
+                </div>
+              </div>
+            </details>
           </div>
         ))}
       </div>
@@ -368,6 +440,14 @@ function SectionTitle({
   );
 }
 
+function EmptyBox({ text }: { text: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+      {text}
+    </div>
+  );
+}
+
 function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed") {
   switch (status) {
     case "uploaded":
@@ -390,5 +470,4 @@ type ActivityIcon =
   | typeof AlertTriangle
   | typeof Mail
   | typeof Clock3
-  | typeof TimerReset
-  | typeof Filter;
+  | typeof TriangleAlert;
