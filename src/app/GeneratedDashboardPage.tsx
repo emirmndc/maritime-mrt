@@ -8,7 +8,12 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
-import { loadGeneratedVoyage } from "./generatedVoyage";
+import {
+  loadGeneratedVoyage,
+  type ConfidenceLevel,
+  type GeneratedCaution,
+  type SourceTraceItem,
+} from "./generatedVoyage";
 
 const flagTone = {
   medium: "border-amber-400/20 bg-amber-500/10 text-amber-100",
@@ -67,7 +72,7 @@ export function GeneratedDashboardPage() {
   return (
     <AppShell
       eyebrow="Workflow Draft"
-      title="Recap → Operational Draft Dashboard"
+      title="Recap -> Operational Draft Dashboard"
       description="Extracted from recap text and organized into a review-required workflow draft. This interface does not decide who is right and does not replace human review."
     >
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
@@ -75,7 +80,7 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
-            {generated.cargo || "Cargo pending review"} • Broker: {generated.broker || "Pending review"}
+            {generated.cargo || "Cargo pending review"} - Broker: {generated.broker || "Pending review"}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -85,7 +90,7 @@ export function GeneratedDashboardPage() {
             <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/8 p-4 text-sm leading-7 text-white/72">
+          <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
             Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> credibility-first roadmap:
             token layer live, workflow utility still in staged proof form.
           </div>
@@ -106,11 +111,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle
-            icon={AlertTriangle}
-            label="Summary panel"
-            subtitle="Attention required"
-          />
+          <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
             <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
@@ -133,10 +134,14 @@ export function GeneratedDashboardPage() {
               <EmptyBox text="No highlighted review points were returned." />
             ) : (
               keyRisks.map((flag) => (
-                <div key={flag.title} className={`rounded-2xl border px-4 py-3 text-sm ${flagTone[flag.severity]}`}>
-                  <div className="font-semibold">{flag.title}</div>
-                  <div className="mt-2 leading-7 opacity-90">{flag.guidance}</div>
-                </div>
+                <TraceableCard
+                  key={flag.title}
+                  title={flag.title}
+                  body={flag.guidance}
+                  confidence={flag.confidence}
+                  sourceTrace={flag.sourceTrace}
+                  accentClass={flagTone[flag.severity]}
+                />
               ))
             )}
           </div>
@@ -156,10 +161,9 @@ export function GeneratedDashboardPage() {
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
-                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
-                    Why this matters
-                  </div>
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
                   <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
+                  <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
                 </div>
               ))
             )}
@@ -179,6 +183,7 @@ export function GeneratedDashboardPage() {
                   <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
                     {formatDocumentStatus(document.status)}
                   </div>
+                  <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
                 </div>
               ))
             )}
@@ -271,11 +276,16 @@ export function GeneratedDashboardPage() {
           <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
           <div className="mt-5 space-y-3">
             {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
-              generated.risk_notes.map((note) => (
-                <div key={note} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
-                  {note}
-                </div>
-              ))
+              generated.risk_notes.map((note, index) => {
+                const caution = normalizeCaution(note, index);
+                return (
+                  <div key={caution.title} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
+                    <div className="font-semibold text-white/90">{caution.title}</div>
+                    <div className="mt-2">{caution.body}</div>
+                    <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
+                  </div>
+                );
+              })
             ) : (
               <EmptyBox text="No suggested cautions were returned." />
             )}
@@ -357,6 +367,8 @@ function TaskColumn({
     clause_source_text: string;
     why_matters: string;
     risk_if_missed: string;
+    confidence?: ConfidenceLevel;
+    sourceTrace?: SourceTraceItem[];
   }>;
 }) {
   return (
@@ -377,13 +389,14 @@ function TaskColumn({
               <div className="font-semibold">{item.title}</div>
               <StatusPill status={item.status} />
             </div>
-
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
 
             <div className="mt-4">
               <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
+
+            <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
 
             <details className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
@@ -430,6 +443,87 @@ function SectionTitle({
   );
 }
 
+function TraceableCard({
+  title,
+  body,
+  confidence,
+  sourceTrace,
+  accentClass,
+}: {
+  title: string;
+  body: string;
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+  accentClass: string;
+}) {
+  return (
+    <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
+      <div className="font-semibold">{title}</div>
+      <div className="mt-2 leading-7 opacity-90">{body}</div>
+      <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
+    </div>
+  );
+}
+
+function TraceFooter({
+  confidence,
+  sourceTrace,
+}: {
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+}) {
+  const traceItems = sourceTrace || [];
+  const hasTrace = traceItems.length > 0;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {confidence ? <ConfidenceBadge level={confidence} /> : null}
+          <span className="text-xs text-white/52">
+            Derived from: {hasTrace ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}` : "source not attached"}
+          </span>
+        </div>
+        {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
+      </div>
+      {hasTrace ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
+            Open source trace
+          </summary>
+          <div className="mt-3 space-y-3">
+            {traceItems.map((item, index) => (
+              <div key={`${item.sectionId}-${item.sectionTitle}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">
+                  {item.sectionId}. {item.sectionTitle}
+                </div>
+                <div className="mt-2 text-sm leading-7 text-white/82">"{item.snippet}"</div>
+                {item.reasoning ? (
+                  <div className="mt-2 text-sm leading-7 text-white/62">Why: {item.reasoning}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
+  const styles = {
+    high: "border-cyan-400/20 bg-cyan-500/10 text-cyan-200",
+    medium: "border-amber-400/20 bg-amber-500/10 text-amber-200",
+    low: "border-rose-400/20 bg-rose-500/10 text-rose-200",
+  } as const;
+
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${styles[level]}`}>
+      {level}
+    </span>
+  );
+}
+
 function EmptyBox({ text }: { text: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
@@ -451,6 +545,17 @@ function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review"
     case "confirmed":
       return "Confirmed";
   }
+}
+
+function normalizeCaution(note: string | GeneratedCaution, index: number): GeneratedCaution {
+  if (typeof note === "string") {
+    return {
+      title: `Suggested caution ${index + 1}`,
+      body: note,
+    };
+  }
+
+  return note;
 }
 
 type ActivityIcon =
