@@ -31,13 +31,24 @@ export default async function handler(req, res) {
   }
 
   const prompt = `
-You are assisting with a maritime voyage recap demo.
+You are assisting with a maritime voyage recap workflow draft.
 Return ONLY valid JSON.
 Do not wrap the JSON in markdown fences.
-Do not include explanations.
-If a field is missing, use an empty string or an empty array.
-Use assistive, non-legal language only.
-Never conclude fault, invalidity, enforceability, or legal liability.
+Do not include explanations outside the JSON.
+Use cautious assistive language.
+Do not decide who is right.
+Do not make legal conclusions.
+Every suggested item must be traceable back to recap wording.
+
+Confidence rules:
+- high = directly stated in recap
+- medium = reasonable synthesis from one or more recap items
+- low = weak basis, incomplete support, or strong interpretation
+
+Source trace rules:
+- each generated card should include sourceTrace
+- sourceTrace must quote short recap snippets
+- prefer the strongest source first
 
 Schema:
 {
@@ -51,38 +62,66 @@ Schema:
   "freight_term": "string",
   "demurrage": "string",
   "claim_deadline": "string",
-  "voyage_status": "Loading|Discharging|Completed|Pending review",
+  "voyage_status": "Pending review|Loading|Discharging|Completed",
   "upcoming_trigger": "string",
   "next_deadline": "string",
-  "voyage_health": "On track|At risk|Delayed",
-  "health_reasons": ["string", "string", "string"],
+  "voyage_health": "Attention required|Risk signals detected|Pending review",
+  "health_reasons": ["string"],
   "commercial_risk": "Low|Medium|High",
+  "parser_summary": [
+    { "label": "string", "value": "string" }
+  ],
   "flags": [
     {
       "title": "string",
       "guidance": "string",
-      "severity": "medium|high"
-    }
-  ],
-  "parser_summary": [
-    {
-      "label": "string",
-      "value": "string"
+      "severity": "medium|high",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "explicit_obligation|payment_term|documentary_requirement|approval_dependency|commercial_uncertainty|operational_condition",
+          "reasoning": "string"
+        }
+      ]
     }
   ],
   "documents": [
     {
       "title": "string",
-      "status": "uploaded|missing|awaiting_review|draft_only|confirmed"
+      "status": "uploaded|missing|awaiting_review|draft_only|confirmed",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "explicit_obligation|payment_term|documentary_requirement|approval_dependency|commercial_uncertainty|operational_condition",
+          "reasoning": "string"
+        }
+      ]
     }
   ],
-  "risk_notes": ["string", "string", "string"],
-  "changes_since_last_update": [
+  "risk_notes": [
     {
       "title": "string",
-      "detail": "string",
-      "stamp": "string"
+      "body": "string",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "explicit_obligation|payment_term|documentary_requirement|approval_dependency|commercial_uncertainty|operational_condition",
+          "reasoning": "string"
+        }
+      ]
     }
+  ],
+  "changes_since_last_update": [
+    { "title": "string", "detail": "string", "stamp": "string" }
   ],
   "owner_tasks": [
     {
@@ -92,7 +131,17 @@ Schema:
       "clause_source_title": "string",
       "clause_source_text": "string",
       "why_matters": "string",
-      "risk_if_missed": "string"
+      "risk_if_missed": "string",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "explicit_obligation|payment_term|documentary_requirement|approval_dependency|commercial_uncertainty|operational_condition",
+          "reasoning": "string"
+        }
+      ]
     }
   ],
   "charterer_tasks": [
@@ -103,16 +152,20 @@ Schema:
       "clause_source_title": "string",
       "clause_source_text": "string",
       "why_matters": "string",
-      "risk_if_missed": "string"
+      "risk_if_missed": "string",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "explicit_obligation|payment_term|documentary_requirement|approval_dependency|commercial_uncertainty|operational_condition",
+          "reasoning": "string"
+        }
+      ]
     }
   ]
 }
-
-Guidance:
-- Build a useful operational draft from the recap text.
-- If exact values are not explicit, use careful phrases like "Pending review" or "Review recommended".
-- Make tasks practical and tied to apparent clauses or triggers.
-- Keep arrays short and useful.
 
 Recap:
 ${recap}
@@ -120,7 +173,7 @@ ${recap}
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      \`https://generativelanguage.googleapis.com/v1beta/models/\${GEMINI_MODEL}:generateContent?key=\${apiKey}\`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
