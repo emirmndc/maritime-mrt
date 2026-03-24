@@ -38,12 +38,12 @@ const whatMattersItems = [
     text: "Holds subject to approval -> loading may be delayed",
   },
   {
-    icon: "💰",
-    text: "Freight split timing -> payment structure needs review",
+    icon: "⛽",
+    text: "Bunkering requires approval -> potential delay risk",
   },
   {
-    icon: "📄",
-    text: "No survey / inspection record -> evidence gap",
+    icon: "💰",
+    text: "Freight timing split -> payment structure needs review",
   },
 ];
 
@@ -73,6 +73,17 @@ export function GeneratedDashboardPage() {
     );
   }, [generated]);
 
+  const summaryReasons = useMemo(() => {
+    if (!generated) return [];
+    if (generated.health_reasons?.length) return generated.health_reasons.slice(0, 3);
+
+    return [
+      "Charter Party wording still needs confirmation.",
+      "Approval-dependent loading conditions remain open.",
+      "Payment timing should be reviewed before reliance.",
+    ];
+  }, [generated]);
+
   if (!generated) {
     return (
       <AppShell
@@ -98,7 +109,7 @@ export function GeneratedDashboardPage() {
       title="Recap -> Operational Draft Dashboard"
       description="Extracted from recap text and organized into a review-required workflow draft. This interface does not decide who is right and does not replace human review."
     >
-      <div className="grid gap-5 xl:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
           <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
@@ -107,7 +118,7 @@ export function GeneratedDashboardPage() {
             {generated.broker || "Pending review"}
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <LabeledMetric
               tag="Extracted"
               label="Owner"
@@ -157,7 +168,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="What matters" tone="mixed" />
-          <SectionTitle icon={TriangleAlert} label="What matters" subtitle="Key issues in one view" />
+          <SectionTitle icon={TriangleAlert} label="What matters" subtitle="Understand the issue in 3 seconds" />
           <div className="mt-5 space-y-3">
             {whatMattersItems.map((item) => (
               <div
@@ -182,21 +193,18 @@ export function GeneratedDashboardPage() {
             </button>
           </div>
         </Surface>
+      </div>
 
+      <div className="mt-5">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
             <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {(generated.health_reasons?.length
-                ? generated.health_reasons
-                : ["No summary reasons returned"]
-              )
-                .slice(0, 3)
-                .map((reason) => (
-                  <div key={reason}>- {reason}</div>
-                ))}
+              {summaryReasons.map((reason) => (
+                <div key={reason}>- {reason}</div>
+              ))}
             </div>
           </div>
         </Surface>
@@ -205,7 +213,7 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
+          <SectionTitle icon={TriangleAlert} label="Look here first" subtitle="Top review points" />
           <div className="mt-5 space-y-3">
             {keyRisks.length === 0 ? (
               <EmptyBox text="No highlighted review points were returned." />
@@ -218,6 +226,7 @@ export function GeneratedDashboardPage() {
                   confidence={flag.confidence}
                   sourceTrace={flag.sourceTrace}
                   accentClass={flagTone[flag.severity]}
+                  impact={impactFromRisk(flag.title, flag.guidance)}
                 />
               ))
             )}
@@ -226,7 +235,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Operational next steps" />
+          <SectionTitle icon={Clock3} label="Actions" subtitle="Operational next steps" />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -245,7 +254,7 @@ export function GeneratedDashboardPage() {
                     Why this matters
                   </div>
                   <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
-                  <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
+                  <TraceFooter sourceTrace={task.sourceTrace} />
                 </div>
               ))
             )}
@@ -254,7 +263,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Requires confirmation" tone="review" />
-          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence comes first" />
+          <SectionTitle icon={FileStack} label="Evidence" subtitle="Missing documents blocking progress" />
           <div className="mt-5 space-y-3">
             {blockingDocuments.length === 0 ? (
               <EmptyBox text="No blocking document gaps are visible in this draft." />
@@ -270,7 +279,7 @@ export function GeneratedDashboardPage() {
                   >
                     {formatDocumentStatus(document.status)}
                   </div>
-                  <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
+                  <TraceFooter sourceTrace={document.sourceTrace} />
                 </div>
               ))
             )}
@@ -296,12 +305,13 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Demo state" tone="mixed" />
           <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
-            {(generated.changes_since_last_update?.length
-              ? generated.changes_since_last_update
-              : []
-            ).length > 0 ? (
+            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : [])
+              .length > 0 ? (
               generated.changes_since_last_update.map((item) => (
-                <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div
+                  key={`${item.title}-${item.stamp}`}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-semibold">{item.title}</div>
                     <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
@@ -372,13 +382,16 @@ export function GeneratedDashboardPage() {
                   caution.body.length > 180 ? `${caution.body.slice(0, 180)}...` : caution.body;
 
                 return (
-                  <div key={caution.title} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
+                  <div
+                    key={caution.title}
+                    className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="font-semibold text-white/90">{caution.title}</div>
                       {caution.confidence ? <ConfidenceBadge level={caution.confidence} /> : null}
                     </div>
                     <div className="mt-2">{shortBody}</div>
-                    <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
+                    <TraceFooter sourceTrace={caution.sourceTrace} />
                   </div>
                 );
               })
@@ -495,7 +508,7 @@ function TaskColumn({
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
 
-            <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
+            <TraceFooter sourceTrace={item.sourceTrace} />
 
             <details className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
@@ -548,12 +561,14 @@ function TraceableCard({
   confidence,
   sourceTrace,
   accentClass,
+  impact,
 }: {
   title: string;
   body: string;
   confidence?: ConfidenceLevel;
   sourceTrace?: SourceTraceItem[];
   accentClass: string;
+  impact: string;
 }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
@@ -562,16 +577,16 @@ function TraceableCard({
         {confidence ? <ConfidenceBadge level={confidence} /> : null}
       </div>
       <div className="mt-2 leading-7 opacity-90">{body}</div>
-      <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
+      <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/55">Impact</div>
+      <div className="mt-2 text-sm leading-7 text-white/88">{impact}</div>
+      <TraceFooter sourceTrace={sourceTrace} />
     </div>
   );
 }
 
 function TraceFooter({
-  confidence,
   sourceTrace,
 }: {
-  confidence?: ConfidenceLevel;
   sourceTrace?: SourceTraceItem[];
 }) {
   const traceItems = sourceTrace || [];
@@ -580,16 +595,14 @@ function TraceFooter({
 
   const derivedLabel = hasTrace
     ? traceItems.length === 1
-      ? `Derived from: Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle})`
-      : `Derived from: Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle}) + ${traceItems.length - 1} more`
+      ? `Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle})`
+      : `Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle}) + ${traceItems.length - 1} more`
     : "Source trace not attached";
 
   return (
     <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-white/52">{derivedLabel}</span>
-        </div>
+        <div className="text-xs text-white/52">{derivedLabel}</div>
         {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
       </div>
       {hasTrace ? (
@@ -599,7 +612,10 @@ function TraceFooter({
           </summary>
           <div className="mt-3 space-y-3">
             {traceItems.map((item, index) => (
-              <div key={`${item.sectionId}-${item.sectionTitle}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div
+                key={`${item.sectionId}-${item.sectionTitle}-${index}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+              >
                 <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">
                   {item.sectionId}. {item.sectionTitle}
                 </div>
@@ -638,7 +654,9 @@ function EmptyBox({ text }: { text: string }) {
   );
 }
 
-function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed") {
+function formatDocumentStatus(
+  status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed",
+) {
   switch (status) {
     case "uploaded":
       return "Uploaded";
@@ -662,6 +680,28 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
   }
 
   return note;
+}
+
+function impactFromRisk(title: string, guidance: string) {
+  const text = `${title} ${guidance}`.toLowerCase();
+
+  if (text.includes("delay") || text.includes("approval")) {
+    return "May cause delay.";
+  }
+
+  if (text.includes("payment") || text.includes("freight")) {
+    return "May require payment review and timing clarification.";
+  }
+
+  if (text.includes("charter") || text.includes("formation")) {
+    return "May lead to dispute or contractual uncertainty.";
+  }
+
+  if (text.includes("document") || text.includes("evidence") || text.includes("survey")) {
+    return "May weaken the evidence position.";
+  }
+
+  return "May require closer operational review.";
 }
 
 type ActivityIcon =
