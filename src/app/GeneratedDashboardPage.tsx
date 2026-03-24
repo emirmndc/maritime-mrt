@@ -91,8 +91,10 @@ export function GeneratedDashboardPage() {
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
-            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> credibility-first roadmap:
-            token layer live, workflow utility still in staged proof form.
+            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> project.
+            <div className="mt-2 text-white/78">
+              Token layer is live. Workflow layer is in development.
+            </div>
           </div>
 
           <div className="mt-6">
@@ -149,7 +151,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
+          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Operational next steps" />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -157,7 +159,10 @@ export function GeneratedDashboardPage() {
               nextActions.map((task) => (
                 <div key={task.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-semibold">{task.title}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-semibold">{task.title}</div>
+                      {task.confidence ? <ConfidenceBadge level={task.confidence} /> : null}
+                    </div>
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
@@ -179,7 +184,10 @@ export function GeneratedDashboardPage() {
             ) : (
               blockingDocuments.map((document) => (
                 <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="font-semibold text-white/90">{document.title}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold text-white/90">{document.title}</div>
+                    {document.confidence ? <ConfidenceBadge level={document.confidence} /> : null}
+                  </div>
                   <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
                     {formatDocumentStatus(document.status)}
                   </div>
@@ -273,15 +281,21 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
+          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Short caution summary" />
           <div className="mt-5 space-y-3">
             {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
               generated.risk_notes.map((note, index) => {
                 const caution = normalizeCaution(note, index);
+                const shortBody =
+                  caution.body.length > 180 ? `${caution.body.slice(0, 180)}...` : caution.body;
+
                 return (
                   <div key={caution.title} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
-                    <div className="font-semibold text-white/90">{caution.title}</div>
-                    <div className="mt-2">{caution.body}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-semibold text-white/90">{caution.title}</div>
+                      {caution.confidence ? <ConfidenceBadge level={caution.confidence} /> : null}
+                    </div>
+                    <div className="mt-2">{shortBody}</div>
                     <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
                   </div>
                 );
@@ -386,7 +400,10 @@ function TaskColumn({
         {items.map((item) => (
           <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="font-semibold">{item.title}</div>
+              <div className="flex items-center gap-2">
+                <div className="font-semibold">{item.title}</div>
+                {item.confidence ? <ConfidenceBadge level={item.confidence} /> : null}
+              </div>
               <StatusPill status={item.status} />
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
@@ -458,7 +475,10 @@ function TraceableCard({
 }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
-      <div className="font-semibold">{title}</div>
+      <div className="flex items-center gap-2">
+        <div className="font-semibold">{title}</div>
+        {confidence ? <ConfidenceBadge level={confidence} /> : null}
+      </div>
       <div className="mt-2 leading-7 opacity-90">{body}</div>
       <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
     </div>
@@ -474,15 +494,19 @@ function TraceFooter({
 }) {
   const traceItems = sourceTrace || [];
   const hasTrace = traceItems.length > 0;
+  const primaryTrace = traceItems[0];
+
+  const derivedLabel = hasTrace
+    ? traceItems.length === 1
+      ? `Derived from: Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle})`
+      : `Derived from: Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle}) + ${traceItems.length - 1} more`
+    : "Source trace not attached";
 
   return (
     <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          {confidence ? <ConfidenceBadge level={confidence} /> : null}
-          <span className="text-xs text-white/52">
-            Derived from: {hasTrace ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}` : "source not attached"}
-          </span>
+          <span className="text-xs text-white/52">{derivedLabel}</span>
         </div>
         {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
       </div>
