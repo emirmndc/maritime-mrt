@@ -28,10 +28,30 @@ const documentTone = {
   confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
 } as const;
 
+const whatMattersItems = [
+  {
+    icon: "⚠️",
+    text: "Charter Party not fully agreed -> formation risk",
+  },
+  {
+    icon: "⏳",
+    text: "Holds subject to approval -> loading may be delayed",
+  },
+  {
+    icon: "💰",
+    text: "Freight split timing -> payment structure needs review",
+  },
+  {
+    icon: "📄",
+    text: "No survey / inspection record -> evidence gap",
+  },
+];
+
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
 
-  const summaryRoute = generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
+  const summaryRoute =
+    generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
 
   const keyRisks = useMemo(() => {
     if (!generated) return [];
@@ -46,7 +66,10 @@ export function GeneratedDashboardPage() {
   const blockingDocuments = useMemo(() => {
     if (!generated) return [];
     return (generated.documents || []).filter(
-      (item) => item.status === "missing" || item.status === "awaiting_review" || item.status === "draft_only",
+      (item) =>
+        item.status === "missing" ||
+        item.status === "awaiting_review" ||
+        item.status === "draft_only",
     );
   }, [generated]);
 
@@ -75,19 +98,40 @@ export function GeneratedDashboardPage() {
       title="Recap -> Operational Draft Dashboard"
       description="Extracted from recap text and organized into a review-required workflow draft. This interface does not decide who is right and does not replace human review."
     >
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-5 xl:grid-cols-3">
         <Surface>
           <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
-            {generated.cargo || "Cargo pending review"} - Broker: {generated.broker || "Pending review"}
+            {generated.cargo || "Cargo pending review"} - Broker:{" "}
+            {generated.broker || "Pending review"}
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
-            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Pending review"} tone="extracted" />
-            <LabeledMetric tag="Suggested" label="Workflow status" value={generated.voyage_status || "Pending review"} tone="suggested" />
-            <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <LabeledMetric
+              tag="Extracted"
+              label="Owner"
+              value={generated.owner || "Pending review"}
+              tone="extracted"
+            />
+            <LabeledMetric
+              tag="Extracted"
+              label="Charterer"
+              value={generated.charterer || "Pending review"}
+              tone="extracted"
+            />
+            <LabeledMetric
+              tag="Suggested"
+              label="Workflow status"
+              value={generated.voyage_status || "Pending review"}
+              tone="suggested"
+            />
+            <LabeledMetric
+              tag="Requires confirmation"
+              label="Next deadline"
+              value={generated.next_deadline || "Pending review"}
+              tone="review"
+            />
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
@@ -112,12 +156,43 @@ export function GeneratedDashboardPage() {
         </Surface>
 
         <Surface>
+          <HeaderTag label="What matters" tone="mixed" />
+          <SectionTitle icon={TriangleAlert} label="What matters" subtitle="Key issues in one view" />
+          <div className="mt-5 space-y-3">
+            {whatMattersItems.map((item) => (
+              <div
+                key={item.text}
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/82"
+              >
+                <span className="mt-0.5 text-base">{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("full-breakdown");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.06]"
+            >
+              Explain in detail
+            </button>
+          </div>
+        </Surface>
+
+        <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
             <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"])
+              {(generated.health_reasons?.length
+                ? generated.health_reasons
+                : ["No summary reasons returned"]
+              )
                 .slice(0, 3)
                 .map((reason) => (
                   <div key={reason}>- {reason}</div>
@@ -166,7 +241,9 @@ export function GeneratedDashboardPage() {
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
-                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
+                    Why this matters
+                  </div>
                   <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
                   <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
                 </div>
@@ -188,7 +265,9 @@ export function GeneratedDashboardPage() {
                     <div className="font-semibold text-white/90">{document.title}</div>
                     {document.confidence ? <ConfidenceBadge level={document.confidence} /> : null}
                   </div>
-                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                  <div
+                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
+                  >
                     {formatDocumentStatus(document.status)}
                   </div>
                   <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
@@ -217,7 +296,10 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Demo state" tone="mixed" />
           <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
-            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
+            {(generated.changes_since_last_update?.length
+              ? generated.changes_since_last_update
+              : []
+            ).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
                 <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
