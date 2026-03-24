@@ -28,24 +28,10 @@ const documentTone = {
   confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
 } as const;
 
-const whatMattersItems = [
-  {
-    icon: "⚠️",
-    text: "Charter Party not fully agreed -> formation risk",
-  },
-  {
-    icon: "⏳",
-    text: "Holds subject to approval -> loading may be delayed",
-  },
-  {
-    icon: "⛽",
-    text: "Bunkering requires approval -> potential delay risk",
-  },
-  {
-    icon: "💰",
-    text: "Freight timing split -> payment structure needs review",
-  },
-];
+type WhatMattersItem = {
+  icon: string;
+  text: string;
+};
 
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
@@ -73,16 +59,119 @@ export function GeneratedDashboardPage() {
     );
   }, [generated]);
 
-  const summaryReasons = useMemo(() => {
+  const whatMatters = useMemo(() => {
     if (!generated) return [];
-    if (generated.health_reasons?.length) return generated.health_reasons.slice(0, 3);
 
-    return [
-      "Charter Party wording still needs confirmation.",
-      "Approval-dependent loading conditions remain open.",
-      "Payment timing should be reviewed before reliance.",
-    ];
-  }, [generated]);
+    const results: WhatMattersItem[] = [];
+    const seen = new Set<string>();
+
+    const add = (icon: string, text: string) => {
+      if (seen.has(text) || results.length >= 4) return;
+      seen.add(text);
+      results.push({ icon, text });
+    };
+
+    const allText = [
+      generated.freight_term,
+      generated.claim_deadline,
+      generated.upcoming_trigger,
+      generated.voyage_status,
+      ...(generated.health_reasons || []),
+      ...(generated.flags || []).flatMap((item) => [item.title, item.guidance]),
+      ...(generated.owner_tasks || []).flatMap((item) => [
+        item.title,
+        item.detail,
+        item.clause_source_title,
+        item.clause_source_text,
+        item.why_matters,
+      ]),
+      ...(generated.charterer_tasks || []).flatMap((item) => [
+        item.title,
+        item.detail,
+        item.clause_source_title,
+        item.clause_source_text,
+        item.why_matters,
+      ]),
+      ...(generated.documents || []).map((item) => item.title),
+      ...(generated.risk_notes || []).map((item) =>
+        typeof item === "string" ? item : `${item.title} ${item.body}`,
+      ),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (
+      allText.includes("mutually agreed") ||
+      allText.includes("final clause") ||
+      allText.includes("charter party")
+    ) {
+      add("⚠️", "Charter Party not fully agreed -> formation risk");
+    }
+
+    if (allText.includes("holds") && allText.includes("approval")) {
+      add("⏳", "Holds subject to approval -> loading may be delayed");
+    }
+
+    if (allText.includes("bunker") || allText.includes("bunkering")) {
+      add("⛽", "Bunkering requires approval -> potential delay");
+    }
+
+    if (
+      allText.includes("freight") &&
+      (allText.includes("balance") || allText.includes("deemed earned") || allText.includes("95%"))
+    ) {
+      add("💰", "Freight timing split -> payment needs review");
+    }
+
+    if (
+      allText.includes("survey") ||
+      allText.includes("inspection") ||
+      allText.includes("document") ||
+      blockingDocuments.length > 0
+    ) {
+      add("📄", "Evidence remains incomplete -> documentation gap");
+    }
+
+    if (results.length < 4) {
+      if (generated.health_reasons?.[0]) {
+        add("⚠️", `${shorten(generated.health_reasons[0], 70)} -> review required`);
+      }
+    }
+
+    if (results.length < 4) {
+      if (nextActions[0]?.title) {
+        add("📌", `${nextActions[0].title} -> operational follow-up needed`);
+      }
+    }
+
+    return results.slice(0, 4);
+  }, [generated, blockingDocuments, nextActions]);
+
+  const summaryPoints = useMemo(() => {
+    if (!generated) return [];
+
+    const points: string[] = [];
+    const seen = new Set<string>();
+
+    const add = (text: string) => {
+      if (!text || seen.has(text) || points.length >= 3) return;
+      seen.add(text);
+      points.push(text);
+    };
+
+    if (whatMatters[0]?.text) add(whatMatters[0].text.split(" -> ")[0]);
+    if (whatMatters[1]?.text) add(whatMatters[1].text.split(" -> ")[0]);
+    if (whatMatters[2]?.text) add(whatMatters[2].text.split(" -> ")[0]);
+
+    if (points.length < 3) {
+      add("Commercial terms may still require confirmation");
+      add("Operational approvals may affect readiness");
+      add("Evidence position may still be incomplete");
+    }
+
+    return points.slice(0, 3);
+  }, [generated, whatMatters]);
 
   if (!generated) {
     return (
@@ -168,9 +257,13 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="What matters" tone="mixed" />
-          <SectionTitle icon={TriangleAlert} label="What matters" subtitle="Understand the issue in 3 seconds" />
+          <SectionTitle
+            icon={TriangleAlert}
+            label="What matters"
+            subtitle="Understand the issue in one view"
+          />
           <div className="mt-5 space-y-3">
-            {whatMattersItems.map((item) => (
+            {whatMatters.map((item) => (
               <div
                 key={item.text}
                 className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/82"
@@ -200,9 +293,9 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
-            <div className="text-sm font-semibold">Risk signals detected</div>
+            <div className="text-sm font-semibold">Key summary points</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {summaryReasons.map((reason) => (
+              {summaryPoints.map((reason) => (
                 <div key={reason}>- {reason}</div>
               ))}
             </div>
@@ -250,10 +343,19 @@ export function GeneratedDashboardPage() {
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
-                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
-                    Why this matters
+
+                  <div className="mt-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+                    <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
                   </div>
-                  <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
+
+                  <div className="mt-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+                    <div className="mt-2 text-sm leading-7 text-white/88">
+                      {impactFromTask(task.title, task.detail, task.risk_if_missed)}
+                    </div>
+                  </div>
+
                   <TraceFooter sourceTrace={task.sourceTrace} />
                 </div>
               ))
@@ -278,6 +380,12 @@ export function GeneratedDashboardPage() {
                     className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
                   >
                     {formatDocumentStatus(document.status)}
+                  </div>
+                  <div className="mt-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+                    <div className="mt-2 text-sm leading-7 text-white/88">
+                      {impactFromDocument(document.title, document.status)}
+                    </div>
                   </div>
                   <TraceFooter sourceTrace={document.sourceTrace} />
                 </div>
@@ -391,6 +499,12 @@ export function GeneratedDashboardPage() {
                       {caution.confidence ? <ConfidenceBadge level={caution.confidence} /> : null}
                     </div>
                     <div className="mt-2">{shortBody}</div>
+                    <div className="mt-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+                      <div className="mt-2 text-sm leading-7 text-white/88">
+                        {impactFromCaution(caution.body)}
+                      </div>
+                    </div>
                     <TraceFooter sourceTrace={caution.sourceTrace} />
                   </div>
                 );
@@ -506,6 +620,13 @@ function TaskColumn({
             <div className="mt-4">
               <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
+            </div>
+
+            <div className="mt-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+              <div className="mt-2 text-sm leading-7 text-white/88">
+                {impactFromTask(item.title, item.detail, item.risk_if_missed)}
+              </div>
             </div>
 
             <TraceFooter sourceTrace={item.sourceTrace} />
@@ -690,18 +811,52 @@ function impactFromRisk(title: string, guidance: string) {
   }
 
   if (text.includes("payment") || text.includes("freight")) {
-    return "May require payment review and timing clarification.";
+    return "May affect payment timing.";
   }
 
   if (text.includes("charter") || text.includes("formation")) {
-    return "May lead to dispute or contractual uncertainty.";
+    return "May increase dispute risk.";
   }
 
-  if (text.includes("document") || text.includes("evidence") || text.includes("survey")) {
-    return "May weaken the evidence position.";
+  if (text.includes("hold") || text.includes("cargo") || text.includes("survey")) {
+    return "May affect cargo readiness or acceptance.";
   }
 
   return "May require closer operational review.";
+}
+
+function impactFromTask(title: string, detail: string, riskIfMissed: string) {
+  const text = `${title} ${detail} ${riskIfMissed}`.toLowerCase();
+
+  if (text.includes("delay")) return "May cause delay.";
+  if (text.includes("demurrage")) return "May trigger demurrage exposure.";
+  if (text.includes("dispute")) return "May increase dispute risk.";
+  if (text.includes("cargo") || text.includes("hold")) return "May affect cargo acceptance.";
+  if (text.includes("payment") || text.includes("freight")) return "May affect payment timing.";
+
+  return "May create operational friction if not confirmed.";
+}
+
+function impactFromDocument(title: string, status: string) {
+  const text = `${title} ${status}`.toLowerCase();
+
+  if (text.includes("charter")) return "May increase commercial uncertainty.";
+  if (text.includes("bill")) return "May affect payment and shipment evidence.";
+  if (text.includes("nor")) return "May affect notice and laytime position.";
+  if (text.includes("survey") || text.includes("inspection")) return "May weaken the evidence position.";
+
+  return "May leave the workflow evidence pack incomplete.";
+}
+
+function impactFromCaution(text: string) {
+  const lower = text.toLowerCase();
+
+  if (lower.includes("delay")) return "May cause delay.";
+  if (lower.includes("payment") || lower.includes("freight")) return "May affect payment timing.";
+  if (lower.includes("dispute")) return "May increase dispute risk.";
+  if (lower.includes("cargo") || lower.includes("hold")) return "May affect cargo acceptance.";
+
+  return "May require closer review before action.";
 }
 
 type ActivityIcon =
