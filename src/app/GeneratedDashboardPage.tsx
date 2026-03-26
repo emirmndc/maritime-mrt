@@ -28,16 +28,10 @@ const documentTone = {
   confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
 } as const;
 
-type WhatMattersItem = {
-  icon: string;
-  text: string;
-};
-
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
 
-  const summaryRoute =
-    generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
+  const summaryRoute = generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
 
   const keyRisks = useMemo(() => {
     if (!generated) return [];
@@ -52,126 +46,14 @@ export function GeneratedDashboardPage() {
   const blockingDocuments = useMemo(() => {
     if (!generated) return [];
     return (generated.documents || []).filter(
-      (item) =>
-        item.status === "missing" ||
-        item.status === "awaiting_review" ||
-        item.status === "draft_only",
+      (item) => item.status === "missing" || item.status === "awaiting_review" || item.status === "draft_only",
     );
   }, [generated]);
 
-  const whatMatters = useMemo(() => {
+  const timingAdvisories = useMemo(() => {
     if (!generated) return [];
-
-    const results: WhatMattersItem[] = [];
-    const seen = new Set<string>();
-
-    const add = (icon: string, text: string) => {
-      if (seen.has(text) || results.length >= 4) return;
-      seen.add(text);
-      results.push({ icon, text });
-    };
-
-    const allText = [
-      generated.freight_term,
-      generated.claim_deadline,
-      generated.upcoming_trigger,
-      generated.voyage_status,
-      ...(generated.health_reasons || []),
-      ...(generated.flags || []).flatMap((item) => [item.title, item.guidance]),
-      ...(generated.owner_tasks || []).flatMap((item) => [
-        item.title,
-        item.detail,
-        item.clause_source_title,
-        item.clause_source_text,
-        item.why_matters,
-      ]),
-      ...(generated.charterer_tasks || []).flatMap((item) => [
-        item.title,
-        item.detail,
-        item.clause_source_title,
-        item.clause_source_text,
-        item.why_matters,
-      ]),
-      ...(generated.documents || []).map((item) => item.title),
-      ...(generated.risk_notes || []).map((item) =>
-        typeof item === "string" ? item : `${item.title} ${item.body}`,
-      ),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    if (
-      allText.includes("mutually agreed") ||
-      allText.includes("final clause") ||
-      allText.includes("charter party")
-    ) {
-      add("⚠️", "Charter Party not fully agreed -> formation risk");
-    }
-
-    if (allText.includes("holds") && allText.includes("approval")) {
-      add("⏳", "Holds subject to approval -> loading may be delayed");
-    }
-
-    if (allText.includes("bunker") || allText.includes("bunkering")) {
-      add("⛽", "Bunkering requires approval -> potential delay");
-    }
-
-    if (
-      allText.includes("freight") &&
-      (allText.includes("balance") || allText.includes("deemed earned") || allText.includes("95%"))
-    ) {
-      add("💰", "Freight timing split -> payment needs review");
-    }
-
-    if (
-      allText.includes("survey") ||
-      allText.includes("inspection") ||
-      allText.includes("document") ||
-      blockingDocuments.length > 0
-    ) {
-      add("📄", "Evidence remains incomplete -> documentation gap");
-    }
-
-    if (results.length < 4) {
-      if (generated.health_reasons?.[0]) {
-        add("⚠️", `${shorten(generated.health_reasons[0], 70)} -> review required`);
-      }
-    }
-
-    if (results.length < 4) {
-      if (nextActions[0]?.title) {
-        add("📌", `${nextActions[0].title} -> operational follow-up needed`);
-      }
-    }
-
-    return results.slice(0, 4);
-  }, [generated, blockingDocuments, nextActions]);
-
-  const summaryPoints = useMemo(() => {
-    if (!generated) return [];
-
-    const points: string[] = [];
-    const seen = new Set<string>();
-
-    const add = (text: string) => {
-      if (!text || seen.has(text) || points.length >= 3) return;
-      seen.add(text);
-      points.push(text);
-    };
-
-    if (whatMatters[0]?.text) add(whatMatters[0].text.split(" -> ")[0]);
-    if (whatMatters[1]?.text) add(whatMatters[1].text.split(" -> ")[0]);
-    if (whatMatters[2]?.text) add(whatMatters[2].text.split(" -> ")[0]);
-
-    if (points.length < 3) {
-      add("Commercial terms may still require confirmation");
-      add("Operational approvals may affect readiness");
-      add("Evidence position may still be incomplete");
-    }
-
-    return points.slice(0, 3);
-  }, [generated, whatMatters]);
+    return (generated.timing_advisories || []).slice(0, 4);
+  }, [generated]);
 
   if (!generated) {
     return (
@@ -203,42 +85,19 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
-            {generated.cargo || "Cargo pending review"} - Broker:{" "}
-            {generated.broker || "Pending review"}
+            {generated.cargo || "Cargo pending review"} - Broker: {generated.broker || "Pending review"}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <LabeledMetric
-              tag="Extracted"
-              label="Owner"
-              value={generated.owner || "Pending review"}
-              tone="extracted"
-            />
-            <LabeledMetric
-              tag="Extracted"
-              label="Charterer"
-              value={generated.charterer || "Pending review"}
-              tone="extracted"
-            />
-            <LabeledMetric
-              tag="Suggested"
-              label="Workflow status"
-              value={generated.voyage_status || "Pending review"}
-              tone="suggested"
-            />
-            <LabeledMetric
-              tag="Requires confirmation"
-              label="Next deadline"
-              value={generated.next_deadline || "Pending review"}
-              tone="review"
-            />
+            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
+            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Pending review"} tone="extracted" />
+            <LabeledMetric tag="Suggested" label="Workflow status" value={generated.voyage_status || "Pending review"} tone="suggested" />
+            <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
-            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> project.
-            <div className="mt-2 text-white/78">
-              Token layer is live. Workflow layer is in development.
-            </div>
+            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> credibility-first roadmap:
+            token layer live, workflow utility still in staged proof form.
           </div>
 
           <div className="mt-6">
@@ -256,48 +115,16 @@ export function GeneratedDashboardPage() {
         </Surface>
 
         <Surface>
-          <HeaderTag label="What matters" tone="mixed" />
-          <SectionTitle
-            icon={TriangleAlert}
-            label="What matters"
-            subtitle="Understand the issue in one view"
-          />
-          <div className="mt-5 space-y-3">
-            {whatMatters.map((item) => (
-              <div
-                key={item.text}
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/82"
-              >
-                <span className="mt-0.5 text-base">{item.icon}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5">
-            <button
-              type="button"
-              onClick={() => {
-                const el = document.getElementById("full-breakdown");
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.06]"
-            >
-              Explain in detail
-            </button>
-          </div>
-        </Surface>
-      </div>
-
-      <div className="mt-5">
-        <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
-            <div className="text-sm font-semibold">Key summary points</div>
+            <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {summaryPoints.map((reason) => (
-                <div key={reason}>- {reason}</div>
-              ))}
+              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"])
+                .slice(0, 3)
+                .map((reason) => (
+                  <div key={reason}>- {reason}</div>
+                ))}
             </div>
           </div>
         </Surface>
@@ -306,7 +133,7 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={TriangleAlert} label="Look here first" subtitle="Top review points" />
+          <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
           <div className="mt-5 space-y-3">
             {keyRisks.length === 0 ? (
               <EmptyBox text="No highlighted review points were returned." />
@@ -319,7 +146,6 @@ export function GeneratedDashboardPage() {
                   confidence={flag.confidence}
                   sourceTrace={flag.sourceTrace}
                   accentClass={flagTone[flag.severity]}
-                  impact={impactFromRisk(flag.title, flag.guidance)}
                 />
               ))
             )}
@@ -328,7 +154,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="Actions" subtitle="Operational next steps" />
+          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -336,27 +162,13 @@ export function GeneratedDashboardPage() {
               nextActions.map((task) => (
                 <div key={task.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="font-semibold">{task.title}</div>
-                      {task.confidence ? <ConfidenceBadge level={task.confidence} /> : null}
-                    </div>
+                    <div className="font-semibold">{task.title}</div>
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
-
-                  <div className="mt-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
-                    <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
-                  </div>
-
-                  <div className="mt-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
-                    <div className="mt-2 text-sm leading-7 text-white/88">
-                      {impactFromTask(task.title, task.detail, task.risk_if_missed)}
-                    </div>
-                  </div>
-
-                  <TraceFooter sourceTrace={task.sourceTrace} />
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+                  <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
+                  <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
                 </div>
               ))
             )}
@@ -365,35 +177,64 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Requires confirmation" tone="review" />
-          <SectionTitle icon={FileStack} label="Evidence" subtitle="Missing documents blocking progress" />
+          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence comes first" />
           <div className="mt-5 space-y-3">
             {blockingDocuments.length === 0 ? (
               <EmptyBox text="No blocking document gaps are visible in this draft." />
             ) : (
               blockingDocuments.map((document) => (
                 <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center gap-2">
-                    <div className="font-semibold text-white/90">{document.title}</div>
-                    {document.confidence ? <ConfidenceBadge level={document.confidence} /> : null}
-                  </div>
-                  <div
-                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
-                  >
+                  <div className="font-semibold text-white/90">{document.title}</div>
+                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
                     {formatDocumentStatus(document.status)}
                   </div>
-                  <div className="mt-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
-                    <div className="mt-2 text-sm leading-7 text-white/88">
-                      {impactFromDocument(document.title, document.status)}
-                    </div>
-                  </div>
-                  <TraceFooter sourceTrace={document.sourceTrace} />
+                  <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
                 </div>
               ))
             )}
           </div>
         </Surface>
       </div>
+
+      <Surface className="mt-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <HeaderTag label="Timing advisory" tone="mixed" />
+            <div className="mt-3 text-2xl font-bold">Local holiday and banking watch</div>
+            <div className="mt-2 text-sm text-white/65">
+              Advisory only. Review local port, bank, agent, and customs working arrangements.
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
+          {timingAdvisories.length === 0 ? (
+            <EmptyBox text="No local holiday or banking advisory was generated for this draft." />
+          ) : (
+            timingAdvisories.map((item, index) => (
+              <div key={`${item.country}-${item.port_context}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold text-white/90">
+                    {item.country} - {item.port_context}
+                  </div>
+                  {item.confidence ? <ConfidenceBadge level={item.confidence} /> : null}
+                </div>
+                <div className="mt-2 text-sm text-[#88c4ff]">
+                  {item.holiday_name || "Holiday / banking calendar review"}
+                </div>
+                <div className="mt-3 text-sm leading-7 text-white/78">{item.advisory}</div>
+                <div className="mt-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+                  <div className="mt-2 text-sm leading-7 text-white/88">
+                    {formatTimingImpact(item.impact)}
+                  </div>
+                </div>
+                <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
+              </div>
+            ))
+          )}
+        </div>
+      </Surface>
 
       <div id="full-breakdown" className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <Surface>
@@ -413,13 +254,9 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Demo state" tone="mixed" />
           <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
-            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : [])
-              .length > 0 ? (
+            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
-                <div
-                  key={`${item.title}-${item.stamp}`}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-                >
+                <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-semibold">{item.title}</div>
                     <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
@@ -481,31 +318,16 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Short caution summary" />
+          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
           <div className="mt-5 space-y-3">
             {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
               generated.risk_notes.map((note, index) => {
                 const caution = normalizeCaution(note, index);
-                const shortBody =
-                  caution.body.length > 180 ? `${caution.body.slice(0, 180)}...` : caution.body;
-
                 return (
-                  <div
-                    key={caution.title}
-                    className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="font-semibold text-white/90">{caution.title}</div>
-                      {caution.confidence ? <ConfidenceBadge level={caution.confidence} /> : null}
-                    </div>
-                    <div className="mt-2">{shortBody}</div>
-                    <div className="mt-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
-                      <div className="mt-2 text-sm leading-7 text-white/88">
-                        {impactFromCaution(caution.body)}
-                      </div>
-                    </div>
-                    <TraceFooter sourceTrace={caution.sourceTrace} />
+                  <div key={caution.title} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
+                    <div className="font-semibold text-white/90">{caution.title}</div>
+                    <div className="mt-2">{caution.body}</div>
+                    <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
                   </div>
                 );
               })
@@ -609,10 +431,7 @@ function TaskColumn({
         {items.map((item) => (
           <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="font-semibold">{item.title}</div>
-                {item.confidence ? <ConfidenceBadge level={item.confidence} /> : null}
-              </div>
+              <div className="font-semibold">{item.title}</div>
               <StatusPill status={item.status} />
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
@@ -622,14 +441,7 @@ function TaskColumn({
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
 
-            <div className="mt-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
-              <div className="mt-2 text-sm leading-7 text-white/88">
-                {impactFromTask(item.title, item.detail, item.risk_if_missed)}
-              </div>
-            </div>
-
-            <TraceFooter sourceTrace={item.sourceTrace} />
+            <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
 
             <details className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
               <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
@@ -682,48 +494,41 @@ function TraceableCard({
   confidence,
   sourceTrace,
   accentClass,
-  impact,
 }: {
   title: string;
   body: string;
   confidence?: ConfidenceLevel;
   sourceTrace?: SourceTraceItem[];
   accentClass: string;
-  impact: string;
 }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
-      <div className="flex items-center gap-2">
-        <div className="font-semibold">{title}</div>
-        {confidence ? <ConfidenceBadge level={confidence} /> : null}
-      </div>
+      <div className="font-semibold">{title}</div>
       <div className="mt-2 leading-7 opacity-90">{body}</div>
-      <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/55">Impact</div>
-      <div className="mt-2 text-sm leading-7 text-white/88">{impact}</div>
-      <TraceFooter sourceTrace={sourceTrace} />
+      <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
     </div>
   );
 }
 
 function TraceFooter({
+  confidence,
   sourceTrace,
 }: {
+  confidence?: ConfidenceLevel;
   sourceTrace?: SourceTraceItem[];
 }) {
   const traceItems = sourceTrace || [];
   const hasTrace = traceItems.length > 0;
-  const primaryTrace = traceItems[0];
-
-  const derivedLabel = hasTrace
-    ? traceItems.length === 1
-      ? `Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle})`
-      : `Clause ${primaryTrace.sectionId} (${primaryTrace.sectionTitle}) + ${traceItems.length - 1} more`
-    : "Source trace not attached";
 
   return (
     <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-white/52">{derivedLabel}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          {confidence ? <ConfidenceBadge level={confidence} /> : null}
+          <span className="text-xs text-white/52">
+            Derived from: {hasTrace ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}` : "source not attached"}
+          </span>
+        </div>
         {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
       </div>
       {hasTrace ? (
@@ -733,10 +538,7 @@ function TraceFooter({
           </summary>
           <div className="mt-3 space-y-3">
             {traceItems.map((item, index) => (
-              <div
-                key={`${item.sectionId}-${item.sectionTitle}-${index}`}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
-              >
+              <div key={`${item.sectionId}-${item.sectionTitle}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                 <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">
                   {item.sectionId}. {item.sectionTitle}
                 </div>
@@ -775,9 +577,7 @@ function EmptyBox({ text }: { text: string }) {
   );
 }
 
-function formatDocumentStatus(
-  status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed",
-) {
+function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed") {
   switch (status) {
     case "uploaded":
       return "Uploaded";
@@ -792,6 +592,19 @@ function formatDocumentStatus(
   }
 }
 
+function formatTimingImpact(impact: "banking" | "port_ops" | "docs" | "customs") {
+  switch (impact) {
+    case "banking":
+      return "May affect banking days and payment timing.";
+    case "port_ops":
+      return "Port operations or local working hours may vary.";
+    case "docs":
+      return "Documentation flow may slow locally.";
+    case "customs":
+      return "Customs or clearance handling may take longer.";
+  }
+}
+
 function normalizeCaution(note: string | GeneratedCaution, index: number): GeneratedCaution {
   if (typeof note === "string") {
     return {
@@ -801,62 +614,6 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
   }
 
   return note;
-}
-
-function impactFromRisk(title: string, guidance: string) {
-  const text = `${title} ${guidance}`.toLowerCase();
-
-  if (text.includes("delay") || text.includes("approval")) {
-    return "May cause delay.";
-  }
-
-  if (text.includes("payment") || text.includes("freight")) {
-    return "May affect payment timing.";
-  }
-
-  if (text.includes("charter") || text.includes("formation")) {
-    return "May increase dispute risk.";
-  }
-
-  if (text.includes("hold") || text.includes("cargo") || text.includes("survey")) {
-    return "May affect cargo readiness or acceptance.";
-  }
-
-  return "May require closer operational review.";
-}
-
-function impactFromTask(title: string, detail: string, riskIfMissed: string) {
-  const text = `${title} ${detail} ${riskIfMissed}`.toLowerCase();
-
-  if (text.includes("delay")) return "May cause delay.";
-  if (text.includes("demurrage")) return "May trigger demurrage exposure.";
-  if (text.includes("dispute")) return "May increase dispute risk.";
-  if (text.includes("cargo") || text.includes("hold")) return "May affect cargo acceptance.";
-  if (text.includes("payment") || text.includes("freight")) return "May affect payment timing.";
-
-  return "May create operational friction if not confirmed.";
-}
-
-function impactFromDocument(title: string, status: string) {
-  const text = `${title} ${status}`.toLowerCase();
-
-  if (text.includes("charter")) return "May increase commercial uncertainty.";
-  if (text.includes("bill")) return "May affect payment and shipment evidence.";
-  if (text.includes("nor")) return "May affect notice and laytime position.";
-  if (text.includes("survey") || text.includes("inspection")) return "May weaken the evidence position.";
-
-  return "May leave the workflow evidence pack incomplete.";
-}
-
-function impactFromCaution(text: string) {
-  const lower = text.toLowerCase();
-
-  if (lower.includes("delay")) return "May cause delay.";
-  if (lower.includes("payment") || lower.includes("freight")) return "May affect payment timing.";
-  if (lower.includes("dispute")) return "May increase dispute risk.";
-  if (lower.includes("cargo") || lower.includes("hold")) return "May affect cargo acceptance.";
-
-  return "May require closer review before action.";
 }
 
 type ActivityIcon =
