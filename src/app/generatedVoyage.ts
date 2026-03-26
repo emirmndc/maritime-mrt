@@ -59,6 +59,29 @@ export type GeneratedCaution = {
   sourceTrace?: SourceTraceItem[];
 };
 
+export type TimingAdvisory = {
+  country: string;
+  port_context: string;
+  holiday_name?: string;
+  advisory: string;
+  impact: "banking" | "port_ops" | "docs" | "customs";
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+};
+
+export type AutopsyInsight = {
+  insight: string;
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+};
+
+export type RecapAutopsy = {
+  contradictions: AutopsyInsight[];
+  dependencies: AutopsyInsight[];
+  missing_structure: AutopsyInsight[];
+  risk_concentration: AutopsyInsight[];
+};
+
 export type GeneratedVoyage = {
   owner: string;
   charterer: string;
@@ -79,10 +102,12 @@ export type GeneratedVoyage = {
   flags: GeneratedFlag[];
   parser_summary: GeneratedParserItem[];
   documents: GeneratedDocument[];
+  timing_advisories?: TimingAdvisory[];
   risk_notes: Array<string | GeneratedCaution>;
   changes_since_last_update: GeneratedChange[];
   owner_tasks: GeneratedTask[];
   charterer_tasks: GeneratedTask[];
+  recap_autopsy?: RecapAutopsy;
 };
 
 const STORAGE_KEY = "generated-voyage-demo";
