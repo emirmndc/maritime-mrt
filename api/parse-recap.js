@@ -32,7 +32,6 @@ export default async function handler(req, res) {
 
   const prompt = `
 You are assisting with a maritime voyage recap workflow draft.
-
 Return ONLY valid JSON.
 Do not wrap the JSON in markdown fences.
 Do not include explanations outside the JSON.
@@ -40,6 +39,14 @@ Use cautious assistive language.
 Do not decide who is right.
 Do not make legal conclusions.
 Every suggested item must be traceable back to recap wording.
+Timing advisories must be cautious and operational.
+Do not state that operations will definitely stop.
+Use language like:
+- may affect banking days
+- may slow local documentation
+- local agent or customs availability may vary
+- local holiday window should be reviewed
+Do not invent exact holiday names or dates unless the recap explicitly supports them.
 
 Confidence rules:
 - high = directly stated in recap
@@ -71,6 +78,25 @@ Schema:
   "commercial_risk": "Low|Medium|High",
   "parser_summary": [
     { "label": "string", "value": "string" }
+  ],
+  "timing_advisories": [
+    {
+      "country": "string",
+      "port_context": "loadport|disport|possible call",
+      "holiday_name": "string",
+      "advisory": "string",
+      "impact": "banking|port_ops|docs|customs",
+      "confidence": "high|medium|low",
+      "sourceTrace": [
+        {
+          "sectionId": "string",
+          "sectionTitle": "string",
+          "snippet": "string",
+          "sourceType": "payment_term|documentary_requirement|approval_dependency|operational_condition",
+          "reasoning": "string"
+        }
+      ]
+    }
   ],
   "flags": [
     {
@@ -189,7 +215,6 @@ ${recap}
     );
 
     const data = await response.json();
-
     if (!response.ok) {
       return res.status(response.status).json({
         error: data?.error?.message || "Gemini request failed",
