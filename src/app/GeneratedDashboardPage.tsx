@@ -157,7 +157,7 @@ export function GeneratedDashboardPage() {
         </Surface>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-3">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_0.95fr_1.25fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
           <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
@@ -756,7 +756,7 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="mt-5 grid gap-4">
           <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4">
             <div className="text-xs uppercase tracking-[0.2em] text-white/45">Uploader role</div>
             <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
@@ -798,7 +798,7 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 min-w-0">
             <div className="text-xs uppercase tracking-[0.2em] text-white/45">Vault log</div>
             <div className="mt-4 space-y-3">
               {entries.map((entry, index) => (
