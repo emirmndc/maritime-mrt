@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type ChangeEvent } from "react";
+import { useId, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import {
   AlertTriangle,
   Clock3,
@@ -6,6 +6,7 @@ import {
   FileStack,
   Mail,
   TriangleAlert,
+  Upload,
 } from "lucide-react";
 import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
 import {
@@ -307,7 +308,11 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Demo state" tone="mixed" />
-          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
+          <SectionTitle
+            icon={Clock3}
+            label="Since last update"
+            subtitle="No new events recorded (demo state)"
+          />
           <div className="mt-5 space-y-4">
             {(generated.changes_since_last_update?.length
               ? generated.changes_since_last_update
@@ -343,9 +348,7 @@ export function GeneratedDashboardPage() {
                     Suggested responsibilities extracted from the recap and organized for review.
                   </div>
                 </div>
-                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">
-                  Open
-                </div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
                 <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
                   Close
                 </div>
@@ -368,9 +371,7 @@ export function GeneratedDashboardPage() {
                     Suggested responsibilities extracted from the recap and organized for review.
                   </div>
                 </div>
-                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">
-                  Open
-                </div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
                 <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
                   Close
                 </div>
@@ -463,9 +464,7 @@ function LabeledMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>
-        {tag}
-      </div>
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
       <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
       <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{value}</div>
     </div>
@@ -525,18 +524,12 @@ function TaskColumn({
               </summary>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                    Clause source
-                  </div>
-                  <div className="mt-2 font-semibold text-white/88">
-                    {item.clause_source_title}
-                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
+                  <div className="mt-2 font-semibold text-white/88">{item.clause_source_title}</div>
                   <div className="mt-1 leading-7">{item.clause_source_text}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                    Risk if missed
-                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
                   <div className="mt-2 leading-7">{item.risk_if_missed}</div>
                 </div>
               </div>
@@ -709,34 +702,43 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
 }
 
 type VaultEntry = {
+  id: string;
   fileName: string;
   timestamp: string;
   uploaderRole: "Owner" | "Charterer" | "Agent";
+  fileUrl: string;
 };
 
 function EvidenceVaultPanel({ className = "" }: { className?: string }) {
   const inputId = useId();
   const [uploaderRole, setUploaderRole] = useState<"Owner" | "Charterer" | "Agent">("Owner");
-  const [entries, setEntries] = useState<VaultEntry[]>([
-    {
-      fileName: "sample_statement_of_facts.pdf",
-      timestamp: "28 Mar 2026, 11:20 HRS",
-      uploaderRole: "Agent",
-    },
-  ]);
+  const [entries, setEntries] = useState<VaultEntry[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const registerFiles = (files: FileList | File[]) => {
+    const nextEntries = Array.from(files).map((file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}`,
+      fileName: file.name,
+      timestamp: formatVaultTimestamp(new Date()),
+      uploaderRole,
+      fileUrl: URL.createObjectURL(file),
+    }));
+
+    setEntries((current) => [...nextEntries, ...current]);
+  };
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files?.length) return;
-
-    const nextEntries = Array.from(files).map((file) => ({
-      fileName: file.name,
-      timestamp: formatVaultTimestamp(new Date()),
-      uploaderRole,
-    }));
-
-    setEntries((current) => [...nextEntries, ...current]);
+    registerFiles(files);
     event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    if (!event.dataTransfer.files?.length) return;
+    registerFiles(event.dataTransfer.files);
   };
 
   return (
@@ -788,11 +790,27 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
               />
               <label
                 htmlFor={inputId}
-                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-8 text-center transition hover:bg-white/[0.05]"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={[
+                  "flex cursor-pointer flex-col items-center justify-center rounded-2xl border px-5 py-8 text-center transition",
+                  isDragging
+                    ? "border-[#4f97e8]/40 bg-[#3373B7]/10"
+                    : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                ].join(" ")}
               >
-                <div className="text-sm font-semibold text-white/90">Upload document</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <div className="mt-4 text-sm font-semibold text-white/90">
+                  {isDragging ? "Drop document here" : "Upload document"}
+                </div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  Click to attach a file. No OCR, no parsing, no text extraction.
+                  Click to attach or drag and drop a file. No OCR, no parsing, no text extraction.
                 </div>
               </label>
             </div>
@@ -801,28 +819,33 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 min-w-0">
             <div className="text-xs uppercase tracking-[0.2em] text-white/45">Vault log</div>
             <div className="mt-4 space-y-3">
-              {entries.map((entry, index) => (
-                <div
-                  key={`${entry.fileName}-${entry.timestamp}-${index}`}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="font-semibold text-white/90">{entry.fileName}</div>
-                    <button
-                      type="button"
-                      className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/70"
-                    >
-                      View
-                    </button>
+              {entries.length === 0 ? (
+                <EmptyBox text="No manually uploaded evidence has been logged yet." />
+              ) : (
+                entries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0 font-semibold text-white/90">{entry.fileName}</div>
+                      <button
+                        type="button"
+                        onClick={() => window.open(entry.fileUrl, "_blank", "noopener,noreferrer")}
+                        className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/70 transition hover:bg-white/[0.06]"
+                      >
+                        View
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/58">
+                      <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-sky-200">
+                        {entry.uploaderRole}
+                      </span>
+                      <span>{entry.timestamp}</span>
+                    </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/58">
-                    <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-sky-200">
-                      {entry.uploaderRole}
-                    </span>
-                    <span>{entry.timestamp}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
