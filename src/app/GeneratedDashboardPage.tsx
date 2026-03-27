@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo, useState, type ChangeEvent } from "react";
 import {
   AlertTriangle,
   Clock3,
@@ -31,7 +31,8 @@ const documentTone = {
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
 
-  const summaryRoute = generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
+  const summaryRoute =
+    generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
 
   const keyRisks = useMemo(() => {
     if (!generated) return [];
@@ -46,7 +47,10 @@ export function GeneratedDashboardPage() {
   const blockingDocuments = useMemo(() => {
     if (!generated) return [];
     return (generated.documents || []).filter(
-      (item) => item.status === "missing" || item.status === "awaiting_review" || item.status === "draft_only",
+      (item) =>
+        item.status === "missing" ||
+        item.status === "awaiting_review" ||
+        item.status === "draft_only",
     );
   }, [generated]);
 
@@ -85,14 +89,35 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Operational draft" tone="mixed" />
           <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
-            {generated.cargo || "Cargo pending review"} - Broker: {generated.broker || "Pending review"}
+            {generated.cargo || "Cargo pending review"} - Broker:{" "}
+            {generated.broker || "Pending review"}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <LabeledMetric tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
-            <LabeledMetric tag="Extracted" label="Charterer" value={generated.charterer || "Pending review"} tone="extracted" />
-            <LabeledMetric tag="Suggested" label="Workflow status" value={generated.voyage_status || "Pending review"} tone="suggested" />
-            <LabeledMetric tag="Requires confirmation" label="Next deadline" value={generated.next_deadline || "Pending review"} tone="review" />
+            <LabeledMetric
+              tag="Extracted"
+              label="Owner"
+              value={generated.owner || "Pending review"}
+              tone="extracted"
+            />
+            <LabeledMetric
+              tag="Extracted"
+              label="Charterer"
+              value={generated.charterer || "Pending review"}
+              tone="extracted"
+            />
+            <LabeledMetric
+              tag="Suggested"
+              label="Workflow status"
+              value={generated.voyage_status || "Pending review"}
+              tone="suggested"
+            />
+            <LabeledMetric
+              tag="Requires confirmation"
+              label="Next deadline"
+              value={generated.next_deadline || "Pending review"}
+              tone="review"
+            />
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
@@ -120,7 +145,9 @@ export function GeneratedDashboardPage() {
           <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
             <div className="text-sm font-semibold">Risk signals detected</div>
             <div className="mt-3 space-y-2 text-sm leading-7">
-              {(generated.health_reasons?.length ? generated.health_reasons : ["No summary reasons returned"])
+              {(generated.health_reasons?.length
+                ? generated.health_reasons
+                : ["No summary reasons returned"])
                 .slice(0, 3)
                 .map((reason) => (
                   <div key={reason}>- {reason}</div>
@@ -160,13 +187,18 @@ export function GeneratedDashboardPage() {
               <EmptyBox text="No next actions were returned." />
             ) : (
               nextActions.map((task) => (
-                <div key={task.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div
+                  key={task.title}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-semibold">{task.title}</div>
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
-                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
+                    Why this matters
+                  </div>
                   <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
                   <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
                 </div>
@@ -177,15 +209,24 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Requires confirmation" tone="review" />
-          <SectionTitle icon={FileStack} label="Missing documents blocking progress" subtitle="Evidence comes first" />
+          <SectionTitle
+            icon={FileStack}
+            label="Missing documents blocking progress"
+            subtitle="Evidence comes first"
+          />
           <div className="mt-5 space-y-3">
             {blockingDocuments.length === 0 ? (
               <EmptyBox text="No blocking document gaps are visible in this draft." />
             ) : (
               blockingDocuments.map((document) => (
-                <div key={document.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div
+                  key={document.title}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
                   <div className="font-semibold text-white/90">{document.title}</div>
-                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                  <div
+                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
+                  >
                     {formatDocumentStatus(document.status)}
                   </div>
                   <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
@@ -193,6 +234,8 @@ export function GeneratedDashboardPage() {
               ))
             )}
           </div>
+
+          <EvidenceVaultPanel className="mt-5" />
         </Surface>
       </div>
 
@@ -212,7 +255,10 @@ export function GeneratedDashboardPage() {
             <EmptyBox text="No local holiday or banking advisory was generated for this draft." />
           ) : (
             timingAdvisories.map((item, index) => (
-              <div key={`${item.country}-${item.port_context}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div
+                key={`${item.country}-${item.port_context}-${index}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+              >
                 <div className="flex items-center gap-2">
                   <div className="font-semibold text-white/90">
                     {item.country} - {item.port_context}
@@ -224,7 +270,9 @@ export function GeneratedDashboardPage() {
                 </div>
                 <div className="mt-3 text-sm leading-7 text-white/78">{item.advisory}</div>
                 <div className="mt-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Potential impact</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Potential impact
+                  </div>
                   <div className="mt-2 text-sm leading-7 text-white/88">
                     {formatTimingImpact(item.impact)}
                   </div>
@@ -242,9 +290,16 @@ export function GeneratedDashboardPage() {
           <SectionTitle icon={FileSearch} label="Recap summary" subtitle="Directly extracted terms" />
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {(generated.parser_summary?.length ? generated.parser_summary : []).map((item) => (
-              <div key={item.label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">{item.label}</div>
-                <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{item.value}</div>
+              <div
+                key={item.label}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+              >
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                  {item.label}
+                </div>
+                <div className="mt-2 text-sm font-semibold leading-6 text-white/90">
+                  {item.value}
+                </div>
               </div>
             ))}
           </div>
@@ -254,9 +309,14 @@ export function GeneratedDashboardPage() {
           <HeaderTag label="Demo state" tone="mixed" />
           <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
-            {(generated.changes_since_last_update?.length ? generated.changes_since_last_update : []).length > 0 ? (
+            {(generated.changes_since_last_update?.length
+              ? generated.changes_since_last_update
+              : []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
-                <div key={`${item.title}-${item.stamp}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div
+                  key={`${item.title}-${item.stamp}`}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-semibold">{item.title}</div>
                     <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
@@ -283,8 +343,12 @@ export function GeneratedDashboardPage() {
                     Suggested responsibilities extracted from the recap and organized for review.
                   </div>
                 </div>
-                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
-                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">
+                  Open
+                </div>
+                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
+                  Close
+                </div>
               </div>
             </Surface>
           </summary>
@@ -304,8 +368,12 @@ export function GeneratedDashboardPage() {
                     Suggested responsibilities extracted from the recap and organized for review.
                   </div>
                 </div>
-                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
-                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+                <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">
+                  Open
+                </div>
+                <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
+                  Close
+                </div>
               </div>
             </Surface>
           </summary>
@@ -324,7 +392,10 @@ export function GeneratedDashboardPage() {
               generated.risk_notes.map((note, index) => {
                 const caution = normalizeCaution(note, index);
                 return (
-                  <div key={caution.title} className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78">
+                  <div
+                    key={caution.title}
+                    className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78"
+                  >
                     <div className="font-semibold text-white/90">{caution.title}</div>
                     <div className="mt-2">{caution.body}</div>
                     <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
@@ -392,7 +463,9 @@ function LabeledMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>
+        {tag}
+      </div>
       <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
       <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{value}</div>
     </div>
@@ -424,12 +497,13 @@ function TaskColumn({
       </div>
 
       <div className="mt-5 space-y-4">
-        {items.length === 0 ? (
-          <EmptyBox text="No tasks returned for this section." />
-        ) : null}
+        {items.length === 0 ? <EmptyBox text="No tasks returned for this section." /> : null}
 
         {items.map((item) => (
-          <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div
+            key={item.title}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="font-semibold">{item.title}</div>
               <StatusPill status={item.status} />
@@ -437,7 +511,9 @@ function TaskColumn({
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
 
             <div className="mt-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                Why this matters
+              </div>
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
 
@@ -449,12 +525,18 @@ function TaskColumn({
               </summary>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
-                  <div className="mt-2 font-semibold text-white/88">{item.clause_source_title}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Clause source
+                  </div>
+                  <div className="mt-2 font-semibold text-white/88">
+                    {item.clause_source_title}
+                  </div>
                   <div className="mt-1 leading-7">{item.clause_source_text}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Risk if missed
+                  </div>
                   <div className="mt-2 leading-7">{item.risk_if_missed}</div>
                 </div>
               </div>
@@ -526,7 +608,10 @@ function TraceFooter({
         <div className="flex flex-wrap items-center gap-2">
           {confidence ? <ConfidenceBadge level={confidence} /> : null}
           <span className="text-xs text-white/52">
-            Derived from: {hasTrace ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}` : "source not attached"}
+            Derived from:{" "}
+            {hasTrace
+              ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}`
+              : "source not attached"}
           </span>
         </div>
         {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
@@ -538,7 +623,10 @@ function TraceFooter({
           </summary>
           <div className="mt-3 space-y-3">
             {traceItems.map((item, index) => (
-              <div key={`${item.sectionId}-${item.sectionTitle}-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div
+                key={`${item.sectionId}-${item.sectionTitle}-${index}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+              >
                 <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">
                   {item.sectionId}. {item.sectionTitle}
                 </div>
@@ -563,7 +651,9 @@ function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
   } as const;
 
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${styles[level]}`}>
+    <span
+      className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${styles[level]}`}
+    >
       {level}
     </span>
   );
@@ -577,7 +667,9 @@ function EmptyBox({ text }: { text: string }) {
   );
 }
 
-function formatDocumentStatus(status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed") {
+function formatDocumentStatus(
+  status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed",
+) {
   switch (status) {
     case "uploaded":
       return "Uploaded";
@@ -614,6 +706,145 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
   }
 
   return note;
+}
+
+type VaultEntry = {
+  fileName: string;
+  timestamp: string;
+  uploaderRole: "Owner" | "Charterer" | "Agent";
+};
+
+function EvidenceVaultPanel({ className = "" }: { className?: string }) {
+  const inputId = useId();
+  const [uploaderRole, setUploaderRole] = useState<"Owner" | "Charterer" | "Agent">("Owner");
+  const [entries, setEntries] = useState<VaultEntry[]>([
+    {
+      fileName: "sample_statement_of_facts.pdf",
+      timestamp: "28 Mar 2026, 11:20 HRS",
+      uploaderRole: "Agent",
+    },
+  ]);
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files?.length) return;
+
+    const nextEntries = Array.from(files).map((file) => ({
+      fileName: file.name,
+      timestamp: formatVaultTimestamp(new Date()),
+      uploaderRole,
+    }));
+
+    setEntries((current) => [...nextEntries, ...current]);
+    event.target.value = "";
+  };
+
+  return (
+    <div className={className}>
+      <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <HeaderTag label="Manual upload" tone="mixed" />
+            <div className="mt-3 text-xl font-bold">Evidence Vault (Manual Upload)</div>
+            <div className="mt-2 max-w-2xl text-sm leading-7 text-white/65">
+              Files stay off-chain at this stage. The system records only file name, uploader role,
+              and timestamp.
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/60">
+            Accepted: PDF, JPG, PNG
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-white/45">Uploader role</div>
+            <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+              {(["Owner", "Charterer", "Agent"] as const).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => setUploaderRole(role)}
+                  className={[
+                    "rounded-full px-3 py-2 text-sm transition",
+                    uploaderRole === role
+                      ? "bg-[#3373B7] text-white"
+                      : "text-white/70 hover:bg-white/[0.04]",
+                  ].join(" ")}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-5">
+              <input
+                id={inputId}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <label
+                htmlFor={inputId}
+                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-8 text-center transition hover:bg-white/[0.05]"
+              >
+                <div className="text-sm font-semibold text-white/90">Upload document</div>
+                <div className="mt-2 text-sm leading-7 text-white/60">
+                  Click to attach a file. No OCR, no parsing, no text extraction.
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-white/45">Vault log</div>
+            <div className="mt-4 space-y-3">
+              {entries.map((entry, index) => (
+                <div
+                  key={`${entry.fileName}-${entry.timestamp}-${index}`}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="font-semibold text-white/90">{entry.fileName}</div>
+                    <button
+                      type="button"
+                      className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/70"
+                    >
+                      View
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/58">
+                    <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-sky-200">
+                      {entry.uploaderRole}
+                    </span>
+                    <span>{entry.timestamp}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatVaultTimestamp(date: Date) {
+  const datePart = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+
+  const timePart = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  return `${datePart}, ${timePart} HRS`;
 }
 
 type ActivityIcon =
