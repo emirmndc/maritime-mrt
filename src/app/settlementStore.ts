@@ -10,6 +10,7 @@ export type EvidenceDocumentType =
   | "Port document";
 
 export type EvidenceUploaderRole = "Owner" | "Charterer" | "Agent";
+export type ClaimPartyRole = "Owner" | "Charterer";
 
 export type EvidenceVaultDocument = {
   id: string;
@@ -33,15 +34,46 @@ export type DisputeReasonKey =
 export type SettlementDraft = {
   id: string;
   title: string;
-  totalAmount: number;
-  disputedAmount: number;
+  claimedAmount: number;
+  admittedAmount: number;
   currency: string;
-  counterparty: string;
   dueDate: string;
-  initiatedBy: string;
+  claimSide: ClaimPartyRole;
   reasonKey: DisputeReasonKey;
   customReason: string;
   evidenceIds: string[];
+};
+
+export type EvidenceRequirement = {
+  id: string;
+  label: string;
+  labelTr: string;
+  anyOf: EvidenceDocumentType[];
+};
+
+export type EvidenceRequirementCheck = EvidenceRequirement & {
+  satisfied: boolean;
+};
+
+export type SettlementAssessment = {
+  disputedAmount: number;
+  directionIssue: string | null;
+  requirementChecks: EvidenceRequirementCheck[];
+  missingRequirementLabels: string[];
+  issues: string[];
+  isReady: boolean;
+};
+
+export type SettlementPartyModel = {
+  claimSide: ClaimPartyRole;
+  claimantRole: ClaimPartyRole;
+  claimantName: string;
+  respondentRole: ClaimPartyRole;
+  respondentName: string;
+  payerRole: "Charterer";
+  payerName: string;
+  payeeRole: "Owner";
+  payeeName: string;
 };
 
 const EVIDENCE_KEY = "generated-dashboard-evidence-vault";
@@ -51,27 +83,33 @@ const SETTLEMENT_STORE_EVENT = "generated-dashboard-settlement-store-updated";
 export const disputeReasonCatalog: Array<{
   key: DisputeReasonKey;
   labelEn: string;
+  labelTr: string;
 }> = [
-  { key: "port_cost_difference", labelEn: "Port cost difference" },
-  { key: "invoice_mismatch", labelEn: "Invoice mismatch" },
-  { key: "off_hire_deduction", labelEn: "Off-hire deduction" },
-  { key: "bunker_difference", labelEn: "Bunker difference" },
-  { key: "freight_shortfall", labelEn: "Freight shortfall" },
-  { key: "laytime_demurrage_difference", labelEn: "Laytime / demurrage difference" },
-  { key: "custom", labelEn: "Custom reason" },
+  { key: "port_cost_difference", labelEn: "Port cost difference", labelTr: "Liman maliyeti farki" },
+  { key: "invoice_mismatch", labelEn: "Invoice mismatch", labelTr: "Fatura uyusmazligi" },
+  { key: "off_hire_deduction", labelEn: "Off-hire deduction", labelTr: "Off-hire kesintisi" },
+  { key: "bunker_difference", labelEn: "Bunker difference", labelTr: "Bunker farki" },
+  { key: "freight_shortfall", labelEn: "Freight shortfall", labelTr: "Navlun eksigi" },
+  {
+    key: "laytime_demurrage_difference",
+    labelEn: "Laytime / demurrage difference",
+    labelTr: "Laytime / demurrage farki",
+  },
+  { key: "custom", labelEn: "Custom reason", labelTr: "Ozel neden" },
 ];
 
 export const evidenceTypeCatalog: Array<{
   value: EvidenceDocumentType;
   labelEn: string;
+  labelTr: string;
 }> = [
-  { value: "Invoice", labelEn: "Invoice" },
-  { value: "SOF", labelEn: "SOF" },
-  { value: "CP clause", labelEn: "CP clause" },
-  { value: "Email", labelEn: "Email" },
-  { value: "PDA / FDA", labelEn: "PDA / FDA" },
-  { value: "Recap", labelEn: "Recap" },
-  { value: "Port document", labelEn: "Port document" },
+  { value: "Invoice", labelEn: "Invoice", labelTr: "Fatura" },
+  { value: "SOF", labelEn: "SOF", labelTr: "SOF" },
+  { value: "CP clause", labelEn: "CP clause", labelTr: "CP klozu" },
+  { value: "Email", labelEn: "Email", labelTr: "E-posta" },
+  { value: "PDA / FDA", labelEn: "PDA / FDA", labelTr: "PDA / FDA" },
+  { value: "Recap", labelEn: "Recap", labelTr: "Recap" },
+  { value: "Port document", labelEn: "Port document", labelTr: "Liman evraki" },
 ];
 
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
@@ -80,7 +118,10 @@ export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   const raw = sessionStorage.getItem(EVIDENCE_KEY);
   if (raw) {
     try {
-      return JSON.parse(raw) as EvidenceVaultDocument[];
+      const parsed = JSON.parse(raw) as unknown[];
+      return parsed
+        .map((item) => normalizeEvidenceDocument(item))
+        .filter((item): item is EvidenceVaultDocument => Boolean(item));
     } catch {
       sessionStorage.removeItem(EVIDENCE_KEY);
     }
@@ -110,7 +151,7 @@ export function loadSettlementDraft(): SettlementDraft {
   const raw = sessionStorage.getItem(SETTLEMENT_DRAFT_KEY);
   if (raw) {
     try {
-      return JSON.parse(raw) as SettlementDraft;
+      return normalizeSettlementDraft(JSON.parse(raw));
     } catch {
       sessionStorage.removeItem(SETTLEMENT_DRAFT_KEY);
     }
@@ -123,12 +164,189 @@ export function loadSettlementDraft(): SettlementDraft {
 
 export function saveSettlementDraft(draft: SettlementDraft) {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(SETTLEMENT_DRAFT_KEY, JSON.stringify(draft));
+  sessionStorage.setItem(SETTLEMENT_DRAFT_KEY, JSON.stringify(clampSettlementDraft(draft)));
   emitSettlementStoreUpdate();
 }
 
 export function getDisputeReasonLabel(key: DisputeReasonKey) {
   return disputeReasonCatalog.find((item) => item.key === key) ?? disputeReasonCatalog[0];
+}
+
+export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRequirement[] {
+  switch (reasonKey) {
+    case "port_cost_difference":
+      return [
+        {
+          id: "port-cost-basis",
+          label: "Port cost backup",
+          labelTr: "Liman maliyet dayanagi",
+          anyOf: ["PDA / FDA", "Port document"],
+        },
+        {
+          id: "commercial-correspondence",
+          label: "Commercial support",
+          labelTr: "Ticari destek",
+          anyOf: ["Email", "Invoice"],
+        },
+      ];
+    case "invoice_mismatch":
+      return [
+        {
+          id: "invoice-base",
+          label: "Invoice basis",
+          labelTr: "Fatura dayanagi",
+          anyOf: ["Invoice"],
+        },
+        {
+          id: "supporting-thread",
+          label: "Supporting thread",
+          labelTr: "Destekleyici yazisma",
+          anyOf: ["Email", "Recap"],
+        },
+      ];
+    case "off_hire_deduction":
+      return [
+        {
+          id: "contract-basis",
+          label: "Contract basis",
+          labelTr: "Sozlesme dayanagi",
+          anyOf: ["CP clause", "Email"],
+        },
+        {
+          id: "operational-support",
+          label: "Operational support",
+          labelTr: "Operasyonel destek",
+          anyOf: ["SOF", "Email"],
+        },
+      ];
+    case "bunker_difference":
+      return [
+        {
+          id: "bunker-basis",
+          label: "Bunker cost basis",
+          labelTr: "Bunker maliyet dayanagi",
+          anyOf: ["Invoice"],
+        },
+        {
+          id: "bunker-thread",
+          label: "Commercial support",
+          labelTr: "Ticari destek",
+          anyOf: ["Email", "CP clause"],
+        },
+      ];
+    case "freight_shortfall":
+      return [
+        {
+          id: "freight-invoice",
+          label: "Freight invoice",
+          labelTr: "Navlun faturasi",
+          anyOf: ["Invoice"],
+        },
+        {
+          id: "freight-basis",
+          label: "Freight basis",
+          labelTr: "Navlun dayanagi",
+          anyOf: ["Recap", "CP clause", "Email"],
+        },
+      ];
+    case "laytime_demurrage_difference":
+      return [
+        {
+          id: "time-counting-record",
+          label: "Time-counting record",
+          labelTr: "Sure sayim kaydi",
+          anyOf: ["SOF"],
+        },
+        {
+          id: "contract-or-thread",
+          label: "Contract / correspondence support",
+          labelTr: "Sozlesme / yazisma destegi",
+          anyOf: ["CP clause", "Email"],
+        },
+      ];
+    case "custom":
+      return [];
+  }
+}
+
+export function deriveDisputedAmount(claimedAmount: number, admittedAmount: number) {
+  return Math.max(claimedAmount - admittedAmount, 0);
+}
+
+export function getSettlementPartyModel(claimSide: ClaimPartyRole): SettlementPartyModel {
+  const generated = loadGeneratedVoyage();
+  const ownerName = generated?.owner || "Northshore Bulk Pte. Ltd.";
+  const chartererName = generated?.charterer || "Bluewake Shipping";
+  const respondentRole = claimSide === "Owner" ? "Charterer" : "Owner";
+
+  return {
+    claimSide,
+    claimantRole: claimSide,
+    claimantName: claimSide === "Owner" ? ownerName : chartererName,
+    respondentRole,
+    respondentName: respondentRole === "Owner" ? ownerName : chartererName,
+    payerRole: "Charterer",
+    payerName: chartererName,
+    payeeRole: "Owner",
+    payeeName: ownerName,
+  };
+}
+
+export function assessSettlementDraft(
+  draft: SettlementDraft,
+  selectedEvidence: EvidenceVaultDocument[],
+): SettlementAssessment {
+  const issues: string[] = [];
+  const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
+  const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide);
+  const requirementChecks = getEvidenceRequirements(draft.reasonKey).map((requirement) => ({
+    ...requirement,
+    satisfied: selectedEvidence.some((document) => requirement.anyOf.includes(document.type)),
+  }));
+  const missingRequirementLabels = requirementChecks
+    .filter((item) => !item.satisfied)
+    .map((item) => item.label);
+
+  if (draft.claimedAmount <= 0) {
+    issues.push("Set a claimed amount greater than zero.");
+  }
+
+  if (draft.admittedAmount < 0) {
+    issues.push("Admitted payable amount cannot be negative.");
+  }
+
+  if (draft.admittedAmount > draft.claimedAmount) {
+    issues.push("Admitted payable amount cannot exceed claimed amount.");
+  }
+
+  if (disputedAmount <= 0) {
+    issues.push("A split only makes sense when a disputed amount remains.");
+  }
+
+  if (!draft.dueDate.trim()) {
+    issues.push("Set a due date or payment deadline.");
+  }
+
+  if (draft.reasonKey === "custom" && !draft.customReason.trim()) {
+    issues.push("Add a custom reason note before continuing.");
+  }
+
+  if (directionIssue) {
+    issues.push(directionIssue);
+  }
+
+  if (missingRequirementLabels.length > 0) {
+    issues.push(`Missing evidence pack: ${missingRequirementLabels.join(", ")}.`);
+  }
+
+  return {
+    disputedAmount,
+    directionIssue,
+    requirementChecks,
+    missingRequirementLabels,
+    issues,
+    isReady: issues.length === 0,
+  };
 }
 
 export function subscribeSettlementStore(onStoreChange: () => void) {
@@ -171,19 +389,104 @@ function buildSeedSettlementDraft(): SettlementDraft {
   const defaultReason = generated?.commercial_risk?.toLowerCase().includes("demurrage")
     ? "laytime_demurrage_difference"
     : "port_cost_difference";
+  const claimedAmount = 1000000;
+  const admittedAmount = 990000;
 
   return {
     id: "settlement-a102",
     title: generated?.route ? `Freight Payment - ${generated.route}` : "Freight Payment - Voyage #A102",
-    totalAmount: 1000000,
-    disputedAmount: 10000,
+    claimedAmount,
+    admittedAmount,
     currency: "USD",
-    counterparty: generated?.charterer || "Bluewake Shipping",
-    dueDate: "28 Mar 2026",
-    initiatedBy: "Charterer",
+    dueDate: generated?.next_deadline || generated?.claim_deadline || "28 Mar 2026",
+    claimSide: getDefaultClaimSideForReason(defaultReason),
     reasonKey: defaultReason,
     customReason: "",
     evidenceIds: evidence.slice(0, 4).map((item) => item.id),
+  };
+}
+
+function normalizeEvidenceDocument(raw: unknown): EvidenceVaultDocument | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const item = raw as Partial<EvidenceVaultDocument> & {
+    fileName?: string;
+    documentType?: EvidenceDocumentType;
+    evidenceType?: EvidenceDocumentType;
+    timestamp?: string;
+  };
+  const type = item.type ?? item.documentType ?? item.evidenceType;
+
+  if (
+    typeof item.id !== "string" ||
+    typeof (item.name ?? item.fileName) !== "string" ||
+    !isEvidenceDocumentType(type) ||
+    !isUploaderRole(item.uploaderRole)
+  ) {
+    return null;
+  }
+
+  return {
+    id: item.id,
+    name: item.name ?? item.fileName ?? "Unnamed document",
+    type,
+    uploaderRole: item.uploaderRole,
+    uploadedAt: typeof item.uploadedAt === "string" ? item.uploadedAt : item.timestamp || "Unknown",
+    source:
+      item.source === "generated-dashboard" || item.source === "manual-upload"
+        ? item.source
+        : "manual-upload",
+    fileDataUrl: typeof item.fileDataUrl === "string" ? item.fileDataUrl : undefined,
+  };
+}
+
+function normalizeSettlementDraft(raw: unknown): SettlementDraft {
+  if (!raw || typeof raw !== "object") {
+    return buildSeedSettlementDraft();
+  }
+
+  const item = raw as Partial<SettlementDraft> & {
+    totalAmount?: number;
+    disputedAmount?: number;
+    initiatedBy?: string;
+  };
+  const fallback = buildSeedSettlementDraft();
+  const claimedAmount = sanitizeNumber(item.claimedAmount ?? item.totalAmount, fallback.claimedAmount);
+  const legacyDisputedAmount = sanitizeNumber(
+    item.disputedAmount,
+    fallback.claimedAmount - fallback.admittedAmount,
+  );
+  const admittedAmount = clampNumber(
+    sanitizeNumber(item.admittedAmount, claimedAmount - legacyDisputedAmount),
+    0,
+    claimedAmount,
+  );
+
+  return {
+    id: typeof item.id === "string" ? item.id : fallback.id,
+    title: typeof item.title === "string" && item.title.trim() ? item.title : fallback.title,
+    claimedAmount,
+    admittedAmount,
+    currency: typeof item.currency === "string" && item.currency.trim() ? item.currency : fallback.currency,
+    dueDate: typeof item.dueDate === "string" ? item.dueDate : fallback.dueDate,
+    claimSide: normalizeClaimSide(item.claimSide ?? item.initiatedBy, fallback.claimSide),
+    reasonKey: isDisputeReasonKey(item.reasonKey) ? item.reasonKey : fallback.reasonKey,
+    customReason: typeof item.customReason === "string" ? item.customReason : "",
+    evidenceIds: Array.isArray(item.evidenceIds)
+      ? item.evidenceIds.filter((value): value is string => typeof value === "string")
+      : fallback.evidenceIds,
+  };
+}
+
+function clampSettlementDraft(draft: SettlementDraft): SettlementDraft {
+  const claimedAmount = Math.max(draft.claimedAmount, 0);
+  const admittedAmount = clampNumber(draft.admittedAmount, 0, claimedAmount);
+
+  return {
+    ...draft,
+    claimedAmount,
+    admittedAmount,
+    dueDate: draft.dueDate.trim(),
   };
 }
 
@@ -197,7 +500,9 @@ function mapGeneratedDocumentToEvidence(title: string, index: number) {
   else if (lowered.includes("email") || lowered.includes("correspondence")) type = "Email";
   else if (lowered.includes("pda") || lowered.includes("fda")) type = "PDA / FDA";
   else if (lowered.includes("recap")) type = "Recap";
-  else if (lowered.includes("port")) type = "Port document";
+  else if (lowered.includes("port") || lowered.includes("bill of lading") || lowered.includes("mate")) {
+    type = "Port document";
+  }
 
   if (!type) return null;
 
@@ -225,6 +530,49 @@ function buildDocument(
     source,
     uploadedAt: "28 Mar 2026, 09:20 HRS",
   };
+}
+
+function getDefaultClaimSideForReason(reasonKey: DisputeReasonKey): ClaimPartyRole {
+  if (reasonKey === "freight_shortfall" || reasonKey === "laytime_demurrage_difference") {
+    return "Owner";
+  }
+
+  return "Charterer";
+}
+
+function getDirectionIssue(
+  reasonKey: DisputeReasonKey,
+  claimSide: ClaimPartyRole,
+) {
+  if (reasonKey === "freight_shortfall" && claimSide !== "Owner") {
+    return "In this freight-payment demo, freight shortfall should be raised from the Owner side.";
+  }
+
+  return null;
+}
+
+function normalizeClaimSide(value: unknown, fallback: ClaimPartyRole): ClaimPartyRole {
+  return value === "Owner" || value === "Charterer" ? value : fallback;
+}
+
+function sanitizeNumber(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function isDisputeReasonKey(value: unknown): value is DisputeReasonKey {
+  return disputeReasonCatalog.some((item) => item.key === value);
+}
+
+function isEvidenceDocumentType(value: unknown): value is EvidenceDocumentType {
+  return evidenceTypeCatalog.some((item) => item.value === value);
+}
+
+function isUploaderRole(value: unknown): value is EvidenceUploaderRole {
+  return value === "Owner" || value === "Charterer" || value === "Agent";
 }
 
 function emitSettlementStoreUpdate() {
