@@ -18,6 +18,7 @@ export type EvidenceVaultDocument = {
   uploaderRole: EvidenceUploaderRole;
   uploadedAt: string;
   source: "generated-dashboard" | "manual-upload";
+  fileDataUrl?: string;
 };
 
 export type DisputeReasonKey =
@@ -188,7 +189,13 @@ function mapGeneratedDocumentToEvidence(title: string, index: number) {
 
   if (!type) return null;
 
-  return buildDocument(`generated-${index + 1}`, title, type, inferUploaderRole(type), "generated-dashboard");
+  return buildDocument(
+    `generated-${index + 1}`,
+    title,
+    type,
+    inferUploaderRole(type),
+    "generated-dashboard",
+  );
 }
 
 function inferUploaderRole(type: EvidenceDocumentType): EvidenceUploaderRole {
