@@ -220,6 +220,7 @@ export function GeneratedDashboardPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#88c4ff]">
                 Manual upload / Manuel yukleme
               </div>
+
               <div className="mt-4 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/70">
                 Accepted: PDF, JPG, PNG
               </div>
@@ -228,6 +229,7 @@ export function GeneratedDashboardPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
                   Uploader role / Yukleyen rol
                 </div>
+
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {(["Owner", "Charterer", "Agent"] as const).map((role) => (
                     <button
@@ -290,9 +292,11 @@ export function GeneratedDashboardPage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
                     <Upload className="h-5 w-5" />
                   </div>
+
                   <div className="mt-4 text-sm font-semibold text-white/90">
                     {isDragging ? "Drop document here" : "Upload document"}
                   </div>
+
                   <div className="mt-2 text-sm leading-7 text-white/60">
                     Click to attach or drag and drop a file. No OCR, no parsing, no text extraction.
                   </div>
@@ -310,6 +314,7 @@ export function GeneratedDashboardPage() {
                     Uploaded files stay logged here and can be opened again at any time.
                   </div>
                 </div>
+
                 <div className="rounded-full border border-white/10 bg-black/10 px-4 py-2 text-sm text-white/70">
                   {manualUploads.length} file(s)
                 </div>
@@ -340,6 +345,7 @@ export function GeneratedDashboardPage() {
                         <div className="break-words text-sm font-semibold text-white/92">
                           {document.name}
                         </div>
+
                         <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
                           <span className="rounded-full border border-white/10 px-3 py-1">
                             {localizedType?.labelEn} / {localizedType?.labelTr}
