@@ -1,4 +1,4 @@
-import { Database, FileText, Route, Sparkles } from "lucide-react";
+import { Database, FileText, Landmark, Route, Sparkles } from "lucide-react";
 import { CTAButton, AppShell, Surface, StatusPill } from "./ui";
 import { getSupabaseStatusLabel } from "./supabase";
 
@@ -23,6 +23,11 @@ const pillars = [
     text: "Supabase is wired for the next step: auth, storage, documents, and events.",
     icon: Database,
   },
+  {
+    title: "Split & Neutralize",
+    text: "Release the undisputed portion and isolate only the disputed amount in a neutral vault workflow.",
+    icon: Landmark,
+  },
 ];
 
 export function AppHomePage() {
@@ -45,6 +50,7 @@ export function AppHomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <CTAButton route="/app/try-demo">Try the demo</CTAButton>
+            <CTAButton route="/app/settlement">Open settlement workflow</CTAButton>
             <CTAButton route="/app/voyages">Open voyage list</CTAButton>
             <CTAButton route="/app/generated-dashboard">Open generated dashboard</CTAButton>
           </div>
@@ -70,7 +76,7 @@ export function AppHomePage() {
         </Surface>
       </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
         {pillars.map((pillar) => {
           const Icon = pillar.icon;
           return (
