@@ -51,6 +51,11 @@ export function GeneratedDashboardPage() {
     [documents, draft.evidenceIds],
   );
 
+  const manualUploads = useMemo(
+    () => documents.filter((item) => item.source === "manual-upload"),
+    [documents],
+  );
+
   function toggleEvidence(documentId: string) {
     const nextEvidenceIds = draft.evidenceIds.includes(documentId)
       ? draft.evidenceIds.filter((item) => item !== documentId)
@@ -156,10 +161,7 @@ export function GeneratedDashboardPage() {
 
           <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <InfoCard label="Owner / Armator" value={voyage?.owner || "Northshore Bulk Pte. Ltd."} />
-            <InfoCard
-              label="Charterer / Kiraci"
-              value={voyage?.charterer || "Bluewake Shipping"}
-            />
+            <InfoCard label="Charterer / Kiraci" value={voyage?.charterer || "Bluewake Shipping"} />
             <InfoCard label="Cargo / Yuk" value={voyage?.cargo || "4,800 MT corn"} />
             <InfoCard
               label="Commercial risk / Ticari risk"
@@ -213,7 +215,7 @@ export function GeneratedDashboardPage() {
             description="Files stay off-chain in this demo. The workflow stores document name, evidence type, uploader role, and timestamp so settlement can cite them consistently."
           />
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="mt-6 grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
             <div className="rounded-[24px] border border-white/10 bg-black/10 p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#88c4ff]">
                 Manual upload / Manuel yukleme
@@ -226,17 +228,17 @@ export function GeneratedDashboardPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
                   Uploader role / Yukleyen rol
                 </div>
-                <div className="mt-3 inline-flex flex-wrap gap-2 rounded-full border border-white/10 bg-white/[0.03] p-2">
+                <div className="mt-3 grid grid-cols-3 gap-2">
                   {(["Owner", "Charterer", "Agent"] as const).map((role) => (
                     <button
                       key={role}
                       type="button"
                       onClick={() => setUploaderRole(role)}
                       className={[
-                        "rounded-full px-4 py-2 text-sm transition",
+                        "rounded-2xl border px-3 py-2 text-sm transition",
                         uploaderRole === role
-                          ? "bg-[#3373B7] text-white shadow-[0_8px_20px_rgba(51,115,183,0.35)]"
-                          : "text-white/72 hover:bg-white/[0.05]",
+                          ? "border-[#4f97e8]/35 bg-[#3373B7] text-white shadow-[0_8px_20px_rgba(51,115,183,0.35)]"
+                          : "border-white/10 bg-white/[0.03] text-white/72 hover:bg-white/[0.05]",
                       ].join(" ")}
                     >
                       {role}
@@ -279,7 +281,7 @@ export function GeneratedDashboardPage() {
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   className={[
-                    "mt-2 flex min-h-[210px] cursor-pointer flex-col items-center justify-center rounded-2xl border px-4 py-6 text-center transition",
+                    "mt-2 flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-2xl border px-4 py-6 text-center transition",
                     isDragging
                       ? "border-[#4f97e8]/40 bg-[#3373B7]/10"
                       : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
@@ -302,19 +304,25 @@ export function GeneratedDashboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#88c4ff]">
-                    Evidence references / Kanit referanslari
+                    Vault log
                   </div>
                   <div className="mt-2 text-sm text-white/65">
-                    These selections feed directly into the settlement vault panel.
+                    Uploaded files stay logged here and can be opened again at any time.
                   </div>
                 </div>
                 <div className="rounded-full border border-white/10 bg-black/10 px-4 py-2 text-sm text-white/70">
-                  {selectedDocuments.length} linked / baglandi
+                  {manualUploads.length} file(s)
                 </div>
               </div>
 
               <div className="mt-5 grid gap-3">
-                {documents.map((document) => {
+                {manualUploads.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-black/10 p-4 text-sm leading-7 text-white/60">
+                    No manually uploaded evidence has been logged yet.
+                  </div>
+                ) : null}
+
+                {manualUploads.map((document) => {
                   const active = draft.evidenceIds.includes(document.id);
                   const localizedType = evidenceTypeCatalog.find((item) => item.value === document.type);
 
@@ -340,9 +348,7 @@ export function GeneratedDashboardPage() {
                             {document.uploaderRole}
                           </span>
                           <span className="rounded-full border border-white/10 px-3 py-1">
-                            {document.source === "generated-dashboard"
-                              ? "Generated dashboard / Uretilen dashboard"
-                              : "Manual upload / Manuel yukleme"}
+                            {document.uploadedAt}
                           </span>
                         </div>
                       </div>
