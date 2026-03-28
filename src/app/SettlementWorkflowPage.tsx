@@ -6,7 +6,7 @@ import {
   Landmark,
   ShieldEllipsis,
 } from "lucide-react";
-import { AppShell, CTAButton, Surface } from "./ui";
+import { AppShell, Surface } from "./ui";
 
 const EVIDENCE_VAULT_STORAGE_KEY = "mrt-evidence-vault";
 
