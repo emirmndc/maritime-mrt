@@ -20,18 +20,18 @@ export function AppShell({
         <header className="sticky top-4 z-30 rounded-[28px] border border-white/10 bg-[#050913]/80 px-5 py-4 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.34)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <button className="flex items-center gap-3 text-left" onClick={() => navigateTo("/")}>
-              <div className="flex items-center gap-4">
-                <MaritimeLogo className="h-12 w-12 shrink-0 drop-shadow-[0_0_24px_rgba(51,115,183,0.18)]" />
-                <div>
-                  <div className="text-[11px] uppercase tracking-[0.34em] text-white/45">MARITIME</div>
-                  <div className="mt-1 text-lg font-bold tracking-[0.18em] text-white">Workflow App</div>
-                </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff] overflow-hidden">
+                <MaritimeMark className="h-10 w-10" />
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.34em] text-white/45">MARITIME</div>
+                <div className="mt-1 text-lg font-bold tracking-[0.18em] text-white">Workflow App</div>
               </div>
             </button>
-
             <nav className="flex flex-wrap gap-3 text-sm text-white/70">
               <NavButton route="/app">App Home</NavButton>
               <NavButton route="/app/try-demo">Try Demo</NavButton>
+              <NavButton route="/app/settlement">Settlement</NavButton>
               <NavButton route="/app/voyages">Voyages</NavButton>
             </nav>
           </div>
@@ -50,13 +50,19 @@ export function AppShell({
   );
 }
 
-function MaritimeLogo({ className = "h-16 w-16" }: { className?: string }) {
+function MaritimeMark({ className }: { className?: string }) {
   return (
-    <img
-      src="/maritime-logo.png"
-      alt="MARITIME logo"
+    <svg
+      viewBox="0 0 100 100"
       className={className}
-    />
+      aria-hidden="true"
+    >
+      <circle cx="50" cy="50" r="50" fill="#3373B7" />
+      <path
+        fill="#F5F7FA"
+        d="M21 24h20l13 38 14-38h20v52H73V45L61 74H47L35 45v31H21z"
+      />
+    </svg>
   );
 }
 
