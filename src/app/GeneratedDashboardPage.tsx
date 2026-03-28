@@ -29,6 +29,8 @@ const documentTone = {
   confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
 } as const;
 
+const EVIDENCE_VAULT_STORAGE_KEY = "mrt-evidence-vault";
+
 type EvidenceType =
   | "Invoice"
   | "SOF"
@@ -43,7 +45,7 @@ type VaultEntry = {
   fileName: string;
   timestamp: string;
   uploaderRole: "Owner" | "Charterer" | "Agent";
-  evidenceType: EvidenceType;
+  documentType: EvidenceType;
   fileUrl: string;
 };
 
@@ -106,7 +108,7 @@ export function GeneratedDashboardPage() {
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Surface>
           <HeaderTag label="Operational draft" tone="mixed" />
-          <h2 className="mt-4 text-3xl font-bold">{summaryRoute}</h2>
+          <h2 className="mt-4 break-words text-3xl font-bold">{summaryRoute}</h2>
           <p className="mt-3 text-white/68">
             {generated.cargo || "Cargo pending review"} - Broker:{" "}
             {generated.broker || "Pending review"}
@@ -140,8 +142,8 @@ export function GeneratedDashboardPage() {
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
-            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span> credibility-first roadmap:
-            token layer live, workflow utility still in staged proof form.
+            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span>{" "}
+            credibility-first roadmap: token layer live, workflow utility still in staged proof form.
           </div>
 
           <div className="mt-6">
@@ -179,7 +181,11 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_0.95fr_1.25fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
+          <SectionTitle
+            icon={TriangleAlert}
+            label="3 critical review points"
+            subtitle="Look here first"
+          />
           <div className="mt-5 space-y-3">
             {keyRisks.length === 0 ? (
               <EmptyBox text="No highlighted review points were returned." />
@@ -200,7 +206,11 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
+          <SectionTitle
+            icon={Clock3}
+            label="3 next actions"
+            subtitle="Suggested workflow follow-up"
+          />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -211,7 +221,7 @@ export function GeneratedDashboardPage() {
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-semibold">{task.title}</div>
+                    <div className="break-words font-semibold">{task.title}</div>
                     <StatusPill status={task.status} />
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
@@ -242,7 +252,7 @@ export function GeneratedDashboardPage() {
                   key={document.title}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                 >
-                  <div className="font-semibold text-white/90">{document.title}</div>
+                  <div className="break-words font-semibold text-white/90">{document.title}</div>
                   <div
                     className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
                   >
@@ -279,7 +289,7 @@ export function GeneratedDashboardPage() {
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
                 <div className="flex items-center gap-2">
-                  <div className="font-semibold text-white/90">
+                  <div className="break-words font-semibold text-white/90">
                     {item.country} - {item.port_context}
                   </div>
                   {item.confidence ? <ConfidenceBadge level={item.confidence} /> : null}
@@ -316,7 +326,7 @@ export function GeneratedDashboardPage() {
                 <div className="text-xs uppercase tracking-[0.2em] text-white/45">
                   {item.label}
                 </div>
-                <div className="mt-2 text-sm font-semibold leading-6 text-white/90">
+                <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
                   {item.value}
                 </div>
               </div>
@@ -341,7 +351,7 @@ export function GeneratedDashboardPage() {
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-semibold">{item.title}</div>
+                    <div className="break-words font-semibold">{item.title}</div>
                     <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
                   </div>
                   <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
@@ -405,7 +415,11 @@ export function GeneratedDashboardPage() {
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
+          <SectionTitle
+            icon={AlertTriangle}
+            label="Operational cautions"
+            subtitle="Suggested wording only"
+          />
           <div className="mt-5 space-y-3">
             {(generated.risk_notes?.length ? generated.risk_notes : []).length > 0 ? (
               generated.risk_notes.map((note, index) => {
@@ -415,7 +429,7 @@ export function GeneratedDashboardPage() {
                     key={caution.title}
                     className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78"
                   >
-                    <div className="font-semibold text-white/90">{caution.title}</div>
+                    <div className="break-words font-semibold text-white/90">{caution.title}</div>
                     <div className="mt-2">{caution.body}</div>
                     <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
                   </div>
@@ -482,9 +496,11 @@ function LabeledMetric({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>
+        {tag}
+      </div>
       <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 text-sm font-semibold leading-6 text-white/90">{value}</div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">{value}</div>
     </div>
   );
 }
@@ -522,7 +538,7 @@ function TaskColumn({
             className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="font-semibold">{item.title}</div>
+              <div className="break-words font-semibold">{item.title}</div>
               <StatusPill status={item.status} />
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
@@ -542,12 +558,18 @@ function TaskColumn({
               </summary>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
-                  <div className="mt-2 font-semibold text-white/88">{item.clause_source_title}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Clause source
+                  </div>
+                  <div className="mt-2 break-words font-semibold text-white/88">
+                    {item.clause_source_title}
+                  </div>
                   <div className="mt-1 leading-7">{item.clause_source_text}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Risk if missed
+                  </div>
                   <div className="mt-2 leading-7">{item.risk_if_missed}</div>
                 </div>
               </div>
@@ -573,9 +595,9 @@ function SectionTitle({
       <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
         <Icon className="h-5 w-5" />
       </div>
-      <div>
+      <div className="min-w-0">
         <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">{label}</div>
-        <div className="mt-1 text-2xl font-bold">{subtitle}</div>
+        <div className="mt-1 break-words text-2xl font-bold">{subtitle}</div>
       </div>
     </div>
   );
@@ -596,7 +618,7 @@ function TraceableCard({
 }) {
   return (
     <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
-      <div className="font-semibold">{title}</div>
+      <div className="break-words font-semibold">{title}</div>
       <div className="mt-2 leading-7 opacity-90">{body}</div>
       <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
     </div>
@@ -625,7 +647,9 @@ function TraceFooter({
               : "source not attached"}
           </span>
         </div>
-        {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
+        {hasTrace ? (
+          <span className="text-xs font-semibold text-[#b8dcff]">View source</span>
+        ) : null}
       </div>
       {hasTrace ? (
         <details className="mt-3">
@@ -719,38 +743,83 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
   return note;
 }
 
+type VaultEntry = {
+  id: string;
+  fileName: string;
+  timestamp: string;
+  uploaderRole: "Owner" | "Charterer" | "Agent";
+  documentType: EvidenceType;
+  fileUrl: string;
+};
+
+function loadVaultEntries(): VaultEntry[] {
+  if (typeof window === "undefined") return [];
+
+  const raw = sessionStorage.getItem(EVIDENCE_VAULT_STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    return JSON.parse(raw) as VaultEntry[];
+  } catch {
+    return [];
+  }
+}
+
+function saveVaultEntries(entries: VaultEntry[]) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(EVIDENCE_VAULT_STORAGE_KEY, JSON.stringify(entries));
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 function EvidenceVaultPanel({ className = "" }: { className?: string }) {
   const inputId = useId();
   const [uploaderRole, setUploaderRole] = useState<"Owner" | "Charterer" | "Agent">("Owner");
-  const [evidenceType, setEvidenceType] = useState<EvidenceType>("Invoice");
-  const [entries, setEntries] = useState<VaultEntry[]>([]);
+  const [documentType, setDocumentType] = useState<EvidenceType>("Invoice");
+  const [entries, setEntries] = useState<VaultEntry[]>(() => loadVaultEntries());
   const [isDragging, setIsDragging] = useState(false);
 
-  const registerFiles = (files: FileList | File[]) => {
-    const nextEntries = Array.from(files).map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}`,
-      fileName: file.name,
-      timestamp: formatVaultTimestamp(new Date()),
-      uploaderRole,
-      evidenceType,
-      fileUrl: URL.createObjectURL(file),
-    }));
+  const registerFiles = async (files: FileList | File[]) => {
+    const currentRole = uploaderRole;
+    const currentDocumentType = documentType;
 
-    setEntries((current) => [...nextEntries, ...current]);
+    const nextEntries = await Promise.all(
+      Array.from(files).map(async (file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}`,
+        fileName: file.name,
+        timestamp: formatVaultTimestamp(new Date()),
+        uploaderRole: currentRole,
+        documentType: currentDocumentType,
+        fileUrl: await readFileAsDataUrl(file),
+      })),
+    );
+
+    setEntries((current) => {
+      const merged = [...nextEntries, ...current];
+      saveVaultEntries(merged);
+      return merged;
+    });
   };
 
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files?.length) return;
-    registerFiles(files);
+    await registerFiles(files);
     event.target.value = "";
   };
 
-  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragging(false);
     if (!event.dataTransfer.files?.length) return;
-    registerFiles(event.dataTransfer.files);
+    await registerFiles(event.dataTransfer.files);
   };
 
   return (
@@ -792,19 +861,35 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
               ))}
             </div>
 
-            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">Evidence type</div>
+            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">
+              Evidence type
+            </div>
             <select
-              value={evidenceType}
-              onChange={(event) => setEvidenceType(event.target.value as EvidenceType)}
+              value={documentType}
+              onChange={(event) => setDocumentType(event.target.value as EvidenceType)}
               className="mt-3 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
             >
-              <option value="Invoice">Invoice</option>
-              <option value="SOF">SOF</option>
-              <option value="CP clause">CP clause</option>
-              <option value="Email">Email</option>
-              <option value="PDA / FDA">PDA / FDA</option>
-              <option value="Recap">Recap</option>
-              <option value="Port document">Port document</option>
+              <option value="Invoice" className="bg-[#07101b] text-white">
+                Invoice
+              </option>
+              <option value="SOF" className="bg-[#07101b] text-white">
+                SOF
+              </option>
+              <option value="CP clause" className="bg-[#07101b] text-white">
+                CP clause
+              </option>
+              <option value="Email" className="bg-[#07101b] text-white">
+                Email
+              </option>
+              <option value="PDA / FDA" className="bg-[#07101b] text-white">
+                PDA / FDA
+              </option>
+              <option value="Recap" className="bg-[#07101b] text-white">
+                Recap
+              </option>
+              <option value="Port document" className="bg-[#07101b] text-white">
+                Port document
+              </option>
             </select>
 
             <div className="mt-5">
@@ -859,18 +944,21 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
                       <div className="min-w-0 font-semibold text-white/90">{entry.fileName}</div>
                       <button
                         type="button"
-                        onClick={() => window.open(entry.fileUrl, "_blank", "noopener,noreferrer")}
+                        onClick={() =>
+                          window.open(entry.fileUrl, "_blank", "noopener,noreferrer")
+                        }
                         className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/70 transition hover:bg-white/[0.06]"
                       >
                         View
                       </button>
                     </div>
+
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/58">
                       <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-sky-200">
                         {entry.uploaderRole}
                       </span>
                       <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-white/70">
-                        {entry.evidenceType}
+                        {entry.documentType}
                       </span>
                       <span>{entry.timestamp}</span>
                     </div>
