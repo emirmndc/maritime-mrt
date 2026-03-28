@@ -49,6 +49,16 @@ type VaultEntry = {
   fileUrl: string;
 };
 
+const evidenceTypeOptions: EvidenceType[] = [
+  "Invoice",
+  "SOF",
+  "CP clause",
+  "Email",
+  "PDA / FDA",
+  "Recap",
+  "Port document",
+];
+
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
 
@@ -743,15 +753,6 @@ function normalizeCaution(note: string | GeneratedCaution, index: number): Gener
   return note;
 }
 
-type VaultEntry = {
-  id: string;
-  fileName: string;
-  timestamp: string;
-  uploaderRole: "Owner" | "Charterer" | "Agent";
-  documentType: EvidenceType;
-  fileUrl: string;
-};
-
 function loadVaultEntries(): VaultEntry[] {
   if (typeof window === "undefined") return [];
 
@@ -759,7 +760,18 @@ function loadVaultEntries(): VaultEntry[] {
   if (!raw) return [];
 
   try {
-    return JSON.parse(raw) as VaultEntry[];
+    const parsed = JSON.parse(raw) as Array<
+      VaultEntry & { evidenceType?: EvidenceType; documentType?: EvidenceType }
+    >;
+
+    return parsed.map((item) => ({
+      id: item.id,
+      fileName: item.fileName,
+      timestamp: item.timestamp,
+      uploaderRole: item.uploaderRole,
+      documentType: item.documentType ?? item.evidenceType ?? "Invoice",
+      fileUrl: item.fileUrl,
+    }));
   } catch {
     return [];
   }
@@ -869,27 +881,16 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
               onChange={(event) => setDocumentType(event.target.value as EvidenceType)}
               className="mt-3 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
             >
-              <option value="Invoice" className="bg-[#07101b] text-white">
-                Invoice
-              </option>
-              <option value="SOF" className="bg-[#07101b] text-white">
-                SOF
-              </option>
-              <option value="CP clause" className="bg-[#07101b] text-white">
-                CP clause
-              </option>
-              <option value="Email" className="bg-[#07101b] text-white">
-                Email
-              </option>
-              <option value="PDA / FDA" className="bg-[#07101b] text-white">
-                PDA / FDA
-              </option>
-              <option value="Recap" className="bg-[#07101b] text-white">
-                Recap
-              </option>
-              <option value="Port document" className="bg-[#07101b] text-white">
-                Port document
-              </option>
+              {evidenceTypeOptions.map((option) => (
+                <option
+                  key={option}
+                  value={option}
+                  className="bg-white text-slate-900"
+                  style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
+                >
+                  {option}
+                </option>
+              ))}
             </select>
 
             <div className="mt-5">
