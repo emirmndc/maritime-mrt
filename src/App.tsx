@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import MaritimeMRTWebsite from "./MaritimeMRTWebsite";
 import { AppHomePage } from "./app/AppHomePage";
 import { GeneratedDashboardPage } from "./app/GeneratedDashboardPage";
+import { SettlementWorkflowPage } from "./app/SettlementWorkflowPage";
 import { TryDemoPage } from "./app/TryDemoPage";
 import { VoyageListPage } from "./app/VoyageListPage";
 import { appRoutes, type AppRoute } from "./app/router";
@@ -23,6 +24,10 @@ function getCurrentRoute(): AppRoute {
 
   if (path === "/app/voyages") {
     return "/app/voyages";
+  }
+
+  if (path === "/app/settlement") {
+    return "/app/settlement";
   }
 
   return "/";
@@ -53,6 +58,8 @@ function App() {
         return <GeneratedDashboardPage />;
       case "/app/voyages":
         return <VoyageListPage />;
+      case "/app/settlement":
+        return <SettlementWorkflowPage />;
       default:
         return <MaritimeMRTWebsite />;
     }
