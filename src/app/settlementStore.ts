@@ -46,37 +46,32 @@ export type SettlementDraft = {
 
 const EVIDENCE_KEY = "generated-dashboard-evidence-vault";
 const SETTLEMENT_DRAFT_KEY = "generated-dashboard-settlement-draft";
+const SETTLEMENT_STORE_EVENT = "generated-dashboard-settlement-store-updated";
 
 export const disputeReasonCatalog: Array<{
   key: DisputeReasonKey;
   labelEn: string;
-  labelTr: string;
 }> = [
-  { key: "port_cost_difference", labelEn: "Port cost difference", labelTr: "Liman maliyeti farki" },
-  { key: "invoice_mismatch", labelEn: "Invoice mismatch", labelTr: "Fatura uyusmazligi" },
-  { key: "off_hire_deduction", labelEn: "Off-hire deduction", labelTr: "Off-hire kesintisi" },
-  { key: "bunker_difference", labelEn: "Bunker difference", labelTr: "Bunker farki" },
-  { key: "freight_shortfall", labelEn: "Freight shortfall", labelTr: "Navlun eksigi" },
-  {
-    key: "laytime_demurrage_difference",
-    labelEn: "Laytime / demurrage difference",
-    labelTr: "Laytime / demurrage farki",
-  },
-  { key: "custom", labelEn: "Custom reason", labelTr: "Ozel neden" },
+  { key: "port_cost_difference", labelEn: "Port cost difference" },
+  { key: "invoice_mismatch", labelEn: "Invoice mismatch" },
+  { key: "off_hire_deduction", labelEn: "Off-hire deduction" },
+  { key: "bunker_difference", labelEn: "Bunker difference" },
+  { key: "freight_shortfall", labelEn: "Freight shortfall" },
+  { key: "laytime_demurrage_difference", labelEn: "Laytime / demurrage difference" },
+  { key: "custom", labelEn: "Custom reason" },
 ];
 
 export const evidenceTypeCatalog: Array<{
   value: EvidenceDocumentType;
   labelEn: string;
-  labelTr: string;
 }> = [
-  { value: "Invoice", labelEn: "Invoice", labelTr: "Fatura" },
-  { value: "SOF", labelEn: "SOF", labelTr: "SOF" },
-  { value: "CP clause", labelEn: "CP clause", labelTr: "CP klozu" },
-  { value: "Email", labelEn: "Email", labelTr: "E-posta" },
-  { value: "PDA / FDA", labelEn: "PDA / FDA", labelTr: "PDA / FDA" },
-  { value: "Recap", labelEn: "Recap", labelTr: "Recap" },
-  { value: "Port document", labelEn: "Port document", labelTr: "Liman evraki" },
+  { value: "Invoice", labelEn: "Invoice" },
+  { value: "SOF", labelEn: "SOF" },
+  { value: "CP clause", labelEn: "CP clause" },
+  { value: "Email", labelEn: "Email" },
+  { value: "PDA / FDA", labelEn: "PDA / FDA" },
+  { value: "Recap", labelEn: "Recap" },
+  { value: "Port document", labelEn: "Port document" },
 ];
 
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
@@ -99,6 +94,7 @@ export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
 export function saveEvidenceVaultDocuments(documents: EvidenceVaultDocument[]) {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(EVIDENCE_KEY, JSON.stringify(documents));
+  emitSettlementStoreUpdate();
 }
 
 export function appendEvidenceVaultDocument(document: EvidenceVaultDocument) {
@@ -128,10 +124,26 @@ export function loadSettlementDraft(): SettlementDraft {
 export function saveSettlementDraft(draft: SettlementDraft) {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(SETTLEMENT_DRAFT_KEY, JSON.stringify(draft));
+  emitSettlementStoreUpdate();
 }
 
 export function getDisputeReasonLabel(key: DisputeReasonKey) {
   return disputeReasonCatalog.find((item) => item.key === key) ?? disputeReasonCatalog[0];
+}
+
+export function subscribeSettlementStore(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const handleChange = () => onStoreChange();
+  window.addEventListener(SETTLEMENT_STORE_EVENT, handleChange);
+  window.addEventListener("storage", handleChange);
+
+  return () => {
+    window.removeEventListener(SETTLEMENT_STORE_EVENT, handleChange);
+    window.removeEventListener("storage", handleChange);
+  };
 }
 
 function buildSeedDocuments(): EvidenceVaultDocument[] {
@@ -189,13 +201,7 @@ function mapGeneratedDocumentToEvidence(title: string, index: number) {
 
   if (!type) return null;
 
-  return buildDocument(
-    `generated-${index + 1}`,
-    title,
-    type,
-    inferUploaderRole(type),
-    "generated-dashboard",
-  );
+  return buildDocument(`generated-${index + 1}`, title, type, inferUploaderRole(type), "generated-dashboard");
 }
 
 function inferUploaderRole(type: EvidenceDocumentType): EvidenceUploaderRole {
@@ -219,4 +225,9 @@ function buildDocument(
     source,
     uploadedAt: "28 Mar 2026, 09:20 HRS",
   };
+}
+
+function emitSettlementStoreUpdate() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(SETTLEMENT_STORE_EVENT));
 }
