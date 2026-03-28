@@ -1,4 +1,4 @@
-<div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+<div className="mt-3 space-y-2">
   {(["Owner", "Charterer", "Agent"] as const).map((role) => (
     <button
       key={role}
