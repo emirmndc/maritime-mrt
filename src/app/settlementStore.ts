@@ -82,10 +82,15 @@ export type SettlementPartyModel = {
   claimantName: string;
   respondentRole: ClaimPartyRole;
   respondentName: string;
-  payerRole: "Charterer";
+  payerRole: ClaimPartyRole;
   payerName: string;
-  payeeRole: "Owner";
+  payeeRole: ClaimPartyRole;
   payeeName: string;
+};
+
+type ClaimSideInference = {
+  side: ClaimPartyRole;
+  confidence: "low" | "medium" | "high";
 };
 
 const EVIDENCE_KEY = "mrt-evidence-vault";
@@ -124,6 +129,26 @@ export const evidenceTypeCatalog: Array<{
   { value: "Recap", labelEn: "Recap", labelTr: "Recap" },
   { value: "Port document", labelEn: "Port document", labelTr: "Port document" },
 ];
+
+const reasonTypePriority: Record<DisputeReasonKey, EvidenceDocumentType[]> = {
+  port_cost_difference: ["PDA / FDA", "Port document", "Invoice", "Email", "Recap", "CP clause", "SOF"],
+  invoice_mismatch: ["Invoice", "Email", "Recap", "CP clause", "PDA / FDA", "Port document", "SOF"],
+  off_hire_deduction: ["SOF", "CP clause", "Email", "Invoice", "Recap", "Port document", "PDA / FDA"],
+  bunker_difference: ["Invoice", "Email", "CP clause", "Recap", "PDA / FDA", "Port document", "SOF"],
+  freight_shortfall: ["Invoice", "Recap", "CP clause", "Email", "Port document", "PDA / FDA", "SOF"],
+  laytime_demurrage_difference: ["SOF", "CP clause", "Email", "Invoice", "Recap", "Port document", "PDA / FDA"],
+  custom: ["Invoice", "Email", "Recap", "CP clause", "Port document", "PDA / FDA", "SOF"],
+};
+
+const reasonKeywords: Record<DisputeReasonKey, string[]> = {
+  port_cost_difference: ["port", "disbursement", "pda", "fda", "da", "advance", "receipt", "reimbursement"],
+  invoice_mismatch: ["invoice", "mismatch", "debit", "credit", "comment", "variance"],
+  off_hire_deduction: ["off-hire", "off hire", "performance", "speed", "deduction", "downtime", "breakdown"],
+  bunker_difference: ["bunker", "fuel", "stem", "consumption", "reconciliation"],
+  freight_shortfall: ["freight", "shortfall", "underpaid", "unpaid", "balance", "payment"],
+  laytime_demurrage_difference: ["laytime", "demurrage", "sof", "nor", "time sheet", "timebar", "timesheet"],
+  custom: ["claim", "settlement", "dispute"],
+};
 
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
@@ -291,16 +316,8 @@ export function deriveSettlementSeedContext(
   evidenceDocuments: EvidenceVaultDocument[] = loadEvidenceVaultDocuments(),
 ): SettlementSeedContext {
   const generated = loadGeneratedVoyage();
-  const corpus = [
-    generated?.commercial_risk,
-    ...(generated?.health_reasons ?? []),
-    ...(generated?.flags ?? []).flatMap((item) => [item.title, item.guidance]),
-  ]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .join(" ")
-    .toLowerCase();
-
-  const reasonKey = inferDisputeReasonFromCorpus(corpus);
+  const corpus = buildDisputeCorpus(generated);
+  const reasonKey = inferDisputeReason(corpus, evidenceDocuments);
   const disputeDetected = hasDisputeSignal(corpus);
   const referenceAmount = null;
   const currency = parseCurrencyAmount(generated?.freight_term).currency ?? "USD";
@@ -311,30 +328,57 @@ export function deriveSettlementSeedContext(
   return {
     disputeDetected,
     reasonKey,
-    claimSide: getDefaultClaimSideForReason(reasonKey),
+    claimSide: getSuggestedClaimSide(reasonKey, evidenceDocuments),
     summary,
     referenceAmount,
     currency,
-    evidenceIds: disputeDetected ? selectSuggestedEvidenceIds(reasonKey, evidenceDocuments) : [],
+    evidenceIds: getSuggestedEvidenceIds(reasonKey, evidenceDocuments),
   };
 }
 
-export function getSettlementPartyModel(claimSide: ClaimPartyRole): SettlementPartyModel {
+export function getSuggestedEvidenceIds(
+  reasonKey: DisputeReasonKey,
+  evidenceDocuments: EvidenceVaultDocument[] = loadEvidenceVaultDocuments(),
+) {
+  const ranked = rankEvidenceDocumentsForReason(reasonKey, evidenceDocuments);
+  const positiveMatches = ranked.filter((item) => item.score > 0).slice(0, 4);
+
+  if (positiveMatches.length > 0) {
+    return positiveMatches.map((item) => item.document.id);
+  }
+
+  return ranked.slice(0, 2).map((item) => item.document.id);
+}
+
+export function getSuggestedClaimSide(
+  reasonKey: DisputeReasonKey,
+  evidenceDocuments: EvidenceVaultDocument[] = loadEvidenceVaultDocuments(),
+) {
+  return inferClaimSide(reasonKey, buildDisputeCorpus(loadGeneratedVoyage()), evidenceDocuments).side;
+}
+
+export function getSettlementPartyModel(
+  claimSide: ClaimPartyRole,
+  reasonKey: DisputeReasonKey = "custom",
+): SettlementPartyModel {
   const generated = loadGeneratedVoyage();
   const ownerName = generated?.owner || "Northshore Bulk Pte. Ltd.";
   const chartererName = generated?.charterer || "Bluewake Shipping";
   const respondentRole = claimSide === "Owner" ? "Charterer" : "Owner";
+  const claimantName = claimSide === "Owner" ? ownerName : chartererName;
+  const respondentName = respondentRole === "Owner" ? ownerName : chartererName;
+  const paymentDirection = derivePaymentDirection(reasonKey, claimSide);
 
   return {
     claimSide,
     claimantRole: claimSide,
-    claimantName: claimSide === "Owner" ? ownerName : chartererName,
+    claimantName,
     respondentRole,
-    respondentName: respondentRole === "Owner" ? ownerName : chartererName,
-    payerRole: "Charterer",
-    payerName: chartererName,
-    payeeRole: "Owner",
-    payeeName: ownerName,
+    respondentName,
+    payerRole: paymentDirection.payerRole,
+    payerName: paymentDirection.payerRole === "Owner" ? ownerName : chartererName,
+    payeeRole: paymentDirection.payeeRole,
+    payeeName: paymentDirection.payeeRole === "Owner" ? ownerName : chartererName,
   };
 }
 
@@ -342,11 +386,11 @@ export function assessSettlementDraft(
   draft: SettlementDraft,
   selectedEvidence: EvidenceVaultDocument[],
 ): SettlementAssessment {
-  const seedContext = deriveSettlementSeedContext();
+  const seedContext = deriveSettlementSeedContext(selectedEvidence);
   const disputeOpen = seedContext.disputeDetected || draft.openingMode === "manual-review";
   const issues: string[] = [];
   const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
-  const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide);
+  const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide, selectedEvidence);
   const requirementChecks = getEvidenceRequirements(draft.reasonKey).map((requirement) => ({
     ...requirement,
     satisfied: selectedEvidence.some((document) => requirement.anyOf.includes(document.type)),
@@ -387,11 +431,15 @@ export function assessSettlementDraft(
     issues.push("Add a custom reason note before continuing.");
   }
 
+  if (disputeOpen && selectedEvidence.length === 0) {
+    issues.push("Link at least one supporting evidence item.");
+  }
+
   if (directionIssue) {
     issues.push(directionIssue);
   }
 
-  if (missingRequirementLabels.length > 0) {
+  if (selectedEvidence.length > 0 && missingRequirementLabels.length > 0) {
     issues.push(`Missing evidence pack: ${missingRequirementLabels.join(", ")}.`);
   }
 
@@ -420,6 +468,110 @@ export function subscribeSettlementStore(onStoreChange: () => void) {
   };
 }
 
+function rankEvidenceDocumentsForReason(
+  reasonKey: DisputeReasonKey,
+  evidenceDocuments: EvidenceVaultDocument[],
+) {
+  const requirements = getEvidenceRequirements(reasonKey);
+  const priority = reasonTypePriority[reasonKey];
+  const keywords = reasonKeywords[reasonKey];
+
+  return evidenceDocuments
+    .map((document, index) => {
+      const lowerName = document.name.toLowerCase();
+      const typeIndex = priority.indexOf(document.type);
+      let score = typeIndex >= 0 ? Math.max(20 - typeIndex * 2, 4) : 0;
+
+      requirements.forEach((requirement, requirementIndex) => {
+        if (requirement.anyOf.includes(document.type)) {
+          score += 40 - requirementIndex * 5;
+        }
+      });
+
+      keywords.forEach((keyword) => {
+        if (lowerName.includes(keyword)) {
+          score += 6;
+        }
+      });
+
+      score += getReasonSpecificEvidenceBoost(reasonKey, document);
+
+      if (document.source === "manual-upload") {
+        score += 4;
+      }
+
+      if (document.uploaderRole === "Agent" && reasonKey === "port_cost_difference") {
+        score += 8;
+      }
+
+      return { document, score, index };
+    })
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      return left.index - right.index;
+    });
+}
+
+function getReasonSpecificEvidenceBoost(
+  reasonKey: DisputeReasonKey,
+  document: EvidenceVaultDocument,
+) {
+  switch (reasonKey) {
+    case "port_cost_difference":
+      return document.type === "PDA / FDA"
+        ? 18
+        : document.type === "Port document"
+          ? 16
+          : document.type === "Invoice"
+            ? 12
+            : document.type === "Email"
+              ? 8
+              : 0;
+    case "invoice_mismatch":
+      return document.type === "Invoice"
+        ? 18
+        : document.type === "Email"
+          ? 12
+          : document.type === "Recap"
+            ? 10
+            : 0;
+    case "off_hire_deduction":
+      return document.type === "SOF"
+        ? 18
+        : document.type === "CP clause"
+          ? 16
+          : document.type === "Email"
+            ? 10
+            : 0;
+    case "bunker_difference":
+      return document.type === "Invoice"
+        ? 18
+        : document.type === "Email"
+          ? 12
+          : document.type === "CP clause"
+            ? 10
+            : 0;
+    case "freight_shortfall":
+      return document.type === "Invoice"
+        ? 18
+        : document.type === "Recap"
+          ? 16
+          : document.type === "CP clause"
+            ? 12
+            : 0;
+    case "laytime_demurrage_difference":
+      return document.type === "SOF"
+        ? 18
+        : document.type === "CP clause"
+          ? 14
+          : document.type === "Email"
+            ? 10
+            : 0;
+    case "custom":
+      return document.type === "Email" || document.type === "Invoice" ? 6 : 0;
+  }
+}
+
 function buildSeedDocuments(): EvidenceVaultDocument[] {
   const generated = loadGeneratedVoyage();
   const docsFromVoyage =
@@ -431,20 +583,65 @@ function buildSeedDocuments(): EvidenceVaultDocument[] {
     return docsFromVoyage;
   }
 
-  return [
-    buildDocument("evd-1", "Freight invoice A102.pdf", "Invoice", "Owner", "generated-dashboard"),
-    buildDocument("evd-2", "Voyage recap A102.eml", "Recap", "Charterer", "generated-dashboard"),
-    buildDocument("evd-3", "Port disbursement estimate.xlsx", "PDA / FDA", "Agent", "generated-dashboard"),
-    buildDocument("evd-4", "Ops clarification thread.msg", "Email", "Charterer", "manual-upload"),
-  ];
+  const fallbackReason = inferDisputeReason(buildDisputeCorpus(generated), []);
+  return buildFallbackDocuments(
+    fallbackReason === "custom" ? "port_cost_difference" : fallbackReason,
+  );
+}
+
+function buildFallbackDocuments(reasonKey: DisputeReasonKey): EvidenceVaultDocument[] {
+  switch (reasonKey) {
+    case "port_cost_difference":
+      return [
+        buildDocument("seed-port-1", "Estimated DA advance - Qingdao.pdf", "PDA / FDA", "Agent", "generated-dashboard"),
+        buildDocument("seed-port-2", "Final port disbursement invoice.pdf", "Invoice", "Owner", "generated-dashboard"),
+        buildDocument("seed-port-3", "Qingdao port receipts bundle.pdf", "Port document", "Agent", "generated-dashboard"),
+        buildDocument("seed-port-4", "DA reimbursement discussion.msg", "Email", "Charterer", "generated-dashboard"),
+      ];
+    case "invoice_mismatch":
+      return [
+        buildDocument("seed-invoice-1", "Commercial invoice - disputed line items.pdf", "Invoice", "Owner", "generated-dashboard"),
+        buildDocument("seed-invoice-2", "Invoice comments thread.msg", "Email", "Charterer", "generated-dashboard"),
+        buildDocument("seed-invoice-3", "Recap payment excerpt.eml", "Recap", "Charterer", "generated-dashboard"),
+      ];
+    case "off_hire_deduction":
+      return [
+        buildDocument("seed-offhire-1", "Off-hire clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
+        buildDocument("seed-offhire-2", "Downtime SOF extract.pdf", "SOF", "Agent", "generated-dashboard"),
+        buildDocument("seed-offhire-3", "Off-hire deduction negotiation.msg", "Email", "Charterer", "generated-dashboard"),
+      ];
+    case "bunker_difference":
+      return [
+        buildDocument("seed-bunker-1", "Bunker supply invoice.pdf", "Invoice", "Owner", "generated-dashboard"),
+        buildDocument("seed-bunker-2", "Bunker reconciliation thread.msg", "Email", "Charterer", "generated-dashboard"),
+        buildDocument("seed-bunker-3", "Bunker adjustment clause.pdf", "CP clause", "Owner", "generated-dashboard"),
+      ];
+    case "freight_shortfall":
+      return [
+        buildDocument("seed-freight-1", "Freight invoice balance due.pdf", "Invoice", "Owner", "generated-dashboard"),
+        buildDocument("seed-freight-2", "Voyage recap freight terms.eml", "Recap", "Charterer", "generated-dashboard"),
+        buildDocument("seed-freight-3", "Freight balance chase.msg", "Email", "Owner", "generated-dashboard"),
+        buildDocument("seed-freight-4", "Freight clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
+      ];
+    case "laytime_demurrage_difference":
+      return [
+        buildDocument("seed-laytime-1", "Statement of facts.pdf", "SOF", "Agent", "generated-dashboard"),
+        buildDocument("seed-laytime-2", "Demurrage clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
+        buildDocument("seed-laytime-3", "Laytime calculation exchange.msg", "Email", "Charterer", "generated-dashboard"),
+      ];
+    case "custom":
+      return [
+        buildDocument("seed-custom-1", "Claims invoice pack.pdf", "Invoice", "Owner", "generated-dashboard"),
+        buildDocument("seed-custom-2", "Claims correspondence.msg", "Email", "Charterer", "generated-dashboard"),
+        buildDocument("seed-custom-3", "Voyage recap extract.eml", "Recap", "Charterer", "generated-dashboard"),
+      ];
+  }
 }
 
 function buildSeedSettlementDraft(): SettlementDraft {
   const generated = loadGeneratedVoyage();
   const evidence = buildSeedDocuments();
   const seedContext = deriveSettlementSeedContext(evidence);
-  const claimedAmount = 0;
-  const admittedAmount = 0;
 
   return {
     id: "settlement-a102",
@@ -455,8 +652,8 @@ function buildSeedSettlementDraft(): SettlementDraft {
       : generated?.route
         ? `No Dispute Package Opened - ${generated.route}`
         : "No Dispute Package Opened - Voyage #A102",
-    claimedAmount,
-    admittedAmount,
+    claimedAmount: 0,
+    admittedAmount: 0,
     currency: seedContext.currency,
     dueDate: generated?.next_deadline || generated?.claim_deadline || "28 Mar 2026",
     claimSide: seedContext.claimSide,
@@ -598,7 +795,7 @@ function mapGeneratedDocumentToEvidence(title: string, index: number) {
   else if (lowered.includes("sof")) type = "SOF";
   else if (lowered.includes("clause") || lowered.includes("cp")) type = "CP clause";
   else if (lowered.includes("email") || lowered.includes("correspondence")) type = "Email";
-  else if (lowered.includes("pda") || lowered.includes("fda")) type = "PDA / FDA";
+  else if (lowered.includes("pda") || lowered.includes("fda") || lowered.includes("disbursement")) type = "PDA / FDA";
   else if (lowered.includes("recap")) type = "Recap";
   else if (lowered.includes("port") || lowered.includes("bill of lading") || lowered.includes("mate")) {
     type = "Port document";
@@ -632,6 +829,21 @@ function buildDocument(
   };
 }
 
+function buildDisputeCorpus(generated: ReturnType<typeof loadGeneratedVoyage>) {
+  return [
+    generated?.commercial_risk,
+    ...(generated?.health_reasons ?? []),
+    ...(generated?.flags ?? []).flatMap((item) => [item.title, item.guidance]),
+    ...(generated?.risk_notes ?? []).map((note) =>
+      typeof note === "string" ? note : `${note.title} ${note.body}`,
+    ),
+    ...(generated?.documents ?? []).map((document) => document.title),
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(" ")
+    .toLowerCase();
+}
+
 function hasDisputeSignal(corpus: string) {
   if (!corpus.trim()) return false;
 
@@ -650,23 +862,177 @@ function hasDisputeSignal(corpus: string) {
     "bunker",
     "port cost",
     "overcharge",
+    "reimbursement",
+    "invoice",
   ].some((keyword) => corpus.includes(keyword));
 }
 
-function inferDisputeReasonFromCorpus(corpus: string): DisputeReasonKey {
-  if (corpus.includes("off-hire")) return "off_hire_deduction";
-  if (corpus.includes("bunker")) return "bunker_difference";
+function inferDisputeReason(
+  corpus: string,
+  evidenceDocuments: EvidenceVaultDocument[],
+): DisputeReasonKey {
+  if (corpus.includes("off-hire") || corpus.includes("off hire")) return "off_hire_deduction";
+  if (corpus.includes("bunker") || corpus.includes("fuel")) return "bunker_difference";
   if (corpus.includes("demurrage") || corpus.includes("laytime")) {
     return "laytime_demurrage_difference";
   }
-  if (corpus.includes("freight") && (corpus.includes("shortfall") || corpus.includes("underpaid"))) {
+  if (
+    corpus.includes("freight") &&
+    (corpus.includes("shortfall") || corpus.includes("underpaid") || corpus.includes("unpaid"))
+  ) {
     return "freight_shortfall";
   }
-  if (corpus.includes("invoice") || corpus.includes("mismatch")) return "invoice_mismatch";
-  if (corpus.includes("port cost") || corpus.includes("pda") || corpus.includes("fda")) {
+  if (corpus.includes("invoice") || corpus.includes("mismatch") || corpus.includes("debit note")) {
+    return "invoice_mismatch";
+  }
+  if (
+    corpus.includes("port cost") ||
+    corpus.includes("disbursement") ||
+    corpus.includes("pda") ||
+    corpus.includes("fda") ||
+    corpus.includes("reimbursement")
+  ) {
     return "port_cost_difference";
   }
+
+  if (evidenceDocuments.some((document) => document.type === "PDA / FDA" || document.type === "Port document")) {
+    return "port_cost_difference";
+  }
+  if (evidenceDocuments.some((document) => document.type === "SOF")) {
+    return "laytime_demurrage_difference";
+  }
+  if (evidenceDocuments.some((document) => document.name.toLowerCase().includes("bunker"))) {
+    return "bunker_difference";
+  }
+  if (evidenceDocuments.some((document) => document.name.toLowerCase().includes("freight"))) {
+    return "freight_shortfall";
+  }
+  if (evidenceDocuments.some((document) => document.type === "Invoice" || document.type === "Email")) {
+    return "invoice_mismatch";
+  }
+
   return "custom";
+}
+
+function inferClaimSide(
+  reasonKey: DisputeReasonKey,
+  corpus: string,
+  evidenceDocuments: EvidenceVaultDocument[],
+): ClaimSideInference {
+  let ownerScore = 0;
+  let chartererScore = 0;
+
+  switch (reasonKey) {
+    case "freight_shortfall":
+      ownerScore += 4;
+      break;
+    case "laytime_demurrage_difference":
+      ownerScore += 3;
+      break;
+    case "off_hire_deduction":
+      chartererScore += 4;
+      break;
+    case "port_cost_difference":
+      ownerScore += 2;
+      break;
+    case "bunker_difference":
+      ownerScore += 1;
+      chartererScore += 1;
+      break;
+    case "invoice_mismatch":
+      ownerScore += 1;
+      chartererScore += 1;
+      break;
+    case "custom":
+      break;
+  }
+
+  if (corpus.includes("underpaid") || corpus.includes("unpaid") || corpus.includes("freight shortfall")) {
+    ownerScore += 2;
+  }
+  if (corpus.includes("off-hire") || corpus.includes("deduction") || corpus.includes("overcharge")) {
+    chartererScore += 2;
+  }
+  if (corpus.includes("reimbursement") || corpus.includes("demurrage")) {
+    ownerScore += 1;
+  }
+
+  evidenceDocuments.forEach((document) => {
+    const lowerName = document.name.toLowerCase();
+
+    if (document.type === "Invoice" && document.uploaderRole === "Owner") {
+      ownerScore += 2;
+    }
+    if (document.type === "Email" && document.uploaderRole === "Charterer") {
+      chartererScore += 1;
+    }
+    if (document.type === "PDA / FDA" || document.type === "Port document") {
+      ownerScore += reasonKey === "port_cost_difference" ? 2 : 1;
+    }
+    if (document.type === "SOF") {
+      if (reasonKey === "off_hire_deduction") chartererScore += 2;
+      if (reasonKey === "laytime_demurrage_difference") ownerScore += 2;
+    }
+    if (lowerName.includes("deduction") || lowerName.includes("counterclaim")) {
+      chartererScore += 2;
+    }
+    if (lowerName.includes("freight") || lowerName.includes("demurrage") || lowerName.includes("reimbursement")) {
+      ownerScore += 2;
+    }
+    if (lowerName.includes("bunker")) {
+      if (document.uploaderRole === "Owner") ownerScore += 1;
+      if (document.uploaderRole === "Charterer") chartererScore += 1;
+    }
+  });
+
+  const side: ClaimPartyRole = ownerScore >= chartererScore ? "Owner" : "Charterer";
+  const spread = Math.abs(ownerScore - chartererScore);
+
+  return {
+    side,
+    confidence: spread >= 3 ? "high" : spread >= 1 ? "medium" : "low",
+  };
+}
+
+function derivePaymentDirection(reasonKey: DisputeReasonKey, claimSide: ClaimPartyRole) {
+  const respondentRole: ClaimPartyRole = claimSide === "Owner" ? "Charterer" : "Owner";
+
+  if (reasonKey === "off_hire_deduction" && claimSide === "Charterer") {
+    return {
+      payerRole: "Owner" as ClaimPartyRole,
+      payeeRole: "Charterer" as ClaimPartyRole,
+    };
+  }
+
+  return {
+    payerRole: respondentRole,
+    payeeRole: claimSide,
+  };
+}
+
+function getDirectionIssue(
+  reasonKey: DisputeReasonKey,
+  claimSide: ClaimPartyRole,
+  evidenceDocuments: EvidenceVaultDocument[],
+) {
+  if (reasonKey === "freight_shortfall" && claimSide !== "Owner") {
+    return "Freight shortfall should be raised from the Owner side in this demo.";
+  }
+
+  if (reasonKey === "off_hire_deduction" && claimSide !== "Charterer") {
+    return "Off-hire deduction should be raised from the Charterer side in this demo.";
+  }
+
+  if (reasonKey === "laytime_demurrage_difference" && claimSide !== "Owner") {
+    return "Laytime / demurrage difference is expected to open from the Owner side in this demo.";
+  }
+
+  const inferred = inferClaimSide(reasonKey, "", evidenceDocuments);
+  if (inferred.confidence === "high" && inferred.side !== claimSide) {
+    return `${getDisputeReasonLabel(reasonKey).labelEn} currently points more naturally to the ${inferred.side} side based on the evidence pack.`;
+  }
+
+  return null;
 }
 
 function parseCurrencyAmount(text: string | undefined) {
@@ -697,44 +1063,11 @@ function buildDisputeSummary(
     return commercialRisk;
   }
 
+  if (reasonKey === "port_cost_difference") {
+    return "Generated recap indicates a port-cost exposure that may need DA / invoice review.";
+  }
+
   return `Generated recap indicates a ${reasonLabel.toLowerCase()} that may require settlement review.`;
-}
-
-function selectSuggestedEvidenceIds(
-  reasonKey: DisputeReasonKey,
-  evidenceDocuments: EvidenceVaultDocument[],
-) {
-  const relevantTypes = new Set(
-    getEvidenceRequirements(reasonKey).flatMap((requirement) => requirement.anyOf),
-  );
-
-  if (relevantTypes.size === 0) {
-    return evidenceDocuments.slice(0, 2).map((item) => item.id);
-  }
-
-  return evidenceDocuments
-    .filter((document) => relevantTypes.has(document.type))
-    .slice(0, 4)
-    .map((item) => item.id);
-}
-
-function getDefaultClaimSideForReason(reasonKey: DisputeReasonKey): ClaimPartyRole {
-  if (reasonKey === "freight_shortfall" || reasonKey === "laytime_demurrage_difference") {
-    return "Owner";
-  }
-
-  return "Charterer";
-}
-
-function getDirectionIssue(
-  reasonKey: DisputeReasonKey,
-  claimSide: ClaimPartyRole,
-) {
-  if (reasonKey === "freight_shortfall" && claimSide !== "Owner") {
-    return "In this freight-payment demo, freight shortfall should be raised from the Owner side.";
-  }
-
-  return null;
 }
 
 function normalizeClaimSide(value: unknown, fallback: ClaimPartyRole): ClaimPartyRole {
