@@ -150,6 +150,29 @@ const reasonKeywords: Record<DisputeReasonKey, string[]> = {
   custom: ["claim", "settlement", "dispute"],
 };
 
+const demoDirectionRules: Partial<
+  Record<
+    DisputeReasonKey,
+    {
+      claimSide: ClaimPartyRole;
+      message: string;
+    }
+  >
+> = {
+  freight_shortfall: {
+    claimSide: "Owner",
+    message: "Freight shortfall should be raised from the Owner side in this demo.",
+  },
+  off_hire_deduction: {
+    claimSide: "Charterer",
+    message: "Off-hire deduction should be raised from the Charterer side in this demo.",
+  },
+  laytime_demurrage_difference: {
+    claimSide: "Owner",
+    message: "Laytime / demurrage difference is expected to open from the Owner side in this demo.",
+  },
+};
+
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
 
@@ -386,7 +409,7 @@ export function assessSettlementDraft(
   draft: SettlementDraft,
   selectedEvidence: EvidenceVaultDocument[],
 ): SettlementAssessment {
-  const seedContext = deriveSettlementSeedContext(selectedEvidence);
+  const seedContext = deriveSettlementSeedContext();
   const disputeOpen = seedContext.disputeDetected || draft.openingMode === "manual-review";
   const issues: string[] = [];
   const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
@@ -1015,16 +1038,9 @@ function getDirectionIssue(
   claimSide: ClaimPartyRole,
   evidenceDocuments: EvidenceVaultDocument[],
 ) {
-  if (reasonKey === "freight_shortfall" && claimSide !== "Owner") {
-    return "Freight shortfall should be raised from the Owner side in this demo.";
-  }
-
-  if (reasonKey === "off_hire_deduction" && claimSide !== "Charterer") {
-    return "Off-hire deduction should be raised from the Charterer side in this demo.";
-  }
-
-  if (reasonKey === "laytime_demurrage_difference" && claimSide !== "Owner") {
-    return "Laytime / demurrage difference is expected to open from the Owner side in this demo.";
+  const demoRule = demoDirectionRules[reasonKey];
+  if (demoRule && claimSide !== demoRule.claimSide) {
+    return demoRule.message;
   }
 
   const inferred = inferClaimSide(reasonKey, "", evidenceDocuments);
