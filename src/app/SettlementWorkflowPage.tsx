@@ -169,9 +169,7 @@ export function SettlementWorkflowPage() {
               status={
                 !seedContext.disputeDetected
                   ? "No dispute package opened"
-                  : seedContext.referenceAmount
-                    ? "Reference amount inferred from recap"
-                    : "Amount basis still needs confirmation"
+                  : "Amount basis still needs confirmation"
               }
             />
             <AmountCard
