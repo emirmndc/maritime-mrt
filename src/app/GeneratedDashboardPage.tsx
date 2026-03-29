@@ -131,6 +131,7 @@ export function GeneratedDashboardPage() {
     () => currentSettlement.evidenceIds.length > 0 ? currentSettlement.evidenceIds : settlementSeed.evidenceIds,
   );
   const [packageMessage, setPackageMessage] = useState<string>("");
+  const [amountsNeedReconfirm, setAmountsNeedReconfirm] = useState(false);
   const suggestedEvidenceIds = useMemo(
     () => getSuggestedEvidenceIds(reasonKey, vaultDocuments),
     [reasonKey, vaultDocuments],
@@ -198,6 +199,10 @@ export function GeneratedDashboardPage() {
       issues.push("No generated dispute signal is available for this voyage recap.");
     }
 
+    if (amountsNeedReconfirm) {
+      issues.push("Dispute reason changed. Reconfirm claimed and admitted amounts before opening the package.");
+    }
+
     if (claimedAmount <= 0) {
       issues.push("Set the claimed exposure before opening the dispute package.");
     }
@@ -233,6 +238,7 @@ export function GeneratedDashboardPage() {
     return issues;
   }, [
     admittedAmount,
+    amountsNeedReconfirm,
     claimedAmount,
     customReason,
     disputedAmount,
@@ -252,14 +258,27 @@ export function GeneratedDashboardPage() {
     );
   }
 
+  function handleReasonChange(nextReason: DisputeReasonKey) {
+    const reasonChanged = nextReason !== reasonKey;
+
+    setReasonKey(nextReason);
+    setClaimSide(getSuggestedClaimSide(nextReason, vaultDocuments));
+    setSelectedEvidenceIds(getSuggestedEvidenceIds(nextReason, vaultDocuments));
+    setPackageMessage("");
+
+    if (reasonChanged && (claimedAmount > 0 || admittedAmount > 0)) {
+      setAmountsNeedReconfirm(true);
+      return;
+    }
+
+    setAmountsNeedReconfirm(false);
+  }
+
   function applyGeneratedSuggestion() {
     setOpeningMode(settlementSeed.disputeDetected ? "generated-signal" : "manual-review");
-    setReasonKey(settlementSeed.reasonKey);
-    setClaimSide(settlementSeed.claimSide);
+    handleReasonChange(settlementSeed.reasonKey);
     setDueDate(defaultDueDate);
     setCustomReason(settlementSeed.reasonKey === "custom" ? settlementSeed.summary : "");
-    setSelectedEvidenceIds(getSuggestedEvidenceIds(settlementSeed.reasonKey, vaultDocuments));
-    setPackageMessage("");
   }
 
   function handleOpenDisputePackage() {
@@ -477,13 +496,7 @@ export function GeneratedDashboardPage() {
                 <span>Dispute reason</span>
                 <select
                   value={reasonKey}
-                  onChange={(event) => {
-                    const nextReason = event.target.value as DisputeReasonKey;
-                    setReasonKey(nextReason);
-                    setClaimSide(getSuggestedClaimSide(nextReason, vaultDocuments));
-                    setSelectedEvidenceIds(getSuggestedEvidenceIds(nextReason, vaultDocuments));
-                    setPackageMessage("");
-                  }}
+                  onChange={(event) => handleReasonChange(event.target.value as DisputeReasonKey)}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
                 >
                   {disputeReasonCatalog.map((reason) => (
@@ -510,7 +523,10 @@ export function GeneratedDashboardPage() {
                   min="0"
                   step="0.01"
                   value={claimedAmount}
-                  onChange={(event) => setClaimedAmount(Number(event.target.value) || 0)}
+                  onChange={(event) => {
+                    setClaimedAmount(Number(event.target.value) || 0);
+                    setAmountsNeedReconfirm(false);
+                  }}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
                 />
               </label>
@@ -522,11 +538,30 @@ export function GeneratedDashboardPage() {
                   min="0"
                   step="0.01"
                   value={admittedAmount}
-                  onChange={(event) => setAdmittedAmount(Number(event.target.value) || 0)}
+                  onChange={(event) => {
+                    setAdmittedAmount(Number(event.target.value) || 0);
+                    setAmountsNeedReconfirm(false);
+                  }}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
                 />
               </label>
             </div>
+
+            {amountsNeedReconfirm ? (
+              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                <div className="font-semibold">Amounts need reconfirmation</div>
+                <div className="mt-2 leading-7 text-amber-100/85">
+                  The dispute reason changed. Recheck the claimed and admitted figures for this new basis before opening the package.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAmountsNeedReconfirm(false)}
+                  className="mt-4 rounded-full border border-amber-300/20 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-white/[0.08]"
+                >
+                  Reconfirm current amounts
+                </button>
+              </div>
+            ) : null}
 
             <div className="mt-4 grid gap-2 text-sm text-white/75">
               <span>Claim side</span>
