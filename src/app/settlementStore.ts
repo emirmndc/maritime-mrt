@@ -76,7 +76,8 @@ export type SettlementPartyModel = {
   payeeName: string;
 };
 
-const EVIDENCE_KEY = "generated-dashboard-evidence-vault";
+const EVIDENCE_KEY = "mrt-evidence-vault";
+const LEGACY_EVIDENCE_KEY = "generated-dashboard-evidence-vault";
 const SETTLEMENT_DRAFT_KEY = "generated-dashboard-settlement-draft";
 const SETTLEMENT_STORE_EVENT = "generated-dashboard-settlement-store-updated";
 
@@ -85,17 +86,17 @@ export const disputeReasonCatalog: Array<{
   labelEn: string;
   labelTr: string;
 }> = [
-  { key: "port_cost_difference", labelEn: "Port cost difference", labelTr: "Liman maliyeti farki" },
-  { key: "invoice_mismatch", labelEn: "Invoice mismatch", labelTr: "Fatura uyusmazligi" },
-  { key: "off_hire_deduction", labelEn: "Off-hire deduction", labelTr: "Off-hire kesintisi" },
-  { key: "bunker_difference", labelEn: "Bunker difference", labelTr: "Bunker farki" },
-  { key: "freight_shortfall", labelEn: "Freight shortfall", labelTr: "Navlun eksigi" },
+  { key: "port_cost_difference", labelEn: "Port cost difference", labelTr: "Port cost difference" },
+  { key: "invoice_mismatch", labelEn: "Invoice mismatch", labelTr: "Invoice mismatch" },
+  { key: "off_hire_deduction", labelEn: "Off-hire deduction", labelTr: "Off-hire deduction" },
+  { key: "bunker_difference", labelEn: "Bunker difference", labelTr: "Bunker difference" },
+  { key: "freight_shortfall", labelEn: "Freight shortfall", labelTr: "Freight shortfall" },
   {
     key: "laytime_demurrage_difference",
     labelEn: "Laytime / demurrage difference",
-    labelTr: "Laytime / demurrage farki",
+    labelTr: "Laytime / demurrage difference",
   },
-  { key: "custom", labelEn: "Custom reason", labelTr: "Ozel neden" },
+  { key: "custom", labelEn: "Custom reason", labelTr: "Custom reason" },
 ];
 
 export const evidenceTypeCatalog: Array<{
@@ -103,38 +104,39 @@ export const evidenceTypeCatalog: Array<{
   labelEn: string;
   labelTr: string;
 }> = [
-  { value: "Invoice", labelEn: "Invoice", labelTr: "Fatura" },
+  { value: "Invoice", labelEn: "Invoice", labelTr: "Invoice" },
   { value: "SOF", labelEn: "SOF", labelTr: "SOF" },
-  { value: "CP clause", labelEn: "CP clause", labelTr: "CP klozu" },
-  { value: "Email", labelEn: "Email", labelTr: "E-posta" },
+  { value: "CP clause", labelEn: "CP clause", labelTr: "CP clause" },
+  { value: "Email", labelEn: "Email", labelTr: "Email" },
   { value: "PDA / FDA", labelEn: "PDA / FDA", labelTr: "PDA / FDA" },
   { value: "Recap", labelEn: "Recap", labelTr: "Recap" },
-  { value: "Port document", labelEn: "Port document", labelTr: "Liman evraki" },
+  { value: "Port document", labelEn: "Port document", labelTr: "Port document" },
 ];
 
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
 
-  const raw = sessionStorage.getItem(EVIDENCE_KEY);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as unknown[];
-      return parsed
-        .map((item) => normalizeEvidenceDocument(item))
-        .filter((item): item is EvidenceVaultDocument => Boolean(item));
-    } catch {
-      sessionStorage.removeItem(EVIDENCE_KEY);
-    }
-  }
+  const manualDocuments = loadStoredEvidenceDocuments();
+  const seededDocuments = buildSeedDocuments();
 
-  const seeded = buildSeedDocuments();
-  saveEvidenceVaultDocuments(seeded);
-  return seeded;
+  return dedupeEvidenceDocuments([...manualDocuments, ...seededDocuments]);
 }
 
 export function saveEvidenceVaultDocuments(documents: EvidenceVaultDocument[]) {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(EVIDENCE_KEY, JSON.stringify(documents));
+
+  const storedDocuments = documents
+    .filter((document) => document.source === "manual-upload")
+    .map((document) => ({
+      id: document.id,
+      fileName: document.name,
+      timestamp: document.uploadedAt,
+      uploaderRole: document.uploaderRole,
+      documentType: document.type,
+      fileUrl: document.fileDataUrl ?? "",
+    }));
+
+  sessionStorage.setItem(EVIDENCE_KEY, JSON.stringify(storedDocuments));
   emitSettlementStoreUpdate();
 }
 
@@ -179,13 +181,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "port-cost-basis",
           label: "Port cost backup",
-          labelTr: "Liman maliyet dayanagi",
+          labelTr: "Port cost backup",
           anyOf: ["PDA / FDA", "Port document"],
         },
         {
           id: "commercial-correspondence",
           label: "Commercial support",
-          labelTr: "Ticari destek",
+          labelTr: "Commercial support",
           anyOf: ["Email", "Invoice"],
         },
       ];
@@ -194,13 +196,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "invoice-base",
           label: "Invoice basis",
-          labelTr: "Fatura dayanagi",
+          labelTr: "Invoice basis",
           anyOf: ["Invoice"],
         },
         {
           id: "supporting-thread",
           label: "Supporting thread",
-          labelTr: "Destekleyici yazisma",
+          labelTr: "Supporting thread",
           anyOf: ["Email", "Recap"],
         },
       ];
@@ -209,13 +211,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "contract-basis",
           label: "Contract basis",
-          labelTr: "Sozlesme dayanagi",
+          labelTr: "Contract basis",
           anyOf: ["CP clause", "Email"],
         },
         {
           id: "operational-support",
           label: "Operational support",
-          labelTr: "Operasyonel destek",
+          labelTr: "Operational support",
           anyOf: ["SOF", "Email"],
         },
       ];
@@ -224,13 +226,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "bunker-basis",
           label: "Bunker cost basis",
-          labelTr: "Bunker maliyet dayanagi",
+          labelTr: "Bunker cost basis",
           anyOf: ["Invoice"],
         },
         {
           id: "bunker-thread",
           label: "Commercial support",
-          labelTr: "Ticari destek",
+          labelTr: "Commercial support",
           anyOf: ["Email", "CP clause"],
         },
       ];
@@ -239,13 +241,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "freight-invoice",
           label: "Freight invoice",
-          labelTr: "Navlun faturasi",
+          labelTr: "Freight invoice",
           anyOf: ["Invoice"],
         },
         {
           id: "freight-basis",
           label: "Freight basis",
-          labelTr: "Navlun dayanagi",
+          labelTr: "Freight basis",
           anyOf: ["Recap", "CP clause", "Email"],
         },
       ];
@@ -254,13 +256,13 @@ export function getEvidenceRequirements(reasonKey: DisputeReasonKey): EvidenceRe
         {
           id: "time-counting-record",
           label: "Time-counting record",
-          labelTr: "Sure sayim kaydi",
+          labelTr: "Time-counting record",
           anyOf: ["SOF"],
         },
         {
           id: "contract-or-thread",
           label: "Contract / correspondence support",
-          labelTr: "Sozlesme / yazisma destegi",
+          labelTr: "Contract / correspondence support",
           anyOf: ["CP clause", "Email"],
         },
       ];
@@ -414,6 +416,7 @@ function normalizeEvidenceDocument(raw: unknown): EvidenceVaultDocument | null {
     documentType?: EvidenceDocumentType;
     evidenceType?: EvidenceDocumentType;
     timestamp?: string;
+    fileUrl?: string;
   };
   const type = item.type ?? item.documentType ?? item.evidenceType;
 
@@ -436,8 +439,41 @@ function normalizeEvidenceDocument(raw: unknown): EvidenceVaultDocument | null {
       item.source === "generated-dashboard" || item.source === "manual-upload"
         ? item.source
         : "manual-upload",
-    fileDataUrl: typeof item.fileDataUrl === "string" ? item.fileDataUrl : undefined,
+    fileDataUrl:
+      typeof item.fileDataUrl === "string"
+        ? item.fileDataUrl
+        : typeof item.fileUrl === "string"
+          ? item.fileUrl
+          : undefined,
   };
+}
+
+function loadStoredEvidenceDocuments() {
+  if (typeof window === "undefined") return [];
+
+  const raw = sessionStorage.getItem(EVIDENCE_KEY) ?? sessionStorage.getItem(LEGACY_EVIDENCE_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as unknown[];
+    return parsed
+      .map((item) => normalizeEvidenceDocument(item))
+      .filter((item): item is EvidenceVaultDocument => Boolean(item));
+  } catch {
+    sessionStorage.removeItem(EVIDENCE_KEY);
+    sessionStorage.removeItem(LEGACY_EVIDENCE_KEY);
+    return [];
+  }
+}
+
+function dedupeEvidenceDocuments(documents: EvidenceVaultDocument[]) {
+  const seen = new Set<string>();
+
+  return documents.filter((document) => {
+    if (seen.has(document.id)) return false;
+    seen.add(document.id);
+    return true;
+  });
 }
 
 function normalizeSettlementDraft(raw: unknown): SettlementDraft {
@@ -452,10 +488,7 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
   };
   const fallback = buildSeedSettlementDraft();
   const claimedAmount = sanitizeNumber(item.claimedAmount ?? item.totalAmount, fallback.claimedAmount);
-  const legacyDisputedAmount = sanitizeNumber(
-    item.disputedAmount,
-    fallback.claimedAmount - fallback.admittedAmount,
-  );
+  const legacyDisputedAmount = sanitizeNumber(item.disputedAmount, fallback.claimedAmount - fallback.admittedAmount);
   const admittedAmount = clampNumber(
     sanitizeNumber(item.admittedAmount, claimedAmount - legacyDisputedAmount),
     0,
