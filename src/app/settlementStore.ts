@@ -64,6 +64,16 @@ export type SettlementAssessment = {
   isReady: boolean;
 };
 
+export type SettlementSeedContext = {
+  disputeDetected: boolean;
+  reasonKey: DisputeReasonKey;
+  claimSide: ClaimPartyRole;
+  summary: string;
+  referenceAmount: number | null;
+  currency: string;
+  evidenceIds: string[];
+};
+
 export type SettlementPartyModel = {
   claimSide: ClaimPartyRole;
   claimantRole: ClaimPartyRole;
@@ -275,6 +285,40 @@ export function deriveDisputedAmount(claimedAmount: number, admittedAmount: numb
   return Math.max(claimedAmount - admittedAmount, 0);
 }
 
+export function deriveSettlementSeedContext(
+  evidenceDocuments: EvidenceVaultDocument[] = loadEvidenceVaultDocuments(),
+): SettlementSeedContext {
+  const generated = loadGeneratedVoyage();
+  const corpus = [
+    generated?.commercial_risk,
+    ...(generated?.health_reasons ?? []),
+    ...(generated?.flags ?? []).flatMap((item) => [item.title, item.guidance]),
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(" ")
+    .toLowerCase();
+
+  const reasonKey = inferDisputeReasonFromCorpus(corpus);
+  const disputeDetected = hasDisputeSignal(corpus);
+  const referenceAmount = shouldSeedReferenceAmount(reasonKey)
+    ? parseCurrencyAmount(generated?.freight_term).amount
+    : null;
+  const currency = parseCurrencyAmount(generated?.freight_term).currency ?? "USD";
+  const summary = disputeDetected
+    ? buildDisputeSummary(generated, reasonKey)
+    : "No payment or claim dispute signal was detected in the generated recap context.";
+
+  return {
+    disputeDetected,
+    reasonKey,
+    claimSide: getDefaultClaimSideForReason(reasonKey),
+    summary,
+    referenceAmount,
+    currency,
+    evidenceIds: disputeDetected ? selectSuggestedEvidenceIds(reasonKey, evidenceDocuments) : [],
+  };
+}
+
 export function getSettlementPartyModel(claimSide: ClaimPartyRole): SettlementPartyModel {
   const generated = loadGeneratedVoyage();
   const ownerName = generated?.owner || "Northshore Bulk Pte. Ltd.";
@@ -298,6 +342,7 @@ export function assessSettlementDraft(
   draft: SettlementDraft,
   selectedEvidence: EvidenceVaultDocument[],
 ): SettlementAssessment {
+  const seedContext = deriveSettlementSeedContext();
   const issues: string[] = [];
   const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
   const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide);
@@ -309,23 +354,31 @@ export function assessSettlementDraft(
     .filter((item) => !item.satisfied)
     .map((item) => item.label);
 
-  if (draft.claimedAmount <= 0) {
-    issues.push("Set a claimed amount greater than zero.");
+  if (!seedContext.disputeDetected) {
+    issues.push(
+      "No dispute signal was detected in the generated recap. Keep settlement closed until a real payment, cost, deduction, or claim issue is identified.",
+    );
   }
 
-  if (draft.admittedAmount < 0) {
+  if (seedContext.disputeDetected && draft.claimedAmount <= 0) {
+    issues.push("Set the claimed exposure before opening settlement.");
+  }
+
+  if (seedContext.disputeDetected && draft.admittedAmount < 0) {
     issues.push("Admitted payable amount cannot be negative.");
   }
 
-  if (draft.admittedAmount > draft.claimedAmount) {
+  if (seedContext.disputeDetected && draft.admittedAmount > draft.claimedAmount) {
     issues.push("Admitted payable amount cannot exceed claimed amount.");
   }
 
-  if (disputedAmount <= 0) {
-    issues.push("A split only makes sense when a disputed amount remains.");
+  if (seedContext.disputeDetected && disputedAmount <= 0) {
+    issues.push(
+      "A dispute signal exists, but the disputed portion has not been isolated yet. Confirm the payable amount before splitting.",
+    );
   }
 
-  if (!draft.dueDate.trim()) {
+  if (seedContext.disputeDetected && !draft.dueDate.trim()) {
     issues.push("Set a due date or payment deadline.");
   }
 
@@ -388,23 +441,27 @@ function buildSeedDocuments(): EvidenceVaultDocument[] {
 function buildSeedSettlementDraft(): SettlementDraft {
   const generated = loadGeneratedVoyage();
   const evidence = buildSeedDocuments();
-  const defaultReason = generated?.commercial_risk?.toLowerCase().includes("demurrage")
-    ? "laytime_demurrage_difference"
-    : "port_cost_difference";
-  const claimedAmount = 1000000;
-  const admittedAmount = 990000;
+  const seedContext = deriveSettlementSeedContext(evidence);
+  const claimedAmount = seedContext.referenceAmount ?? 0;
+  const admittedAmount = claimedAmount;
 
   return {
     id: "settlement-a102",
-    title: generated?.route ? `Freight Payment - ${generated.route}` : "Freight Payment - Voyage #A102",
+    title: seedContext.disputeDetected
+      ? generated?.route
+        ? `Settlement Review - ${generated.route}`
+        : "Settlement Review - Voyage #A102"
+      : generated?.route
+        ? `No Dispute Package Opened - ${generated.route}`
+        : "No Dispute Package Opened - Voyage #A102",
     claimedAmount,
     admittedAmount,
-    currency: "USD",
+    currency: seedContext.currency,
     dueDate: generated?.next_deadline || generated?.claim_deadline || "28 Mar 2026",
-    claimSide: getDefaultClaimSideForReason(defaultReason),
-    reasonKey: defaultReason,
-    customReason: "",
-    evidenceIds: evidence.slice(0, 4).map((item) => item.id),
+    claimSide: seedContext.claimSide,
+    reasonKey: seedContext.reasonKey,
+    customReason: seedContext.reasonKey === "custom" ? seedContext.summary : "",
+    evidenceIds: seedContext.evidenceIds,
   };
 }
 
@@ -563,6 +620,96 @@ function buildDocument(
     source,
     uploadedAt: "28 Mar 2026, 09:20 HRS",
   };
+}
+
+function hasDisputeSignal(corpus: string) {
+  if (!corpus.trim()) return false;
+
+  return [
+    "dispute",
+    "claim",
+    "shortfall",
+    "mismatch",
+    "difference",
+    "deduction",
+    "underpaid",
+    "unpaid",
+    "off-hire",
+    "demurrage",
+    "laytime",
+    "bunker",
+    "port cost",
+    "overcharge",
+  ].some((keyword) => corpus.includes(keyword));
+}
+
+function inferDisputeReasonFromCorpus(corpus: string): DisputeReasonKey {
+  if (corpus.includes("off-hire")) return "off_hire_deduction";
+  if (corpus.includes("bunker")) return "bunker_difference";
+  if (corpus.includes("demurrage") || corpus.includes("laytime")) {
+    return "laytime_demurrage_difference";
+  }
+  if (corpus.includes("freight") && (corpus.includes("shortfall") || corpus.includes("underpaid"))) {
+    return "freight_shortfall";
+  }
+  if (corpus.includes("invoice") || corpus.includes("mismatch")) return "invoice_mismatch";
+  if (corpus.includes("port cost") || corpus.includes("pda") || corpus.includes("fda")) {
+    return "port_cost_difference";
+  }
+  return "custom";
+}
+
+function shouldSeedReferenceAmount(reasonKey: DisputeReasonKey) {
+  return reasonKey === "freight_shortfall" || reasonKey === "invoice_mismatch";
+}
+
+function parseCurrencyAmount(text: string | undefined) {
+  if (!text) {
+    return { amount: null as number | null, currency: null as string | null };
+  }
+
+  const match = text.match(/\b(USD|EUR|GBP)\s*([0-9][0-9,]*(?:\.\d+)?)\b/i);
+  if (!match) {
+    return { amount: null as number | null, currency: null as string | null };
+  }
+
+  const amount = Number(match[2].replace(/,/g, ""));
+  return {
+    amount: Number.isFinite(amount) ? amount : null,
+    currency: match[1].toUpperCase(),
+  };
+}
+
+function buildDisputeSummary(
+  generated: ReturnType<typeof loadGeneratedVoyage>,
+  reasonKey: DisputeReasonKey,
+) {
+  const reasonLabel = getDisputeReasonLabel(reasonKey).labelEn;
+  const commercialRisk = generated?.commercial_risk?.trim();
+
+  if (commercialRisk) {
+    return commercialRisk;
+  }
+
+  return `Generated recap indicates a ${reasonLabel.toLowerCase()} that may require settlement review.`;
+}
+
+function selectSuggestedEvidenceIds(
+  reasonKey: DisputeReasonKey,
+  evidenceDocuments: EvidenceVaultDocument[],
+) {
+  const relevantTypes = new Set(
+    getEvidenceRequirements(reasonKey).flatMap((requirement) => requirement.anyOf),
+  );
+
+  if (relevantTypes.size === 0) {
+    return evidenceDocuments.slice(0, 2).map((item) => item.id);
+  }
+
+  return evidenceDocuments
+    .filter((document) => relevantTypes.has(document.type))
+    .slice(0, 4)
+    .map((item) => item.id);
 }
 
 function getDefaultClaimSideForReason(reasonKey: DisputeReasonKey): ClaimPartyRole {
