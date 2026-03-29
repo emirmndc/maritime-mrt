@@ -103,12 +103,12 @@ export function SettlementWorkflowPage() {
       buildSettlementView(
         activeSource,
         parties,
-        seedContext,
+        disputeOpen,
         assessment.disputedAmount,
         assessment.isReady,
         Boolean(stage),
       ),
-    [activeSource, parties, seedContext, assessment.disputedAmount, assessment.isReady, stage],
+    [activeSource, parties, disputeOpen, assessment.disputedAmount, assessment.isReady, stage],
   );
 
   useEffect(() => {
@@ -632,13 +632,12 @@ function loadSettlementSource(): SettlementSource {
 function buildSettlementView(
   source: SettlementSource,
   parties: ReturnType<typeof getSettlementPartyModel>,
-  seedContext: ReturnType<typeof deriveSettlementSeedContext>,
+  disputeOpen: boolean,
   disputedAmount: number,
   isReady: boolean,
   isStaged: boolean,
 ): SettlementView {
   const reasonLabel = getDisputeReasonLabel(source.draft.reasonKey);
-  const disputeOpen = seedContext.disputeDetected || source.draft.openingMode === "manual-review";
   const reason =
     source.draft.reasonKey === "custom"
       ? source.draft.customReason.trim() || "Custom review note"
