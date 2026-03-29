@@ -1,171 +1,699 @@
+import { useId, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type DragEvent,
-} from "react";
-import {
-  ChevronDown,
-  ClipboardList,
+  AlertTriangle,
+  Clock3,
+  FileSearch,
   FileStack,
-  FolderOpenDot,
-  Landmark,
+  Mail,
+  TriangleAlert,
   Upload,
-  WalletCards,
 } from "lucide-react";
-import { loadGeneratedVoyage } from "./generatedVoyage";
+import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
 import {
-  assessSettlementDraft,
-  disputeReasonCatalog,
-  evidenceTypeCatalog,
-  getDisputeReasonLabel,
-  getSettlementPartyModel,
-  loadEvidenceVaultDocuments,
-  loadSettlementDraft,
-  saveEvidenceVaultDocuments,
-  saveSettlementDraft,
-  type ClaimPartyRole,
-  type DisputeReasonKey,
-  type EvidenceDocumentType,
-  type EvidenceUploaderRole,
-  type EvidenceVaultDocument,
-  type SettlementDraft,
-} from "./settlementStore";
-import { AppShell, CTAButton, Surface } from "./ui";
+  loadGeneratedVoyage,
+  type ConfidenceLevel,
+  type GeneratedCaution,
+  type SourceTraceItem,
+} from "./generatedVoyage";
+
+const flagTone = {
+  medium: "border-amber-400/20 bg-amber-500/10 text-amber-100",
+  high: "border-rose-400/20 bg-rose-500/10 text-rose-100",
+} as const;
+
+const documentTone = {
+  uploaded: "border-sky-400/20 bg-sky-500/10 text-sky-100",
+  missing: "border-rose-400/20 bg-rose-500/10 text-rose-100",
+  awaiting_review: "border-amber-400/20 bg-amber-500/10 text-amber-100",
+  draft_only: "border-violet-400/20 bg-violet-500/10 text-violet-100",
+  confirmed: "border-emerald-400/20 bg-emerald-500/10 text-emerald-100",
+} as const;
+
+const EVIDENCE_VAULT_STORAGE_KEY = "mrt-evidence-vault";
+
+type EvidenceType =
+  | "Invoice"
+  | "SOF"
+  | "CP clause"
+  | "Email"
+  | "PDA / FDA"
+  | "Recap"
+  | "Port document";
+
+type VaultEntry = {
+  id: string;
+  fileName: string;
+  timestamp: string;
+  uploaderRole: "Owner" | "Charterer" | "Agent";
+  documentType: EvidenceType;
+  fileUrl: string;
+};
+
+const evidenceTypeOptions: EvidenceType[] = [
+  "Invoice",
+  "SOF",
+  "CP clause",
+  "Email",
+  "PDA / FDA",
+  "Recap",
+  "Port document",
+];
 
 export function GeneratedDashboardPage() {
-  const voyage = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
-  const [documents, setDocuments] = useState<EvidenceVaultDocument[]>(() =>
-    loadEvidenceVaultDocuments(),
+  const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
+
+  const summaryRoute =
+    generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
+
+  const keyRisks = useMemo(() => (generated?.flags || []).slice(0, 3), [generated]);
+  const nextActions = useMemo(
+    () => [...(generated?.owner_tasks || []), ...(generated?.charterer_tasks || [])].slice(0, 3),
+    [generated],
   );
-  const [draft, setDraft] = useState(() => loadSettlementDraft());
-  const [uploaderRole, setUploaderRole] = useState<EvidenceUploaderRole>("Owner");
-  const [manualType, setManualType] = useState<EvidenceDocumentType>("Invoice");
-  const [customReason, setCustomReason] = useState(draft.customReason);
+  const blockingDocuments = useMemo(
+    () =>
+      (generated?.documents || []).filter(
+        (item) =>
+          item.status === "missing" ||
+          item.status === "awaiting_review" ||
+          item.status === "draft_only",
+      ),
+    [generated],
+  );
+  const timingAdvisories = useMemo(
+    () => (generated?.timing_advisories || []).slice(0, 4),
+    [generated],
+  );
+
+  if (!generated) {
+    return (
+      <AppShell
+        eyebrow="Workflow Draft"
+        title="No operational draft available yet."
+        description="Generate a draft from a voyage recap first. This screen is designed as a review surface, not a final decision engine."
+      >
+        <Surface>
+          <div className="text-sm text-white/70">
+            No operational draft is stored in this session yet.
+          </div>
+          <div className="mt-6">
+            <CTAButton route="/app/try-demo">Go to Try Demo</CTAButton>
+          </div>
+        </Surface>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell
+      eyebrow="Workflow Draft"
+      title="Recap -> Operational Draft Dashboard"
+      description="Extracted from recap text and organized into a review-required workflow draft. This interface does not decide who is right and does not replace human review."
+    >
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <Surface>
+          <HeaderTag label="Operational draft" tone="mixed" />
+          <h2 className="mt-4 break-words text-3xl font-bold">{summaryRoute}</h2>
+          <p className="mt-3 text-white/68">
+            {generated.cargo || "Cargo pending review"} - Broker:{" "}
+            {generated.broker || "Pending review"}
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
+            <MetricCard
+              tag="Extracted"
+              label="Charterer"
+              value={generated.charterer || "Pending review"}
+              tone="extracted"
+            />
+            <MetricCard
+              tag="Suggested"
+              label="Workflow status"
+              value={generated.voyage_status || "Pending review"}
+              tone="suggested"
+            />
+            <MetricCard
+              tag="Requires confirmation"
+              label="Next deadline"
+              value={generated.next_deadline || "Pending review"}
+              tone="review"
+            />
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-[#4f97e8]/15 bg-[#3373B7]/10 p-4 text-sm leading-7 text-white/72">
+            Part of the <span className="font-semibold text-white">MARITIME (MRT)</span>{" "}
+            credibility-first roadmap: token layer live, workflow utility still in staged proof form.
+          </div>
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("full-breakdown");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.06]"
+            >
+              View full breakdown
+            </button>
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={AlertTriangle} label="Summary panel" subtitle="Attention required" />
+          <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-4 text-amber-100">
+            <div className="text-sm font-semibold">Risk signals detected</div>
+            <div className="mt-3 space-y-2 text-sm leading-7">
+              {(generated.health_reasons?.length
+                ? generated.health_reasons
+                : ["No summary reasons returned"])
+                .slice(0, 3)
+                .map((reason) => (
+                  <div key={reason}>- {reason}</div>
+                ))}
+            </div>
+          </div>
+        </Surface>
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_0.95fr_1.25fr]">
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={TriangleAlert} label="3 critical review points" subtitle="Look here first" />
+          <div className="mt-5 space-y-3">
+            {keyRisks.length === 0 ? (
+              <EmptyBox text="No highlighted review points were returned." />
+            ) : (
+              keyRisks.map((flag) => (
+                <TraceableCard
+                  key={flag.title}
+                  title={flag.title}
+                  body={flag.guidance}
+                  confidence={flag.confidence}
+                  sourceTrace={flag.sourceTrace}
+                  accentClass={flagTone[flag.severity]}
+                />
+              ))
+            )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
+          <div className="mt-5 space-y-3">
+            {nextActions.length === 0 ? (
+              <EmptyBox text="No next actions were returned." />
+            ) : (
+              nextActions.map((task) => (
+                <div
+                  key={task.title}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="break-words font-semibold">{task.title}</div>
+                    <StatusPill status={task.status} />
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-white/68">{task.detail}</p>
+                  <div className="mt-3 text-xs uppercase tracking-[0.2em] text-white/45">
+                    Why this matters
+                  </div>
+                  <div className="mt-2 text-sm leading-7 text-white/78">{task.why_matters}</div>
+                  <TraceFooter confidence={task.confidence} sourceTrace={task.sourceTrace} />
+                </div>
+              ))
+            )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Requires confirmation" tone="review" />
+          <SectionTitle
+            icon={FileStack}
+            label="Missing documents blocking progress"
+            subtitle="Evidence comes first"
+          />
+          <div className="mt-5 space-y-3">
+            {blockingDocuments.length === 0 ? (
+              <EmptyBox text="No blocking document gaps are visible in this draft." />
+            ) : (
+              blockingDocuments.map((document) => (
+                <div
+                  key={document.title}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <div className="break-words font-semibold text-white/90">{document.title}</div>
+                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                    {formatDocumentStatus(document.status)}
+                  </div>
+                  <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
+                </div>
+              ))
+            )}
+          </div>
+          <EvidenceVaultPanel className="mt-5" />
+        </Surface>
+      </div>
+
+      <Surface className="mt-5">
+        <HeaderTag label="Timing advisory" tone="mixed" />
+        <div className="mt-3 text-2xl font-bold">Local holiday and banking watch</div>
+        <div className="mt-2 text-sm text-white/65">
+          Advisory only. Review local port, bank, agent, and customs working arrangements.
+        </div>
+        <div className="mt-5 grid gap-3 xl:grid-cols-2">
+          {timingAdvisories.length === 0 ? (
+            <EmptyBox text="No local holiday or banking advisory was generated for this draft." />
+          ) : (
+            timingAdvisories.map((item, index) => (
+              <div
+                key={`${item.country}-${item.port_context}-${index}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="break-words font-semibold text-white/90">
+                    {item.country} - {item.port_context}
+                  </div>
+                  {item.confidence ? <ConfidenceBadge level={item.confidence} /> : null}
+                </div>
+                <div className="mt-2 text-sm text-[#88c4ff]">
+                  {item.holiday_name || "Holiday / banking calendar review"}
+                </div>
+                <div className="mt-3 text-sm leading-7 text-white/78">{item.advisory}</div>
+                <div className="mt-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Potential impact
+                  </div>
+                  <div className="mt-2 text-sm leading-7 text-white/88">
+                    {formatTimingImpact(item.impact)}
+                  </div>
+                </div>
+                <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
+              </div>
+            ))
+          )}
+        </div>
+      </Surface>
+
+      <div id="full-breakdown" className="mt-5 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+        <Surface>
+          <HeaderTag label="Extracted" tone="extracted" />
+          <SectionTitle icon={FileSearch} label="Recap summary" subtitle="Directly extracted terms" />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {(generated.parser_summary || []).map((item) => (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+              >
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">{item.label}</div>
+                <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Demo state" tone="mixed" />
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
+          <div className="mt-5 space-y-4">
+            {(generated.changes_since_last_update || []).length > 0 ? (
+              generated.changes_since_last_update.map((item) => (
+                <div
+                  key={`${item.title}-${item.stamp}`}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="break-words font-semibold">{item.title}</div>
+                    <div className="text-xs text-[#88c4ff]">{item.stamp}</div>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
+                </div>
+              ))
+            ) : (
+              <EmptyBox text="No new events recorded (demo state)." />
+            )}
+          </div>
+        </Surface>
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <TaskDisclosure
+          title="View Owner tasks"
+          description="Suggested responsibilities extracted from the recap and organized for review."
+          columnTitle="Owner tasks"
+          items={generated.owner_tasks || []}
+        />
+        <TaskDisclosure
+          title="View Charterer tasks"
+          description="Suggested responsibilities extracted from the recap and organized for review."
+          columnTitle="Charterer tasks"
+          items={generated.charterer_tasks || []}
+        />
+      </div>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <Surface>
+          <HeaderTag label="Suggested" tone="suggested" />
+          <SectionTitle icon={AlertTriangle} label="Operational cautions" subtitle="Suggested wording only" />
+          <div className="mt-5 space-y-3">
+            {(generated.risk_notes || []).length > 0 ? (
+              generated.risk_notes.map((note, index) => {
+                const caution = normalizeCaution(note, index);
+                return (
+                  <div
+                    key={caution.title}
+                    className="rounded-2xl border border-amber-400/15 bg-amber-500/5 px-4 py-3 text-sm leading-7 text-white/78"
+                  >
+                    <div className="break-words font-semibold text-white/90">{caution.title}</div>
+                    <div className="mt-2">{caution.body}</div>
+                    <TraceFooter confidence={caution.confidence} sourceTrace={caution.sourceTrace} />
+                  </div>
+                );
+              })
+            ) : (
+              <EmptyBox text="No suggested cautions were returned." />
+            )}
+          </div>
+        </Surface>
+
+        <Surface>
+          <HeaderTag label="Future layer" tone="mixed" />
+          <SectionTitle icon={Mail} label="Reminder drafts" subtitle="Not generated yet" />
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-7 text-white/70">
+            Draft generation should come after extraction quality and task quality are stable.
+          </div>
+        </Surface>
+      </div>
+    </AppShell>
+  );
+}
+
+function HeaderTag({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "extracted" | "suggested" | "review" | "mixed";
+}) {
+  const toneClass =
+    tone === "extracted"
+      ? "border-sky-400/20 bg-sky-500/10 text-sky-200"
+      : tone === "suggested"
+        ? "border-amber-400/20 bg-amber-500/10 text-amber-200"
+        : tone === "review"
+          ? "border-rose-400/20 bg-rose-500/10 text-rose-200"
+          : "border-white/15 bg-white/10 text-white/85";
+
+  return (
+    <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${toneClass}`}>
+      {label}
+    </div>
+  );
+}
+
+function MetricCard({
+  tag,
+  label,
+  value,
+  tone,
+}: {
+  tag: string;
+  label: string;
+  value: string;
+  tone: "extracted" | "suggested" | "review";
+}) {
+  const toneClass =
+    tone === "extracted"
+      ? "text-sky-200"
+      : tone === "suggested"
+        ? "text-amber-200"
+        : "text-rose-200";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
+      <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">{value}</div>
+    </div>
+  );
+}
+
+function SectionTitle({
+  icon: Icon,
+  label,
+  subtitle,
+}: {
+  icon: ActivityIcon;
+  label: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">{label}</div>
+        <div className="mt-1 break-words text-2xl font-bold">{subtitle}</div>
+      </div>
+    </div>
+  );
+}
+
+function TraceableCard({
+  title,
+  body,
+  confidence,
+  sourceTrace,
+  accentClass,
+}: {
+  title: string;
+  body: string;
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+  accentClass: string;
+}) {
+  return (
+    <div className={`rounded-2xl border px-4 py-3 text-sm ${accentClass}`}>
+      <div className="break-words font-semibold">{title}</div>
+      <div className="mt-2 leading-7 opacity-90">{body}</div>
+      <TraceFooter confidence={confidence} sourceTrace={sourceTrace} />
+    </div>
+  );
+}
+
+function TraceFooter({
+  confidence,
+  sourceTrace,
+}: {
+  confidence?: ConfidenceLevel;
+  sourceTrace?: SourceTraceItem[];
+}) {
+  const traceItems = sourceTrace || [];
+  const hasTrace = traceItems.length > 0;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {confidence ? <ConfidenceBadge level={confidence} /> : null}
+          <span className="text-xs text-white/52">
+            Derived from:{" "}
+            {hasTrace
+              ? `${traceItems.length} source${traceItems.length > 1 ? "s" : ""}`
+              : "source not attached"}
+          </span>
+        </div>
+        {hasTrace ? <span className="text-xs font-semibold text-[#b8dcff]">View source</span> : null}
+      </div>
+      {hasTrace ? (
+        <details className="mt-3">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
+            Open source trace
+          </summary>
+          <div className="mt-3 space-y-3">
+            {traceItems.map((item, index) => (
+              <div
+                key={`${item.sectionId}-${item.sectionTitle}-${index}`}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+              >
+                <div className="text-xs uppercase tracking-[0.2em] text-[#88c4ff]">
+                  {item.sectionId}. {item.sectionTitle}
+                </div>
+                <div className="mt-2 text-sm leading-7 text-white/82">"{item.snippet}"</div>
+                {item.reasoning ? (
+                  <div className="mt-2 text-sm leading-7 text-white/62">Why: {item.reasoning}</div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
+  const styles = {
+    high: "border-cyan-400/20 bg-cyan-500/10 text-cyan-200",
+    medium: "border-amber-400/20 bg-amber-500/10 text-amber-200",
+    low: "border-rose-400/20 bg-rose-500/10 text-rose-200",
+  } as const;
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${styles[level]}`}
+    >
+      {level}
+    </span>
+  );
+}
+
+function EmptyBox({ text }: { text: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
+      {text}
+    </div>
+  );
+}
+
+function TaskDisclosure({
+  title,
+  description,
+  columnTitle,
+  items,
+}: {
+  title: string;
+  description: string;
+  columnTitle: string;
+  items: Array<{
+    title: string;
+    detail: string;
+    status: string;
+    clause_source_title: string;
+    clause_source_text: string;
+    why_matters: string;
+    risk_if_missed: string;
+    confidence?: ConfidenceLevel;
+    sourceTrace?: SourceTraceItem[];
+  }>;
+}) {
+  return (
+    <details className="group">
+      <summary className="list-none">
+        <Surface>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <HeaderTag label="Suggested" tone="suggested" />
+              <div className="mt-3 text-2xl font-bold">{title}</div>
+              <div className="mt-2 text-sm text-white/65">{description}</div>
+            </div>
+            <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
+            <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+          </div>
+        </Surface>
+      </summary>
+      <div className="mt-4">
+        <TaskColumn title={columnTitle} items={items} />
+      </div>
+    </details>
+  );
+}
+
+function TaskColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{
+    title: string;
+    detail: string;
+    status: string;
+    clause_source_title: string;
+    clause_source_text: string;
+    why_matters: string;
+    risk_if_missed: string;
+    confidence?: ConfidenceLevel;
+    sourceTrace?: SourceTraceItem[];
+  }>;
+}) {
+  return (
+    <Surface>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <HeaderTag label="Suggested" tone="suggested" />
+      </div>
+      <div className="mt-5 space-y-4">
+        {items.length === 0 ? <EmptyBox text="No tasks returned for this section." /> : null}
+        {items.map((item) => (
+          <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="break-words font-semibold">{item.title}</div>
+              <StatusPill status={item.status} />
+            </div>
+            <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
+            <div className="mt-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+              <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
+            </div>
+            <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
+            <details className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-[#b8dcff]">
+                Show clause source
+              </summary>
+              <div className="mt-4 grid gap-3 text-sm text-white/72">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
+                  <div className="mt-2 break-words font-semibold text-white/88">{item.clause_source_title}</div>
+                  <div className="mt-1 leading-7">{item.clause_source_text}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                  <div className="mt-2 leading-7">{item.risk_if_missed}</div>
+                </div>
+              </div>
+            </details>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+
+function EvidenceVaultPanel({ className = "" }: { className?: string }) {
+  const inputId = useId();
+  const [uploaderRole, setUploaderRole] = useState<"Owner" | "Charterer" | "Agent">("Owner");
+  const [documentType, setDocumentType] = useState<EvidenceType>("Invoice");
+  const [entries, setEntries] = useState<VaultEntry[]>(() => loadVaultEntries());
   const [isDragging, setIsDragging] = useState(false);
-  const [isTypeMenuOpen, setIsTypeMenuOpen] = useState(false);
-  const uploadInputId = useId();
-  const typeMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const routeLabel = voyage?.route || "Voyage #A102";
-  const selectedReason = getDisputeReasonLabel(draft.reasonKey);
-  const selectedManualType =
-    evidenceTypeCatalog.find((item) => item.value === manualType) ?? evidenceTypeCatalog[0];
-  const selectedDocuments = useMemo(
-    () => documents.filter((item) => draft.evidenceIds.includes(item.id)),
-    [documents, draft.evidenceIds],
-  );
-  const manualUploads = useMemo(
-    () => documents.filter((item) => item.source === "manual-upload"),
-    [documents],
-  );
-  const assessment = useMemo(
-    () => assessSettlementDraft(draft, selectedDocuments),
-    [draft, selectedDocuments],
-  );
-  const partyModel = useMemo(() => getSettlementPartyModel(draft.claimSide), [draft.claimSide]);
-
-  useEffect(() => {
-    setCustomReason(draft.customReason);
-  }, [draft.customReason]);
-
-  useEffect(() => {
-    if (!isTypeMenuOpen) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      if (typeMenuRef.current?.contains(event.target as Node)) return;
-      setIsTypeMenuOpen(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsTypeMenuOpen(false);
-    }
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isTypeMenuOpen]);
-
-  function persistDraft(nextDraft: SettlementDraft) {
-    setDraft(nextDraft);
-    saveSettlementDraft(nextDraft);
-  }
-
-  function updateDraft(patch: Partial<SettlementDraft>) {
-    const nextDraft = {
-      ...draft,
-      ...patch,
-      claimedAmount:
-        patch.claimedAmount !== undefined ? Math.max(patch.claimedAmount, 0) : draft.claimedAmount,
-    };
-
-    if (nextDraft.admittedAmount > nextDraft.claimedAmount) {
-      nextDraft.admittedAmount = nextDraft.claimedAmount;
-    }
-
-    persistDraft(nextDraft);
-  }
-
-  function toggleEvidence(documentId: string) {
-    updateDraft({
-      evidenceIds: draft.evidenceIds.includes(documentId)
-        ? draft.evidenceIds.filter((item) => item !== documentId)
-        : [...draft.evidenceIds, documentId],
-    });
-  }
-
-  function updateReason(reasonKey: DisputeReasonKey) {
-    updateDraft({
-      reasonKey,
-      customReason: reasonKey === "custom" ? customReason : "",
-    });
-  }
-
-  function parseNumeric(value: string) {
-    const numeric = Number(value.replace(/[^0-9.]/g, ""));
-    return Number.isFinite(numeric) ? numeric : 0;
-  }
-
-  async function handleManualEvidenceUpload(files: FileList | File[]) {
-    const fileArray = Array.from(files);
-    if (fileArray.length === 0) return;
-
-    const nextDocuments = await Promise.all(
-      fileArray.map(async (file) => ({
-        id: `manual-${file.name}-${file.size}-${file.lastModified}-${Date.now()}`,
-        name: file.name,
-        type: manualType,
+  async function registerFiles(files: FileList | File[]) {
+    const nextEntries = await Promise.all(
+      Array.from(files).map(async (file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Date.now()}`,
+        fileName: file.name,
+        timestamp: formatVaultTimestamp(new Date()),
         uploaderRole,
-        uploadedAt: formatNow(),
-        source: "manual-upload" as const,
-        fileDataUrl: await readFileAsDataUrl(file),
+        documentType,
+        fileUrl: await readFileAsDataUrl(file),
       })),
     );
 
-    const mergedDocuments = [...nextDocuments, ...loadEvidenceVaultDocuments()];
-    setDocuments(mergedDocuments);
-    saveEvidenceVaultDocuments(mergedDocuments);
-
-    const latestDraft = loadSettlementDraft();
-    persistDraft({
-      ...latestDraft,
-      evidenceIds: [
-        ...nextDocuments.map((item) => item.id),
-        ...latestDraft.evidenceIds.filter((id) => !nextDocuments.some((item) => item.id === id)),
-      ],
+    setEntries((current) => {
+      const merged = [...nextEntries, ...current];
+      saveVaultEntries(merged);
+      return merged;
     });
   }
 
   async function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
     if (!files?.length) return;
-    await handleManualEvidenceUpload(files);
+    await registerFiles(files);
     event.target.value = "";
   }
 
@@ -173,474 +701,199 @@ export function GeneratedDashboardPage() {
     event.preventDefault();
     setIsDragging(false);
     if (!event.dataTransfer.files?.length) return;
-    await handleManualEvidenceUpload(event.dataTransfer.files);
+    await registerFiles(event.dataTransfer.files);
   }
 
   return (
-    <AppShell
-      eyebrow="Generated Dashboard / Uretilen Dashboard"
-      title="Operational evidence and settlement intake"
-      description="Generated dashboard feeds the settlement workflow. This draft now follows a stricter freight-payment logic: claimant side, admitted payable amount, disputed remainder, and evidence-pack checks."
-    >
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <Surface>
-          <PanelHeader
-            icon={ClipboardList}
-            eyebrow="Voyage context / Sefer baglami"
-            title={routeLabel}
-            description="Review the voyage context first, then prepare the dispute intake in a controlled way."
-          />
-          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <InfoCard label="Owner / Armator" value={voyage?.owner || "Northshore Bulk Pte. Ltd."} />
-            <InfoCard label="Charterer / Kiraci" value={voyage?.charterer || "Bluewake Shipping"} />
-            <InfoCard label="Cargo / Yuk" value={voyage?.cargo || "4,800 MT corn"} />
-            <InfoCard
-              label="Commercial risk / Ticari risk"
-              value={voyage?.commercial_risk || "Port cost difference under review"}
-            />
+    <div className={className}>
+      <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <HeaderTag label="Manual upload" tone="mixed" />
+            <div className="mt-3 text-xl font-bold">Evidence Vault (Manual Upload)</div>
+            <div className="mt-2 max-w-2xl text-sm leading-7 text-white/65">
+              Files stay off-chain at this stage. The system records only file name, uploader role, evidence type, and timestamp.
+            </div>
           </div>
-        </Surface>
-
-        <Surface>
-          <PanelHeader
-            icon={WalletCards}
-            eyebrow="Settlement handoff / Settlement aktarimi"
-            title="Prepared for Split & Neutralize"
-            description="The handoff now separates claimed amount, admitted payable amount, and disputed remainder instead of using a loose total-minus-dispute shortcut."
-          />
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <InfoCard label="Claimed / Talep" value={formatMoney(draft.claimedAmount, draft.currency)} />
-            <InfoCard label="Admitted / Kabul edilen" value={formatMoney(draft.admittedAmount, draft.currency)} />
-            <InfoCard label="Disputed / Tartismali" value={formatMoney(assessment.disputedAmount, draft.currency)} />
-            <InfoCard label="Claimant / Talep sahibi" value={`${partyModel.claimantRole} - ${partyModel.claimantName}`} />
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/60">
+            Accepted: PDF, JPG, PNG
           </div>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm text-white/70">
-            Demo assumption: in this freight-payment flow, Charterer pays and Owner receives.
-          </div>
-          <div className="mt-6">
-            <CTAButton route="/app/settlement">Open settlement workflow</CTAButton>
-          </div>
-        </Surface>
-      </div>
+        </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-        <Surface className="h-full">
-          <PanelHeader
-            icon={FileStack}
-            eyebrow="Evidence Vault / Kanit kasasi"
-            title="Manual upload and document linking"
-            description="Files stay off-chain in this demo. The workflow stores name, evidence type, uploader role, and timestamp."
-          />
-
-          <div className="mt-6 grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-            <div className="rounded-[24px] border border-white/10 bg-black/10 p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#88c4ff]">
-                Manual upload / Manuel yukleme
-              </div>
-              <div className="mt-4 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/70">
-                Accepted: PDF, JPG, PNG
-              </div>
-
-              <div className="mt-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
-                  Uploader role / Yukleyen rol
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {(["Owner", "Charterer", "Agent"] as const).map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setUploaderRole(role)}
-                      className={[
-                        "rounded-2xl border px-3 py-2 text-sm transition",
-                        uploaderRole === role
-                          ? "border-[#4f97e8]/35 bg-[#3373B7] text-white"
-                          : "border-white/10 bg-white/[0.03] text-white/72 hover:bg-white/[0.05]",
-                      ].join(" ")}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                <label className="grid gap-2 text-sm text-white/75">
-                  <span>Evidence type / Kanit tipi</span>
-                  <div className="relative" ref={typeMenuRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsTypeMenuOpen((current) => !current)}
-                      className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-white transition hover:bg-white/[0.05]"
-                    >
-                      <span>{selectedManualType.labelEn} / {selectedManualType.labelTr}</span>
-                      <ChevronDown className={`h-4 w-4 text-white/65 transition ${isTypeMenuOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {isTypeMenuOpen ? (
-                      <div className="absolute z-20 mt-2 w-full rounded-2xl border border-white/10 bg-[#0d1825] p-2 shadow-[0_18px_40px_rgba(0,0,0,0.4)]">
-                        {evidenceTypeCatalog.map((item) => (
-                          <button
-                            key={item.value}
-                            type="button"
-                            onClick={() => {
-                              setManualType(item.value);
-                              setIsTypeMenuOpen(false);
-                            }}
-                            className={[
-                              "flex w-full rounded-xl px-3 py-2 text-left text-sm transition",
-                              item.value === manualType
-                                ? "bg-[#3373B7] text-white"
-                                : "text-white/82 hover:bg-white/[0.06]",
-                            ].join(" ")}
-                          >
-                            {item.labelEn} / {item.labelTr}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </label>
-
-                <input
-                  id={uploadInputId}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-
-                <label
-                  htmlFor={uploadInputId}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
+        <div className="mt-5 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-white/45">Uploader role</div>
+            <div className="mt-3 space-y-2">
+              {(["Owner", "Charterer", "Agent"] as const).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => setUploaderRole(role)}
                   className={[
-                    "mt-2 flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-2xl border px-4 py-6 text-center transition",
-                    isDragging
-                      ? "border-[#4f97e8]/40 bg-[#3373B7]/10"
-                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                    "block w-full rounded-2xl border px-3 py-2 text-left text-sm font-semibold transition",
+                    uploaderRole === role
+                      ? "border-[#4f97e8]/35 bg-[#3373B7] text-white"
+                      : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.05]",
                   ].join(" ")}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
-                    <Upload className="h-5 w-5" />
-                  </div>
-                  <div className="mt-4 text-sm font-semibold text-white/90">
-                    {isDragging ? "Drop document here" : "Upload document"}
-                  </div>
-                  <div className="mt-2 text-sm leading-7 text-white/60">
-                    Click to attach or drag and drop a file. No OCR, no parsing, no text extraction.
-                  </div>
-                </label>
-              </div>
+                  {role}
+                </button>
+              ))}
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#88c4ff]">Vault log</div>
-                  <div className="mt-2 text-sm text-white/65">Uploaded files stay logged here.</div>
-                </div>
-                <div className="rounded-full border border-white/10 bg-black/10 px-4 py-2 text-sm text-white/70">
-                  {manualUploads.length} file(s)
-                </div>
-              </div>
+            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">Evidence type</div>
+            <select
+              value={documentType}
+              onChange={(event) => setDocumentType(event.target.value as EvidenceType)}
+              className="mt-3 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
+            >
+              {evidenceTypeOptions.map((option) => (
+                <option key={option} value={option} className="bg-white text-slate-900">
+                  {option}
+                </option>
+              ))}
+            </select>
 
-              <div className="mt-5 grid gap-3">
-                {manualUploads.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-black/10 p-4 text-sm text-white/60">
-                    No manually uploaded evidence has been logged yet.
-                  </div>
-                ) : null}
-
-                {manualUploads.map((document) => {
-                  const active = draft.evidenceIds.includes(document.id);
-                  const localizedType = evidenceTypeCatalog.find((item) => item.value === document.type);
-
-                  return (
-                    <div
-                      key={document.id}
-                      className={[
-                        "rounded-[22px] border p-4",
-                        active ? "border-sky-400/30 bg-sky-500/10" : "border-white/10 bg-black/10",
-                      ].join(" ")}
-                    >
-                      <div className="break-words text-sm font-semibold text-white/92">{document.name}</div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
-                        <span className="rounded-full border border-white/10 px-3 py-1">
-                          {localizedType?.labelEn} / {localizedType?.labelTr}
-                        </span>
-                        <span className="rounded-full border border-white/10 px-3 py-1">{document.uploaderRole}</span>
-                        <span className="rounded-full border border-white/10 px-3 py-1">{document.uploadedAt}</span>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleEvidence(document.id)}
-                          className={[
-                            "rounded-full px-3 py-1 text-xs font-semibold transition",
-                            active ? "bg-emerald-500/15 text-emerald-200" : "bg-white/[0.04] text-white/65",
-                          ].join(" ")}
-                        >
-                          {active ? "Included / Dahil" : "Include / Dahil et"}
-                        </button>
-                        {document.fileDataUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => window.open(document.fileDataUrl, "_blank", "noopener,noreferrer")}
-                            className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/72"
-                          >
-                            Open / Ac
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </Surface>
-
-        <Surface className="h-full">
-          <PanelHeader
-            icon={Landmark}
-            eyebrow="Dispute intake / Uyusmazlik girisi"
-            title="Structured before settlement"
-            description="This intake now enforces party direction, admitted payable logic, and a reason-specific evidence pack."
-          />
-
-          <div className="mt-6 grid gap-4">
-            <label className="grid gap-2 text-sm text-white/75">
-              <span>Claimed amount / Talep edilen tutar</span>
-              <input
-                value={draft.claimedAmount}
-                onChange={(event) => updateDraft({ claimedAmount: parseNumeric(event.target.value) })}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm text-white/75">
-              <span>Admitted payable / Kabul edilen odeme</span>
-              <input
-                value={draft.admittedAmount}
-                onChange={(event) => updateDraft({ admittedAmount: parseNumeric(event.target.value) })}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm text-white/75">
-              <span>Due date / Vade tarihi</span>
-              <input
-                value={draft.dueDate}
-                onChange={(event) => updateDraft({ dueDate: event.target.value })}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
-              />
-            </label>
-
-            <div className="grid gap-2 text-sm text-white/75">
-              <span>Claim raised by / Talebi acan taraf</span>
-              <div className="grid grid-cols-2 gap-2">
-                {(["Owner", "Charterer"] as const).map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => updateDraft({ claimSide: role as ClaimPartyRole })}
-                    className={[
-                      "rounded-2xl border px-4 py-3 text-left transition",
-                      draft.claimSide === role
-                        ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
-                        : "border-white/10 bg-white/[0.02] text-white/75 hover:bg-white/[0.05]",
-                    ].join(" ")}
-                  >
-                    <div className="font-semibold">{role}</div>
-                    <div className="mt-1 text-xs text-white/55">
-                      {role === "Owner" ? "Owner-led claim package" : "Charterer-led claim package"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-white/10 bg-black/10 p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#88c4ff]">Party map / Taraf haritasi</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <InfoCard label="Claimant / Talep sahibi" value={`${partyModel.claimantRole} - ${partyModel.claimantName}`} />
-                <InfoCard label="Respondent / Muhatap" value={`${partyModel.respondentRole} - ${partyModel.respondentName}`} />
-                <InfoCard label="Payer / Odeyen" value={`${partyModel.payerRole} - ${partyModel.payerName}`} />
-                <InfoCard label="Payee / Alan" value={`${partyModel.payeeRole} - ${partyModel.payeeName}`} />
-              </div>
-            </div>
-
-            <div className="grid gap-2 text-sm text-white/75">
-              <span>Dispute reason / Uyusmazlik nedeni</span>
-              <div className="grid gap-2">
-                {disputeReasonCatalog.map((reason) => (
-                  <button
-                    key={reason.key}
-                    type="button"
-                    onClick={() => updateReason(reason.key)}
-                    className={[
-                      "rounded-2xl border px-4 py-3 text-left transition",
-                      draft.reasonKey === reason.key
-                        ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
-                        : "border-white/10 bg-white/[0.02] text-white/75 hover:bg-white/[0.05]",
-                    ].join(" ")}
-                  >
-                    <div className="font-semibold">{reason.labelEn}</div>
-                    <div className="mt-1 text-xs text-white/55">{reason.labelTr}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {draft.reasonKey === "custom" ? (
-              <label className="grid gap-2 text-sm text-white/75">
-                <span>Custom note / Ozel not</span>
-                <textarea
-                  value={customReason}
-                  onChange={(event) => {
-                    setCustomReason(event.target.value);
-                    updateDraft({ customReason: event.target.value });
-                  }}
-                  className="min-h-[120px] rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
-                />
-              </label>
-            ) : null}
-
-            <div className="rounded-[24px] border border-white/10 bg-black/10 p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#88c4ff]">Required evidence pack / Gerekli kanit paketi</div>
-              <div className="mt-4 grid gap-2">
-                {assessment.requirementChecks.length > 0 ? (
-                  assessment.requirementChecks.map((item) => (
-                    <div
-                      key={item.id}
-                      className={[
-                        "rounded-2xl border px-4 py-3 text-sm",
-                        item.satisfied
-                          ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
-                          : "border-amber-400/20 bg-amber-500/10 text-amber-100",
-                      ].join(" ")}
-                    >
-                      <div className="font-semibold">{item.label} / {item.labelTr}</div>
-                      <div className="mt-1 text-xs opacity-80">{item.anyOf.join(" or ")}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/65">
-                    Custom reason selected. Attach the evidence you intend to rely on.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-white/10 bg-black/10 p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#88c4ff]">Ready for settlement / Settlement icin hazir</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <InfoCard label="Claimed / Talep" value={formatMoney(draft.claimedAmount, draft.currency)} />
-                <InfoCard label="Admitted / Kabul edilen" value={formatMoney(draft.admittedAmount, draft.currency)} />
-                <InfoCard label="Disputed / Tartismali" value={formatMoney(assessment.disputedAmount, draft.currency)} />
-                <InfoCard label="Reason / Neden" value={`${selectedReason.labelEn} / ${selectedReason.labelTr}`} />
-              </div>
-              <div className="mt-4 grid gap-2">
-                {assessment.issues.length > 0 ? (
-                  assessment.issues.map((issue) => (
-                    <div
-                      key={issue}
-                      className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-100"
-                    >
-                      {issue}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
-                    Claimed, admitted, party direction, and evidence pack are aligned for settlement.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Surface>
-      </div>
-
-      {!voyage ? (
-        <div className="mt-5">
-          <Surface>
-            <PanelHeader
-              icon={FolderOpenDot}
-              eyebrow="Demo note / Demo notu"
-              title="No generated voyage in session"
-              description="The page still works with seeded demo evidence, but it becomes more precise after Try Demo generates a voyage context."
-            />
             <div className="mt-5">
-              <CTAButton route="/app/try-demo">Go to Try Demo</CTAButton>
+              <input
+                id={inputId}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <label
+                htmlFor={inputId}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={[
+                  "flex cursor-pointer flex-col items-center justify-center rounded-2xl border px-5 py-8 text-center transition",
+                  isDragging ? "border-[#4f97e8]/40 bg-[#3373B7]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                ].join(" ")}
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <div className="mt-4 text-sm font-semibold text-white/90">
+                  {isDragging ? "Drop document here" : "Upload document"}
+                </div>
+                <div className="mt-2 text-sm leading-7 text-white/60">
+                  Click to attach or drag and drop a file. No OCR, no parsing, no text extraction.
+                </div>
+              </label>
             </div>
-          </Surface>
+          </div>
+
+          <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-white/45">Vault log</div>
+            <div className="mt-4 space-y-3">
+              {entries.length === 0 ? (
+                <EmptyBox text="No manually uploaded evidence has been logged yet." />
+              ) : (
+                entries.map((entry) => (
+                  <div key={entry.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0 font-semibold text-white/90">{entry.fileName}</div>
+                      <button
+                        type="button"
+                        onClick={() => window.open(entry.fileUrl, "_blank", "noopener,noreferrer")}
+                        className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/70 transition hover:bg-white/[0.06]"
+                      >
+                        View
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/58">
+                      <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-sky-200">
+                        {entry.uploaderRole}
+                      </span>
+                      <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-white/70">
+                        {entry.documentType}
+                      </span>
+                      <span>{entry.timestamp}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-      ) : null}
-    </AppShell>
-  );
-}
-
-function PanelHeader({
-  icon: Icon,
-  eyebrow,
-  title,
-  description,
-}: {
-  icon: typeof ClipboardList;
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">{eyebrow}</div>
-        <div className="mt-1 text-2xl font-bold text-white">{title}</div>
-        <div className="mt-2 max-w-3xl text-sm leading-7 text-white/65">{description}</div>
       </div>
     </div>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="text-[11px] uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">{value}</div>
-    </div>
-  );
+function formatDocumentStatus(
+  status: "uploaded" | "missing" | "awaiting_review" | "draft_only" | "confirmed",
+) {
+  switch (status) {
+    case "uploaded":
+      return "Uploaded";
+    case "missing":
+      return "Missing";
+    case "awaiting_review":
+      return "Awaiting review";
+    case "draft_only":
+      return "Draft only";
+    case "confirmed":
+      return "Confirmed";
+  }
 }
 
-function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
+function formatTimingImpact(impact: "banking" | "port_ops" | "docs" | "customs") {
+  switch (impact) {
+    case "banking":
+      return "May affect banking days and payment timing.";
+    case "port_ops":
+      return "Port operations or local working hours may vary.";
+    case "docs":
+      return "Documentation flow may slow locally.";
+    case "customs":
+      return "Customs or clearance handling may take longer.";
+  }
 }
 
-function formatNow() {
-  const now = new Date();
-  const datePart = new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(now);
-  const timePart = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(now);
+function normalizeCaution(note: string | GeneratedCaution, index: number): GeneratedCaution {
+  if (typeof note === "string") {
+    return {
+      title: `Suggested caution ${index + 1}`,
+      body: note,
+    };
+  }
 
-  return `${datePart}, ${timePart} HRS`;
+  return note;
+}
+
+function loadVaultEntries(): VaultEntry[] {
+  if (typeof window === "undefined") return [];
+  const raw = sessionStorage.getItem(EVIDENCE_VAULT_STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as Array<
+      VaultEntry & { evidenceType?: EvidenceType; documentType?: EvidenceType }
+    >;
+
+    return parsed.map((item) => ({
+      id: item.id,
+      fileName: item.fileName,
+      timestamp: item.timestamp,
+      uploaderRole: item.uploaderRole,
+      documentType: item.documentType ?? item.evidenceType ?? "Invoice",
+      fileUrl: item.fileUrl,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveVaultEntries(entries: VaultEntry[]) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(EVIDENCE_VAULT_STORAGE_KEY, JSON.stringify(entries));
 }
 
 function readFileAsDataUrl(file: File) {
@@ -651,3 +904,26 @@ function readFileAsDataUrl(file: File) {
     reader.readAsDataURL(file);
   });
 }
+
+function formatVaultTimestamp(date: Date) {
+  const datePart = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+  const timePart = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  return `${datePart}, ${timePart} HRS`;
+}
+
+type ActivityIcon =
+  | typeof AlertTriangle
+  | typeof Clock3
+  | typeof FileSearch
+  | typeof FileStack
+  | typeof Mail
+  | typeof TriangleAlert;
