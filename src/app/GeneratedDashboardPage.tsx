@@ -23,6 +23,8 @@ import {
   disputeReasonCatalog,
   getDisputeReasonLabel,
   getEvidenceRequirements,
+  getSuggestedClaimSide,
+  getSuggestedEvidenceIds,
   loadEvidenceVaultDocuments,
   loadSettlementDraft,
   saveSettlementDraft,
@@ -126,12 +128,13 @@ export function GeneratedDashboardPage() {
       (settlementSeed.reasonKey === "custom" ? settlementSeed.summary : ""),
   );
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>(
-    () =>
-      currentSettlement.evidenceIds.length > 0
-        ? currentSettlement.evidenceIds
-        : settlementSeed.evidenceIds,
+    () => currentSettlement.evidenceIds.length > 0 ? currentSettlement.evidenceIds : settlementSeed.evidenceIds,
   );
   const [packageMessage, setPackageMessage] = useState<string>("");
+  const suggestedEvidenceIds = useMemo(
+    () => getSuggestedEvidenceIds(reasonKey, vaultDocuments),
+    [reasonKey, vaultDocuments],
+  );
 
   useEffect(() => {
     if (openingMode === "generated-signal" && !settlementSeed.disputeDetected) {
@@ -140,10 +143,10 @@ export function GeneratedDashboardPage() {
   }, [openingMode, settlementSeed.disputeDetected]);
 
   useEffect(() => {
-    if (selectedEvidenceIds.length === 0 && settlementSeed.evidenceIds.length > 0) {
-      setSelectedEvidenceIds(settlementSeed.evidenceIds);
+    if (selectedEvidenceIds.length === 0 && suggestedEvidenceIds.length > 0) {
+      setSelectedEvidenceIds(suggestedEvidenceIds);
     }
-  }, [selectedEvidenceIds.length, settlementSeed.evidenceIds]);
+  }, [selectedEvidenceIds.length, suggestedEvidenceIds]);
 
   useEffect(() => {
     if (reasonKey === "custom" && !customReason.trim()) {
@@ -155,7 +158,20 @@ export function GeneratedDashboardPage() {
     () => vaultDocuments.filter((item) => selectedEvidenceIds.includes(item.id)),
     [vaultDocuments, selectedEvidenceIds],
   );
-  const disputeRequirements = useMemo(() => getEvidenceRequirements(reasonKey), [reasonKey]);
+  const rankedVaultDocuments = useMemo(() => {
+    const selected = new Set(selectedEvidenceIds);
+    const suggested = new Set(suggestedEvidenceIds);
+
+    return [...vaultDocuments].sort((left, right) => {
+      const leftScore = (selected.has(left.id) ? 2 : 0) + (suggested.has(left.id) ? 1 : 0);
+      const rightScore = (selected.has(right.id) ? 2 : 0) + (suggested.has(right.id) ? 1 : 0);
+      return rightScore - leftScore;
+    });
+  }, [selectedEvidenceIds, suggestedEvidenceIds, vaultDocuments]);
+  const disputeRequirements = useMemo(
+    () => getEvidenceRequirements(reasonKey),
+    [reasonKey],
+  );
   const disputeRequirementChecks = useMemo(
     () =>
       disputeRequirements.map((requirement) => ({
@@ -165,7 +181,10 @@ export function GeneratedDashboardPage() {
     [disputeRequirements, selectedEvidence],
   );
   const missingRequirementLabels = useMemo(
-    () => disputeRequirementChecks.filter((item) => !item.satisfied).map((item) => item.label),
+    () =>
+      disputeRequirementChecks
+        .filter((item) => !item.satisfied)
+        .map((item) => item.label),
     [disputeRequirementChecks],
   );
   const disputedAmount = useMemo(
@@ -207,7 +226,7 @@ export function GeneratedDashboardPage() {
       issues.push("Link at least one supporting evidence item.");
     }
 
-    if (missingRequirementLabels.length > 0) {
+    if (selectedEvidenceIds.length > 0 && missingRequirementLabels.length > 0) {
       issues.push(`Suggested evidence still missing: ${missingRequirementLabels.join(", ")}.`);
     }
 
@@ -237,11 +256,9 @@ export function GeneratedDashboardPage() {
     setOpeningMode(settlementSeed.disputeDetected ? "generated-signal" : "manual-review");
     setReasonKey(settlementSeed.reasonKey);
     setClaimSide(settlementSeed.claimSide);
-    setClaimedAmount(0);
-    setAdmittedAmount(0);
     setDueDate(defaultDueDate);
     setCustomReason(settlementSeed.reasonKey === "custom" ? settlementSeed.summary : "");
-    setSelectedEvidenceIds(settlementSeed.evidenceIds);
+    setSelectedEvidenceIds(getSuggestedEvidenceIds(settlementSeed.reasonKey, vaultDocuments));
     setPackageMessage("");
   }
 
@@ -269,7 +286,6 @@ export function GeneratedDashboardPage() {
     };
 
     saveSettlementDraft(draft);
-    setPackageMessage("Dispute package opened. Redirecting to settlement workflow.");
     navigateTo("/app/settlement");
   }
 
@@ -308,12 +324,7 @@ export function GeneratedDashboardPage() {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard
-              tag="Extracted"
-              label="Owner"
-              value={generated.owner || "Pending review"}
-              tone="extracted"
-            />
+            <MetricCard tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
             <MetricCard
               tag="Extracted"
               label="Charterer"
@@ -427,8 +438,7 @@ export function GeneratedDashboardPage() {
               >
                 <div className="font-semibold">Use generated signal</div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  Opens the package from the recap-derived dispute signal and suggested evidence
-                  pack.
+                  Opens the package from the recap-derived dispute signal and suggested evidence pack.
                 </div>
               </button>
 
@@ -444,8 +454,7 @@ export function GeneratedDashboardPage() {
               >
                 <div className="font-semibold">Open manual review</div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  Lets claims users open a package even when the generated recap did not classify
-                  the dispute correctly.
+                  Lets claims users open a package even when the generated recap did not classify the dispute correctly.
                 </div>
               </button>
             </div>
@@ -455,14 +464,9 @@ export function GeneratedDashboardPage() {
                 Maritime logic
               </div>
               <div className="mt-3 space-y-2 text-sm leading-7 text-white/72">
-                <div>
-                  - A settlement package should only open when there is an actual monetary dispute.
-                </div>
+                <div>- A settlement package should only open when there is an actual monetary dispute.</div>
                 <div>- Contract freight is not auto-treated as the disputed amount.</div>
-                <div>
-                  - The package must identify claimant side, admitted payable amount, and disputed
-                  remainder separately.
-                </div>
+                <div>- The package must identify claimant side, admitted payable amount, and disputed remainder separately.</div>
               </div>
             </div>
           </div>
@@ -473,7 +477,13 @@ export function GeneratedDashboardPage() {
                 <span>Dispute reason</span>
                 <select
                   value={reasonKey}
-                  onChange={(event) => setReasonKey(event.target.value as DisputeReasonKey)}
+                  onChange={(event) => {
+                    const nextReason = event.target.value as DisputeReasonKey;
+                    setReasonKey(nextReason);
+                    setClaimSide(getSuggestedClaimSide(nextReason, vaultDocuments));
+                    setSelectedEvidenceIds(getSuggestedEvidenceIds(nextReason, vaultDocuments));
+                    setPackageMessage("");
+                  }}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
                 >
                   {disputeReasonCatalog.map((reason) => (
@@ -554,15 +564,16 @@ export function GeneratedDashboardPage() {
             ) : null}
 
             <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <MetricCard tag="Draft" label="Currency" value={settlementSeed.currency} tone="review" />
+              <MetricCard
+                tag="Draft"
+                label="Currency"
+                value={settlementSeed.currency}
+                tone="review"
+              />
               <MetricCard
                 tag="Draft"
                 label="Disputed remainder"
-                value={new Intl.NumberFormat("en-US", {
-                  style: "currency",
-                  currency: settlementSeed.currency,
-                  maximumFractionDigits: 0,
-                }).format(disputedAmount)}
+                value={formatMoney(disputedAmount, settlementSeed.currency)}
                 tone={disputedAmount > 0 ? "suggested" : "review"}
               />
               <MetricCard
@@ -580,7 +591,7 @@ export function GeneratedDashboardPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedEvidenceIds(settlementSeed.evidenceIds)}
+                  onClick={() => setSelectedEvidenceIds(suggestedEvidenceIds)}
                   className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/75 transition hover:bg-white/[0.06]"
                 >
                   Use suggested pack
@@ -609,8 +620,8 @@ export function GeneratedDashboardPage() {
               </div>
 
               <div className="mt-4 grid gap-2">
-                {vaultDocuments.length > 0 ? (
-                  vaultDocuments.map((document) => {
+                {rankedVaultDocuments.length > 0 ? (
+                  rankedVaultDocuments.map((document) => {
                     const active = selectedEvidenceIds.includes(document.id);
                     return (
                       <button
@@ -629,9 +640,7 @@ export function GeneratedDashboardPage() {
                           <span
                             className={[
                               "rounded-full px-3 py-1 text-xs font-semibold",
-                              active
-                                ? "bg-emerald-500/15 text-emerald-200"
-                                : "bg-white/[0.04] text-white/60",
+                              active ? "bg-emerald-500/15 text-emerald-200" : "bg-white/[0.04] text-white/60",
                             ].join(" ")}
                           >
                             {active ? "Linked" : "Link"}
@@ -657,9 +666,7 @@ export function GeneratedDashboardPage() {
                 className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f] shadow-[0_14px_34px_rgba(51,115,183,0.35)] transition hover:-translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <ArrowRightLeft className="h-4 w-4" />
-                {openingMode === "manual-review"
-                  ? "Open manual dispute package"
-                  : "Open settlement package"}
+                {openingMode === "manual-review" ? "Open manual dispute package" : "Open settlement package"}
               </button>
               <button
                 type="button"
@@ -719,11 +726,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle
-            icon={Clock3}
-            label="3 next actions"
-            subtitle="Suggested workflow follow-up"
-          />
+          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -766,9 +769,7 @@ export function GeneratedDashboardPage() {
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                 >
                   <div className="break-words font-semibold text-white/90">{document.title}</div>
-                  <div
-                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
-                  >
+                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
                     {formatDocumentStatus(document.status)}
                   </div>
                   <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
@@ -833,9 +834,7 @@ export function GeneratedDashboardPage() {
                 key={item.label}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                  {item.label}
-                </div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">{item.label}</div>
                 <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
                   {item.value}
                 </div>
@@ -846,11 +845,7 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Demo state" tone="mixed" />
-          <SectionTitle
-            icon={Clock3}
-            label="Since last update"
-            subtitle="No new events recorded (demo state)"
-          />
+          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
           <div className="mt-5 space-y-4">
             {(generated.changes_since_last_update || []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
@@ -967,13 +962,9 @@ function MetricCard({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>
-        {tag}
-      </div>
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
       <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
-        {value}
-      </div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">{value}</div>
     </div>
   );
 }
@@ -1129,9 +1120,7 @@ function TaskDisclosure({
               <div className="mt-2 text-sm text-white/65">{description}</div>
             </div>
             <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
-            <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
-              Close
-            </div>
+            <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
           </div>
         </Surface>
       </summary>
@@ -1175,9 +1164,7 @@ function TaskColumn({
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
             <div className="mt-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                Why this matters
-              </div>
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
             <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
@@ -1187,18 +1174,12 @@ function TaskColumn({
               </summary>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                    Clause source
-                  </div>
-                  <div className="mt-2 break-words font-semibold text-white/88">
-                    {item.clause_source_title}
-                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
+                  <div className="mt-2 break-words font-semibold text-white/88">{item.clause_source_title}</div>
                   <div className="mt-1 leading-7">{item.clause_source_text}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
-                    Risk if missed
-                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
                   <div className="mt-2 leading-7">{item.risk_if_missed}</div>
                 </div>
               </div>
@@ -1265,8 +1246,7 @@ function EvidenceVaultPanel({
             <HeaderTag label="Manual upload" tone="mixed" />
             <div className="mt-3 text-xl font-bold">Evidence Vault (Manual Upload)</div>
             <div className="mt-2 max-w-2xl text-sm leading-7 text-white/65">
-              Files stay off-chain at this stage. The system records only file name, uploader role,
-              evidence type, and timestamp.
+              Files stay off-chain at this stage. The system records only file name, uploader role, evidence type, and timestamp.
             </div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/60">
@@ -1295,9 +1275,7 @@ function EvidenceVaultPanel({
               ))}
             </div>
 
-            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">
-              Evidence type
-            </div>
+            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">Evidence type</div>
             <select
               value={documentType}
               onChange={(event) => setDocumentType(event.target.value as EvidenceType)}
@@ -1329,9 +1307,7 @@ function EvidenceVaultPanel({
                 onDrop={handleDrop}
                 className={[
                   "flex cursor-pointer flex-col items-center justify-center rounded-2xl border px-5 py-8 text-center transition",
-                  isDragging
-                    ? "border-[#4f97e8]/40 bg-[#3373B7]/10"
-                    : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                  isDragging ? "border-[#4f97e8]/40 bg-[#3373B7]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
                 ].join(" ")}
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
@@ -1476,6 +1452,15 @@ function formatVaultTimestamp(date: Date) {
   }).format(date);
 
   return `${datePart}, ${timePart} HRS`;
+}
+
+function formatMoney(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 function deriveInitialOpeningMode(
