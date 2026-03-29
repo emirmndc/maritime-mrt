@@ -99,7 +99,6 @@ export type ClaimSideConstraint = {
 };
 
 const EVIDENCE_KEY = "mrt-evidence-vault";
-const LEGACY_EVIDENCE_KEY = "generated-dashboard-evidence-vault";
 const SETTLEMENT_DRAFT_KEY = "generated-dashboard-settlement-draft";
 const SETTLEMENT_STORE_EVENT = "generated-dashboard-settlement-store-updated";
 
@@ -183,6 +182,32 @@ type GeneratedSettlementSignal = Pick<
   "disputeDetected" | "summary" | "referenceAmount" | "currency"
 >;
 
+export function getCurrentVoyageScopeKey() {
+  const generated = loadGeneratedVoyage();
+  const seed = JSON.stringify({
+    owner: generated?.owner ?? "",
+    charterer: generated?.charterer ?? "",
+    cargo: generated?.cargo ?? "",
+    loadport: generated?.loadport ?? "",
+    disport: generated?.disport ?? "",
+    route: generated?.route ?? "",
+    freight_term: generated?.freight_term ?? "",
+    demurrage: generated?.demurrage ?? "",
+    claim_deadline: generated?.claim_deadline ?? "",
+    next_deadline: generated?.next_deadline ?? "",
+  }).toLowerCase();
+
+  return `voyage-${hashString(seed)}`;
+}
+
+export function getEvidenceVaultStorageKey() {
+  return `${EVIDENCE_KEY}:${getCurrentVoyageScopeKey()}`;
+}
+
+function getSettlementDraftStorageKey() {
+  return `${SETTLEMENT_DRAFT_KEY}:${getCurrentVoyageScopeKey()}`;
+}
+
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
 
@@ -204,7 +229,7 @@ export function saveEvidenceVaultDocuments(documents: EvidenceVaultDocument[]) {
       fileUrl: document.fileDataUrl ?? "",
     }));
 
-  sessionStorage.setItem(EVIDENCE_KEY, JSON.stringify(storedDocuments));
+  sessionStorage.setItem(getEvidenceVaultStorageKey(), JSON.stringify(storedDocuments));
   emitSettlementStoreUpdate();
 }
 
@@ -218,12 +243,12 @@ export function loadSettlementDraft(): SettlementDraft {
     return buildSeedSettlementDraft();
   }
 
-  const raw = sessionStorage.getItem(SETTLEMENT_DRAFT_KEY);
+  const raw = sessionStorage.getItem(getSettlementDraftStorageKey());
   if (raw) {
     try {
       return normalizeSettlementDraft(JSON.parse(raw));
     } catch {
-      sessionStorage.removeItem(SETTLEMENT_DRAFT_KEY);
+      sessionStorage.removeItem(getSettlementDraftStorageKey());
     }
   }
 
@@ -234,7 +259,7 @@ export function loadSettlementDraft(): SettlementDraft {
 
 export function saveSettlementDraft(draft: SettlementDraft) {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(SETTLEMENT_DRAFT_KEY, JSON.stringify(clampSettlementDraft(draft)));
+  sessionStorage.setItem(getSettlementDraftStorageKey(), JSON.stringify(clampSettlementDraft(draft)));
   emitSettlementStoreUpdate();
 }
 
@@ -685,7 +710,7 @@ function normalizeEvidenceDocument(raw: unknown): EvidenceVaultDocument | null {
 function loadStoredEvidenceDocuments() {
   if (typeof window === "undefined") return [];
 
-  const raw = sessionStorage.getItem(EVIDENCE_KEY) ?? sessionStorage.getItem(LEGACY_EVIDENCE_KEY);
+  const raw = sessionStorage.getItem(getEvidenceVaultStorageKey());
   if (!raw) return [];
 
   try {
@@ -694,8 +719,7 @@ function loadStoredEvidenceDocuments() {
       .map((item) => normalizeEvidenceDocument(item))
       .filter((item): item is EvidenceVaultDocument => Boolean(item));
   } catch {
-    sessionStorage.removeItem(EVIDENCE_KEY);
-    sessionStorage.removeItem(LEGACY_EVIDENCE_KEY);
+    sessionStorage.removeItem(getEvidenceVaultStorageKey());
     return [];
   }
 }
@@ -1032,6 +1056,16 @@ function sanitizeNumber(value: unknown, fallback: number) {
 
 function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function hashString(value: string) {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+
+  return hash.toString(36);
 }
 
 function isDisputeReasonKey(value: unknown): value is DisputeReasonKey {
