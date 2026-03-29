@@ -90,13 +90,14 @@ export function SettlementWorkflowPage() {
     [activeSource.linkedEvidence],
   );
   const parties = useMemo(
-    () => getSettlementPartyModel(activeSource.draft.claimSide),
-    [activeSource.draft.claimSide],
+    () => getSettlementPartyModel(activeSource.draft.claimSide, activeSource.draft.reasonKey),
+    [activeSource.draft.claimSide, activeSource.draft.reasonKey],
   );
   const assessment = useMemo(
     () => assessSettlementDraft(activeSource.draft, activeSource.linkedEvidence),
     [activeSource],
   );
+  const disputeOpen = seedContext.disputeDetected || activeSource.draft.openingMode === "manual-review";
   const settlement = useMemo(
     () =>
       buildSettlementView(
@@ -154,7 +155,7 @@ export function SettlementWorkflowPage() {
     <AppShell
       eyebrow="Settlement Workflow"
       title="Split & Neutralize"
-      description="Generated recap context and the evidence vault feed this demo workflow. Settlement stays closed unless the recap actually points to a payment, deduction, cost, or claim dispute."
+      description="Generated recap context and the evidence vault feed this demo workflow. A package stays open when the recap carries a dispute signal or the dashboard opens a manual review package."
     >
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <Surface className="h-full">
@@ -167,7 +168,7 @@ export function SettlementWorkflowPage() {
               currency={settlement.currency}
               tone="border-white/10 bg-white/[0.03] text-white/88"
               status={
-                !seedContext.disputeDetected
+                !disputeOpen
                   ? "No dispute package opened"
                   : "Amount basis still needs confirmation"
               }
@@ -178,7 +179,7 @@ export function SettlementWorkflowPage() {
               currency={settlement.currency}
               tone="border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
               status={
-                !seedContext.disputeDetected
+                !disputeOpen
                   ? "Settlement closed"
                   : assessment.isReady
                     ? "Ready to release"
@@ -191,7 +192,7 @@ export function SettlementWorkflowPage() {
               currency={settlement.currency}
               tone="border-amber-400/20 bg-amber-500/10 text-amber-200"
               status={
-                !seedContext.disputeDetected
+                !disputeOpen
                   ? "No live dispute"
                   : stage
                     ? "Staged in demo flow"
@@ -209,9 +210,15 @@ export function SettlementWorkflowPage() {
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
             <div className="text-sm uppercase tracking-[0.22em] text-[#88c4ff]">
-              Generated dispute signal
+              Intake basis
             </div>
-            <div className="mt-3 text-sm leading-7 text-white/75">{seedContext.summary}</div>
+            <div className="mt-3 text-sm leading-7 text-white/75">
+              {seedContext.disputeDetected
+                ? seedContext.summary
+                : activeSource.draft.openingMode === "manual-review"
+                  ? "Manual dispute review package was opened from the generated dashboard."
+                  : seedContext.summary}
+            </div>
           </div>
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
@@ -223,7 +230,7 @@ export function SettlementWorkflowPage() {
               <InfoCard label="Payee" value={settlement.payee} />
             </div>
             <div className="mt-4 text-sm leading-7 text-white/68">
-              Demo assumption: this screen models a freight-payment flow, so Charterer pays and Owner receives.
+              Direction follows the dispute posture on this package: the responding side is modeled as payer and the claimant side as payee.
             </div>
           </div>
 
@@ -287,7 +294,7 @@ export function SettlementWorkflowPage() {
             <ThesisLine text="Claimed amount is the asserted exposure." />
             <ThesisLine text="Admitted payable amount is the portion you are willing to release." />
             <ThesisLine text="Disputed remainder is derived, not guessed." />
-            <ThesisLine text="Freight shortfall cannot be staged from the Charterer side in this demo." />
+            <ThesisLine text="Payment direction must stay coherent with the selected claimant side." />
           </div>
 
           <div className="mt-6 rounded-[24px] border border-white/10 bg-black/10 p-5">
@@ -326,18 +333,18 @@ export function SettlementWorkflowPage() {
             icon={Landmark}
             eyebrow="Disputed Portion Stage"
             title={
-              !seedContext.disputeDetected
+              !disputeOpen
                 ? "Settlement closed"
                 : stage
                   ? "Disputed remainder staged"
                   : "No staged split yet"
             }
             description={
-              !seedContext.disputeDetected
+              !disputeOpen
                 ? "No monetary dispute trigger was detected from the recap context, so the settlement flow remains closed."
                 : stage
-                  ? "The disputed remainder is staged in this demo flow. No real custody movement occurs."
-                  : "Complete the intake gate, then confirm Split & Neutralize to stage the disputed remainder."
+                ? "The disputed remainder is staged in this demo flow. No real custody movement occurs."
+                : "Complete the intake gate, then confirm Split & Neutralize to stage the disputed remainder."
             }
           />
 
@@ -631,20 +638,21 @@ function buildSettlementView(
   isStaged: boolean,
 ): SettlementView {
   const reasonLabel = getDisputeReasonLabel(source.draft.reasonKey);
+  const disputeOpen = seedContext.disputeDetected || source.draft.openingMode === "manual-review";
   const reason =
     source.draft.reasonKey === "custom"
       ? source.draft.customReason.trim() || "Custom review note"
       : reasonLabel.labelEn;
   const status: SettlementStatus = isStaged
     ? "disputed_portion_staged"
-    : !seedContext.disputeDetected
+    : !disputeOpen
       ? "closed_no_dispute"
       : disputedAmount <= 0
         ? "awaiting_quantification"
         : isReady
           ? "ready_to_split"
           : "review_required";
-  const title = !seedContext.disputeDetected
+  const title = !disputeOpen
     ? "No Dispute Package Opened"
     : source.draft.title;
 
@@ -690,7 +698,7 @@ function buildInitialTimeline(source: SettlementSource): TimelineEvent[] {
 function getStatusLabel(status: SettlementStatus) {
   switch (status) {
     case "closed_no_dispute":
-      return "Closed - no dispute signal";
+      return "Closed - no active dispute package";
     case "review_required":
       return "Review required";
     case "awaiting_quantification":
@@ -706,7 +714,8 @@ function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
