@@ -300,9 +300,7 @@ export function deriveSettlementSeedContext(
 
   const reasonKey = inferDisputeReasonFromCorpus(corpus);
   const disputeDetected = hasDisputeSignal(corpus);
-  const referenceAmount = shouldSeedReferenceAmount(reasonKey)
-    ? parseCurrencyAmount(generated?.freight_term).amount
-    : null;
+  const referenceAmount = null;
   const currency = parseCurrencyAmount(generated?.freight_term).currency ?? "USD";
   const summary = disputeDetected
     ? buildDisputeSummary(generated, reasonKey)
@@ -442,8 +440,8 @@ function buildSeedSettlementDraft(): SettlementDraft {
   const generated = loadGeneratedVoyage();
   const evidence = buildSeedDocuments();
   const seedContext = deriveSettlementSeedContext(evidence);
-  const claimedAmount = seedContext.referenceAmount ?? 0;
-  const admittedAmount = claimedAmount;
+  const claimedAmount = 0;
+  const admittedAmount = 0;
 
   return {
     id: "settlement-a102",
@@ -544,10 +542,16 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
     initiatedBy?: string;
   };
   const fallback = buildSeedSettlementDraft();
-  const claimedAmount = sanitizeNumber(item.claimedAmount ?? item.totalAmount, fallback.claimedAmount);
-  const legacyDisputedAmount = sanitizeNumber(item.disputedAmount, fallback.claimedAmount - fallback.admittedAmount);
+  const seedContext = deriveSettlementSeedContext();
+  const isLegacyDraft = item.totalAmount !== undefined || item.disputedAmount !== undefined;
+
+  if (!seedContext.disputeDetected || isLegacyDraft) {
+    return fallback;
+  }
+
+  const claimedAmount = sanitizeNumber(item.claimedAmount, fallback.claimedAmount);
   const admittedAmount = clampNumber(
-    sanitizeNumber(item.admittedAmount, claimedAmount - legacyDisputedAmount),
+    sanitizeNumber(item.admittedAmount, fallback.admittedAmount),
     0,
     claimedAmount,
   );
@@ -657,10 +661,6 @@ function inferDisputeReasonFromCorpus(corpus: string): DisputeReasonKey {
     return "port_cost_difference";
   }
   return "custom";
-}
-
-function shouldSeedReferenceAmount(reasonKey: DisputeReasonKey) {
-  return reasonKey === "freight_shortfall" || reasonKey === "invoice_mismatch";
 }
 
 function parseCurrencyAmount(text: string | undefined) {
