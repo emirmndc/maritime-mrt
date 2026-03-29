@@ -146,7 +146,7 @@ export function SettlementWorkflowPage() {
     <AppShell
       eyebrow="Settlement Workflow"
       title="Split & Neutralize"
-      description="Generated Dashboard is the source of truth for this demo workflow. Settlement only becomes available when the party direction, admitted payable amount, and evidence pack are coherent."
+      description="Generated recap context and the evidence vault feed this demo workflow. Settlement only becomes available when the seeded party direction, payable amount, and evidence pack are coherent."
     >
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <Surface className="h-full">
@@ -158,7 +158,7 @@ export function SettlementWorkflowPage() {
               amount={settlement.claimedAmount}
               currency={settlement.currency}
               tone="border-white/10 bg-white/[0.03] text-white/88"
-              status="Raised in dashboard intake"
+              status="Seeded from recap context"
             />
             <AmountCard
               label="Admitted payable"
@@ -212,7 +212,7 @@ export function SettlementWorkflowPage() {
                 ))
               ) : (
                 <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
-                  Intake is coherent. Split can proceed in the demo flow.
+                  Settlement seed is coherent. Split can proceed in the demo flow.
                 </div>
               )}
             </div>
@@ -247,7 +247,7 @@ export function SettlementWorkflowPage() {
                 Admit what is payable, isolate only what is disputed
               </div>
               <div className="mt-2 text-sm text-white/65">
-                This demo refuses loose arithmetic. Split only happens after party direction and evidence make sense.
+                This demo refuses loose arithmetic. Split only happens after seeded direction and evidence make sense.
               </div>
             </div>
           </div>
@@ -334,7 +334,7 @@ export function SettlementWorkflowPage() {
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/55">
-                  No evidence linked yet. Use Generated Dashboard to attach evidence first.
+                  No evidence linked yet. Use the recap dashboard to attach evidence first.
                 </div>
               )}
             </div>
@@ -623,7 +623,7 @@ function buildInitialTimeline(source: SettlementSource): TimelineEvent[] {
   return [
     {
       id: "evt-intake",
-      action: "Settlement intake synced from Generated Dashboard",
+      action: "Settlement seed loaded from recap context",
       timestamp,
       actor: "Generated Dashboard",
     },
@@ -631,8 +631,8 @@ function buildInitialTimeline(source: SettlementSource): TimelineEvent[] {
       id: "evt-evidence",
       action:
         source.linkedEvidence.length > 0
-          ? `${source.linkedEvidence.length} evidence item(s) linked from dashboard vault`
-          : "Waiting for linked evidence from Generated Dashboard",
+          ? `${source.linkedEvidence.length} evidence item(s) available from the evidence vault`
+          : "Waiting for linked evidence from the evidence vault",
       timestamp,
       actor: "Generated Dashboard",
     },
