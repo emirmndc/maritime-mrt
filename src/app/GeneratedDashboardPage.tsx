@@ -1,6 +1,7 @@
-import { useId, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useId, useMemo, useState, type ChangeEvent, type DragEvent } from "react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   Clock3,
   FileSearch,
   FileStack,
@@ -15,6 +16,21 @@ import {
   type GeneratedCaution,
   type SourceTraceItem,
 } from "./generatedVoyage";
+import { navigateTo } from "./router";
+import {
+  deriveDisputedAmount,
+  deriveSettlementSeedContext,
+  disputeReasonCatalog,
+  getDisputeReasonLabel,
+  getEvidenceRequirements,
+  loadEvidenceVaultDocuments,
+  loadSettlementDraft,
+  saveSettlementDraft,
+  type ClaimPartyRole,
+  type DisputeReasonKey,
+  type SettlementDraft,
+  type SettlementOpeningMode,
+} from "./settlementStore";
 
 const flagTone = {
   medium: "border-amber-400/20 bg-amber-500/10 text-amber-100",
@@ -61,9 +77,17 @@ const evidenceTypeOptions: EvidenceType[] = [
 
 export function GeneratedDashboardPage() {
   const generated = typeof window !== "undefined" ? loadGeneratedVoyage() : null;
+  const [vaultVersion, setVaultVersion] = useState(0);
 
   const summaryRoute =
     generated?.route || `${generated?.loadport || "Unknown"} > ${generated?.disport || "Unknown"}`;
+  const vaultDocuments = useMemo(() => loadEvidenceVaultDocuments(), [vaultVersion]);
+  const currentSettlement = useMemo(() => loadSettlementDraft(), [vaultVersion]);
+  const settlementSeed = useMemo(
+    () => deriveSettlementSeedContext(vaultDocuments),
+    [vaultDocuments],
+  );
+  const defaultDueDate = generated?.next_deadline || generated?.claim_deadline || "";
 
   const keyRisks = useMemo(() => (generated?.flags || []).slice(0, 3), [generated]);
   const nextActions = useMemo(
@@ -84,6 +108,173 @@ export function GeneratedDashboardPage() {
     () => (generated?.timing_advisories || []).slice(0, 4),
     [generated],
   );
+  const [openingMode, setOpeningMode] = useState<SettlementOpeningMode>(() =>
+    deriveInitialOpeningMode(currentSettlement, settlementSeed),
+  );
+  const [reasonKey, setReasonKey] = useState<DisputeReasonKey>(() =>
+    deriveInitialReasonKey(currentSettlement, settlementSeed),
+  );
+  const [claimSide, setClaimSide] = useState<ClaimPartyRole>(() =>
+    deriveInitialClaimSide(currentSettlement, settlementSeed),
+  );
+  const [claimedAmount, setClaimedAmount] = useState<number>(() => currentSettlement.claimedAmount);
+  const [admittedAmount, setAdmittedAmount] = useState<number>(() => currentSettlement.admittedAmount);
+  const [dueDate, setDueDate] = useState<string>(() => currentSettlement.dueDate || defaultDueDate);
+  const [customReason, setCustomReason] = useState<string>(
+    () =>
+      currentSettlement.customReason ||
+      (settlementSeed.reasonKey === "custom" ? settlementSeed.summary : ""),
+  );
+  const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>(
+    () => currentSettlement.evidenceIds.length > 0 ? currentSettlement.evidenceIds : settlementSeed.evidenceIds,
+  );
+  const [packageMessage, setPackageMessage] = useState<string>("");
+
+  useEffect(() => {
+    if (openingMode === "generated-signal" && !settlementSeed.disputeDetected) {
+      setOpeningMode("manual-review");
+    }
+  }, [openingMode, settlementSeed.disputeDetected]);
+
+  useEffect(() => {
+    if (selectedEvidenceIds.length === 0 && settlementSeed.evidenceIds.length > 0) {
+      setSelectedEvidenceIds(settlementSeed.evidenceIds);
+    }
+  }, [selectedEvidenceIds.length, settlementSeed.evidenceIds]);
+
+  useEffect(() => {
+    if (reasonKey === "custom" && !customReason.trim()) {
+      setCustomReason(settlementSeed.summary);
+    }
+  }, [customReason, reasonKey, settlementSeed.summary]);
+
+  const selectedEvidence = useMemo(
+    () => vaultDocuments.filter((item) => selectedEvidenceIds.includes(item.id)),
+    [vaultDocuments, selectedEvidenceIds],
+  );
+  const disputeRequirements = useMemo(
+    () => getEvidenceRequirements(reasonKey),
+    [reasonKey],
+  );
+  const disputeRequirementChecks = useMemo(
+    () =>
+      disputeRequirements.map((requirement) => ({
+        ...requirement,
+        satisfied: selectedEvidence.some((document) => requirement.anyOf.includes(document.type)),
+      })),
+    [disputeRequirements, selectedEvidence],
+  );
+  const missingRequirementLabels = useMemo(
+    () =>
+      disputeRequirementChecks
+        .filter((item) => !item.satisfied)
+        .map((item) => item.label),
+    [disputeRequirementChecks],
+  );
+  const disputedAmount = useMemo(
+    () => deriveDisputedAmount(claimedAmount, admittedAmount),
+    [admittedAmount, claimedAmount],
+  );
+  const disputeIssues = useMemo(() => {
+    const issues: string[] = [];
+
+    if (openingMode === "generated-signal" && !settlementSeed.disputeDetected) {
+      issues.push("No generated dispute signal is available for this voyage recap.");
+    }
+
+    if (claimedAmount <= 0) {
+      issues.push("Set the claimed exposure before opening the dispute package.");
+    }
+
+    if (admittedAmount < 0) {
+      issues.push("Admitted payable amount cannot be negative.");
+    }
+
+    if (admittedAmount > claimedAmount) {
+      issues.push("Admitted payable amount cannot exceed claimed amount.");
+    }
+
+    if (disputedAmount <= 0) {
+      issues.push("A dispute package needs a positive disputed remainder.");
+    }
+
+    if (!dueDate.trim()) {
+      issues.push("Set a due date or payment deadline.");
+    }
+
+    if (reasonKey === "custom" && !customReason.trim()) {
+      issues.push("Add a custom dispute note for manual review.");
+    }
+
+    if (selectedEvidenceIds.length === 0) {
+      issues.push("Link at least one supporting evidence item.");
+    }
+
+    if (missingRequirementLabels.length > 0) {
+      issues.push(`Suggested evidence still missing: ${missingRequirementLabels.join(", ")}.`);
+    }
+
+    return issues;
+  }, [
+    admittedAmount,
+    claimedAmount,
+    customReason,
+    disputedAmount,
+    dueDate,
+    missingRequirementLabels,
+    openingMode,
+    reasonKey,
+    selectedEvidenceIds.length,
+    settlementSeed.disputeDetected,
+  ]);
+
+  function toggleEvidenceSelection(documentId: string) {
+    setSelectedEvidenceIds((current) =>
+      current.includes(documentId)
+        ? current.filter((item) => item !== documentId)
+        : [...current, documentId],
+    );
+  }
+
+  function applyGeneratedSuggestion() {
+    setOpeningMode(settlementSeed.disputeDetected ? "generated-signal" : "manual-review");
+    setReasonKey(settlementSeed.reasonKey);
+    setClaimSide(settlementSeed.claimSide);
+    setClaimedAmount(0);
+    setAdmittedAmount(0);
+    setDueDate(defaultDueDate);
+    setCustomReason(settlementSeed.reasonKey === "custom" ? settlementSeed.summary : "");
+    setSelectedEvidenceIds(settlementSeed.evidenceIds);
+    setPackageMessage("");
+  }
+
+  function handleOpenDisputePackage() {
+    if (disputeIssues.length > 0) {
+      setPackageMessage(disputeIssues[0]);
+      return;
+    }
+
+    const draft: SettlementDraft = {
+      id: currentSettlement.id || "settlement-a102",
+      title:
+        openingMode === "manual-review"
+          ? `Manual Dispute Review - ${summaryRoute}`
+          : `Settlement Review - ${summaryRoute}`,
+      claimedAmount,
+      admittedAmount,
+      currency: settlementSeed.currency,
+      dueDate,
+      claimSide,
+      openingMode,
+      reasonKey,
+      customReason: reasonKey === "custom" ? customReason.trim() : "",
+      evidenceIds: selectedEvidenceIds,
+    };
+
+    saveSettlementDraft(draft);
+    setPackageMessage("Dispute package opened. Redirecting to settlement workflow.");
+    navigateTo("/app/settlement");
+  }
 
   if (!generated) {
     return (
@@ -178,6 +369,324 @@ export function GeneratedDashboardPage() {
         </Surface>
       </div>
 
+      <Surface className="mt-5">
+        <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+          <div>
+            <HeaderTag
+              label={openingMode === "manual-review" ? "Manual review" : "Generated signal"}
+              tone={openingMode === "manual-review" ? "mixed" : "suggested"}
+            />
+            <SectionTitle
+              icon={ArrowRightLeft}
+              label="Dispute opening"
+              subtitle="Open a maritime dispute package from the dashboard"
+            />
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                Review basis
+              </div>
+              <div className="mt-3 text-sm leading-7 text-white/78">
+                {settlementSeed.disputeDetected
+                  ? settlementSeed.summary
+                  : "No generated dispute signal was found. You can still open a manual dispute review if operations or claims teams identify a real exposure."}
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <MetricCard
+                  tag="Suggested"
+                  label="Reason"
+                  value={getDisputeReasonLabel(settlementSeed.reasonKey).labelEn}
+                  tone="suggested"
+                />
+                <MetricCard
+                  tag="Suggested"
+                  label="Claim side"
+                  value={settlementSeed.claimSide}
+                  tone="suggested"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={!settlementSeed.disputeDetected}
+                onClick={() => {
+                  setOpeningMode("generated-signal");
+                  applyGeneratedSuggestion();
+                }}
+                className={[
+                  "rounded-2xl border px-4 py-4 text-left transition",
+                  openingMode === "generated-signal"
+                    ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
+                    : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.05]",
+                  !settlementSeed.disputeDetected ? "cursor-not-allowed opacity-45" : "",
+                ].join(" ")}
+              >
+                <div className="font-semibold">Use generated signal</div>
+                <div className="mt-2 text-sm leading-7 text-white/60">
+                  Opens the package from the recap-derived dispute signal and suggested evidence pack.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOpeningMode("manual-review")}
+                className={[
+                  "rounded-2xl border px-4 py-4 text-left transition",
+                  openingMode === "manual-review"
+                    ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
+                    : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.05]",
+                ].join(" ")}
+              >
+                <div className="font-semibold">Open manual review</div>
+                <div className="mt-2 text-sm leading-7 text-white/60">
+                  Lets claims users open a package even when the generated recap did not classify the dispute correctly.
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                Maritime logic
+              </div>
+              <div className="mt-3 space-y-2 text-sm leading-7 text-white/72">
+                <div>- A settlement package should only open when there is an actual monetary dispute.</div>
+                <div>- Contract freight is not auto-treated as the disputed amount.</div>
+                <div>- The package must identify claimant side, admitted payable amount, and disputed remainder separately.</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 text-sm text-white/75">
+                <span>Dispute reason</span>
+                <select
+                  value={reasonKey}
+                  onChange={(event) => setReasonKey(event.target.value as DisputeReasonKey)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none"
+                >
+                  {disputeReasonCatalog.map((reason) => (
+                    <option key={reason.key} value={reason.key} className="bg-white text-slate-900">
+                      {reason.labelEn}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2 text-sm text-white/75">
+                <span>Due date / payment deadline</span>
+                <input
+                  value={dueDate}
+                  onChange={(event) => setDueDate(event.target.value)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
+                />
+              </label>
+
+              <label className="grid gap-2 text-sm text-white/75">
+                <span>Claimed exposure</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={claimedAmount}
+                  onChange={(event) => setClaimedAmount(Number(event.target.value) || 0)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
+                />
+              </label>
+
+              <label className="grid gap-2 text-sm text-white/75">
+                <span>Admitted payable amount</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={admittedAmount}
+                  onChange={(event) => setAdmittedAmount(Number(event.target.value) || 0)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 grid gap-2 text-sm text-white/75">
+              <span>Claim side</span>
+              <div className="grid grid-cols-2 gap-2">
+                {(["Owner", "Charterer"] as const).map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setClaimSide(role)}
+                    className={[
+                      "rounded-2xl border px-4 py-3 text-left transition",
+                      claimSide === role
+                        ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
+                        : "border-white/10 bg-white/[0.02] text-white/75 hover:bg-white/[0.05]",
+                    ].join(" ")}
+                  >
+                    <div className="font-semibold">{role}</div>
+                    <div className="mt-1 text-xs text-white/55">
+                      {role === "Owner" ? "Owner-led claim package" : "Charterer-led claim package"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {reasonKey === "custom" ? (
+              <label className="mt-4 grid gap-2 text-sm text-white/75">
+                <span>Custom dispute note</span>
+                <textarea
+                  value={customReason}
+                  onChange={(event) => setCustomReason(event.target.value)}
+                  className="min-h-[110px] rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
+                />
+              </label>
+            ) : null}
+
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              <MetricCard
+                tag="Draft"
+                label="Currency"
+                value={settlementSeed.currency}
+                tone="review"
+              />
+              <MetricCard
+                tag="Draft"
+                label="Disputed remainder"
+                value={new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: settlementSeed.currency,
+                  maximumFractionDigits: 0,
+                }).format(disputedAmount)}
+                tone={disputedAmount > 0 ? "suggested" : "review"}
+              />
+              <MetricCard
+                tag="Draft"
+                label="Linked evidence"
+                value={`${selectedEvidenceIds.length} item(s)`}
+                tone={selectedEvidenceIds.length > 0 ? "suggested" : "review"}
+              />
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                  Suggested evidence pack
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvidenceIds(settlementSeed.evidenceIds)}
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold text-white/75 transition hover:bg-white/[0.06]"
+                >
+                  Use suggested pack
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {disputeRequirementChecks.length > 0 ? (
+                  disputeRequirementChecks.map((item) => (
+                    <div
+                      key={item.id}
+                      className={[
+                        "rounded-2xl border px-4 py-3 text-sm",
+                        item.satisfied
+                          ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
+                          : "border-amber-400/20 bg-amber-500/10 text-amber-100",
+                      ].join(" ")}
+                    >
+                      <div className="font-semibold">{item.label}</div>
+                      <div className="mt-1 text-xs opacity-80">{item.anyOf.join(" or ")}</div>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyBox text="Custom review selected. Attach the evidence you intend to rely on." />
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                {vaultDocuments.length > 0 ? (
+                  vaultDocuments.map((document) => {
+                    const active = selectedEvidenceIds.includes(document.id);
+                    return (
+                      <button
+                        key={document.id}
+                        type="button"
+                        onClick={() => toggleEvidenceSelection(document.id)}
+                        className={[
+                          "rounded-2xl border px-4 py-3 text-left transition",
+                          active
+                            ? "border-sky-400/30 bg-sky-500/10"
+                            : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                        ].join(" ")}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="break-words font-semibold text-white/90">{document.name}</div>
+                          <span
+                            className={[
+                              "rounded-full px-3 py-1 text-xs font-semibold",
+                              active ? "bg-emerald-500/15 text-emerald-200" : "bg-white/[0.04] text-white/60",
+                            ].join(" ")}
+                          >
+                            {active ? "Linked" : "Link"}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-white/58">
+                          {document.type} - {document.uploaderRole} - {document.uploadedAt}
+                        </div>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <EmptyBox text="No evidence is available yet. Upload or confirm documents first." />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleOpenDisputePackage}
+                disabled={disputeIssues.length > 0}
+                className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f] shadow-[0_14px_34px_rgba(51,115,183,0.35)] transition hover:-translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                {openingMode === "manual-review" ? "Open manual dispute package" : "Open settlement package"}
+              </button>
+              <button
+                type="button"
+                onClick={applyGeneratedSuggestion}
+                className="rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/[0.06]"
+              >
+                Reset to suggestion
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {packageMessage ? (
+                <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+                  {packageMessage}
+                </div>
+              ) : null}
+              {disputeIssues.length > 0 ? (
+                disputeIssues.map((issue) => (
+                  <div
+                    key={issue}
+                    className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100"
+                  >
+                    {issue}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                  Dispute package is coherent and ready to open in settlement.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Surface>
+
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_0.95fr_1.25fr]">
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
@@ -253,7 +762,10 @@ export function GeneratedDashboardPage() {
               ))
             )}
           </div>
-          <EvidenceVaultPanel className="mt-5" />
+          <EvidenceVaultPanel
+            className="mt-5"
+            onEntriesChanged={() => setVaultVersion((current) => current + 1)}
+          />
         </Surface>
       </div>
 
@@ -664,7 +1176,13 @@ function TaskColumn({
   );
 }
 
-function EvidenceVaultPanel({ className = "" }: { className?: string }) {
+function EvidenceVaultPanel({
+  className = "",
+  onEntriesChanged,
+}: {
+  className?: string;
+  onEntriesChanged?: () => void;
+}) {
   const inputId = useId();
   const [uploaderRole, setUploaderRole] = useState<"Owner" | "Charterer" | "Agent">("Owner");
   const [documentType, setDocumentType] = useState<EvidenceType>("Invoice");
@@ -686,6 +1204,7 @@ function EvidenceVaultPanel({ className = "" }: { className?: string }) {
     setEntries((current) => {
       const merged = [...nextEntries, ...current];
       saveVaultEntries(merged);
+      onEntriesChanged?.();
       return merged;
     });
   }
@@ -920,8 +1439,31 @@ function formatVaultTimestamp(date: Date) {
   return `${datePart}, ${timePart} HRS`;
 }
 
+function deriveInitialOpeningMode(
+  draft: SettlementDraft,
+  seed: ReturnType<typeof deriveSettlementSeedContext>,
+): SettlementOpeningMode {
+  if (draft.openingMode === "manual-review") return "manual-review";
+  return seed.disputeDetected ? "generated-signal" : "manual-review";
+}
+
+function deriveInitialReasonKey(
+  draft: SettlementDraft,
+  seed: ReturnType<typeof deriveSettlementSeedContext>,
+): DisputeReasonKey {
+  return draft.reasonKey ?? seed.reasonKey;
+}
+
+function deriveInitialClaimSide(
+  draft: SettlementDraft,
+  seed: ReturnType<typeof deriveSettlementSeedContext>,
+): ClaimPartyRole {
+  return draft.claimSide ?? seed.claimSide;
+}
+
 type ActivityIcon =
   | typeof AlertTriangle
+  | typeof ArrowRightLeft
   | typeof Clock3
   | typeof FileSearch
   | typeof FileStack
