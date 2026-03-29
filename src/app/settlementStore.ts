@@ -187,9 +187,7 @@ export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
 
   const manualDocuments = loadStoredEvidenceDocuments();
-  const seededDocuments = buildSeedDocuments();
-
-  return dedupeEvidenceDocuments([...manualDocuments, ...seededDocuments]);
+  return dedupeEvidenceDocuments(manualDocuments);
 }
 
 export function saveEvidenceVaultDocuments(documents: EvidenceVaultDocument[]) {
@@ -618,75 +616,9 @@ function getReasonSpecificEvidenceBoost(
   }
 }
 
-function buildSeedDocuments(): EvidenceVaultDocument[] {
-  const generated = loadGeneratedVoyage();
-  const docsFromVoyage =
-    generated?.documents
-      ?.map((document, index) => mapGeneratedDocumentToEvidence(document.title, index))
-      .filter((item): item is EvidenceVaultDocument => Boolean(item)) ?? [];
-
-  if (docsFromVoyage.length > 0) {
-    return docsFromVoyage;
-  }
-
-  const fallbackReason = inferDisputeReason(buildDisputeCorpus(generated), []);
-  return buildFallbackDocuments(
-    fallbackReason === "custom" ? "port_cost_difference" : fallbackReason,
-  );
-}
-
-function buildFallbackDocuments(reasonKey: DisputeReasonKey): EvidenceVaultDocument[] {
-  switch (reasonKey) {
-    case "port_cost_difference":
-      return [
-        buildDocument("seed-port-1", "Estimated DA advance - Qingdao.pdf", "PDA / FDA", "Agent", "generated-dashboard"),
-        buildDocument("seed-port-2", "Final port disbursement invoice.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-port-3", "Qingdao port receipts bundle.pdf", "Port document", "Agent", "generated-dashboard"),
-        buildDocument("seed-port-4", "DA reimbursement discussion.msg", "Email", "Charterer", "generated-dashboard"),
-      ];
-    case "invoice_mismatch":
-      return [
-        buildDocument("seed-invoice-1", "Commercial invoice - disputed line items.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-invoice-2", "Invoice comments thread.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-invoice-3", "Recap payment excerpt.eml", "Recap", "Charterer", "generated-dashboard"),
-      ];
-    case "off_hire_deduction":
-      return [
-        buildDocument("seed-offhire-1", "Off-hire clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-        buildDocument("seed-offhire-2", "Downtime SOF extract.pdf", "SOF", "Agent", "generated-dashboard"),
-        buildDocument("seed-offhire-3", "Off-hire deduction negotiation.msg", "Email", "Charterer", "generated-dashboard"),
-      ];
-    case "bunker_difference":
-      return [
-        buildDocument("seed-bunker-1", "Bunker supply invoice.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-bunker-2", "Bunker reconciliation thread.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-bunker-3", "Bunker adjustment clause.pdf", "CP clause", "Owner", "generated-dashboard"),
-      ];
-    case "freight_shortfall":
-      return [
-        buildDocument("seed-freight-1", "Freight invoice balance due.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-freight-2", "Voyage recap freight terms.eml", "Recap", "Charterer", "generated-dashboard"),
-        buildDocument("seed-freight-3", "Freight balance chase.msg", "Email", "Owner", "generated-dashboard"),
-        buildDocument("seed-freight-4", "Freight clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-      ];
-    case "laytime_demurrage_difference":
-      return [
-        buildDocument("seed-laytime-1", "Statement of facts.pdf", "SOF", "Agent", "generated-dashboard"),
-        buildDocument("seed-laytime-2", "Demurrage clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-        buildDocument("seed-laytime-3", "Laytime calculation exchange.msg", "Email", "Charterer", "generated-dashboard"),
-      ];
-    case "custom":
-      return [
-        buildDocument("seed-custom-1", "Claims invoice pack.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-custom-2", "Claims correspondence.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-custom-3", "Voyage recap extract.eml", "Recap", "Charterer", "generated-dashboard"),
-      ];
-  }
-}
-
 function buildSeedSettlementDraft(): SettlementDraft {
   const generated = loadGeneratedVoyage();
-  const evidence = buildSeedDocuments();
+  const evidence = loadEvidenceVaultDocuments();
   const seedContext = deriveSettlementSeedContext(evidence);
 
   return {
@@ -706,7 +638,7 @@ function buildSeedSettlementDraft(): SettlementDraft {
     openingMode: "generated-signal",
     reasonKey: seedContext.reasonKey,
     customReason: seedContext.reasonKey === "custom" ? seedContext.summary : "",
-    evidenceIds: seedContext.evidenceIds,
+    evidenceIds: [],
   };
 }
 
@@ -790,6 +722,7 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
   };
   const fallback = buildSeedSettlementDraft();
   const generatedSignal = deriveGeneratedSettlementSignal();
+  const availableEvidenceIds = new Set(loadEvidenceVaultDocuments().map((document) => document.id));
   const isLegacyDraft = item.totalAmount !== undefined || item.disputedAmount !== undefined;
   const openingMode = normalizeOpeningMode(item.openingMode, fallback.openingMode);
 
@@ -816,7 +749,10 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
     reasonKey: isDisputeReasonKey(item.reasonKey) ? item.reasonKey : fallback.reasonKey,
     customReason: typeof item.customReason === "string" ? item.customReason : "",
     evidenceIds: Array.isArray(item.evidenceIds)
-      ? item.evidenceIds.filter((value): value is string => typeof value === "string")
+      ? item.evidenceIds.filter(
+          (value): value is string =>
+            typeof value === "string" && availableEvidenceIds.has(value),
+        )
       : fallback.evidenceIds,
   };
 }
@@ -830,48 +766,6 @@ function clampSettlementDraft(draft: SettlementDraft): SettlementDraft {
     claimedAmount,
     admittedAmount,
     dueDate: draft.dueDate.trim(),
-  };
-}
-
-function mapGeneratedDocumentToEvidence(title: string, index: number) {
-  const lowered = title.toLowerCase();
-  let type: EvidenceDocumentType | null = null;
-
-  if (lowered.includes("invoice")) type = "Invoice";
-  else if (lowered.includes("sof")) type = "SOF";
-  else if (lowered.includes("clause") || lowered.includes("cp")) type = "CP clause";
-  else if (lowered.includes("email") || lowered.includes("correspondence")) type = "Email";
-  else if (lowered.includes("pda") || lowered.includes("fda") || lowered.includes("disbursement")) type = "PDA / FDA";
-  else if (lowered.includes("recap")) type = "Recap";
-  else if (lowered.includes("port") || lowered.includes("bill of lading") || lowered.includes("mate")) {
-    type = "Port document";
-  }
-
-  if (!type) return null;
-
-  return buildDocument(`generated-${index + 1}`, title, type, inferUploaderRole(type), "generated-dashboard");
-}
-
-function inferUploaderRole(type: EvidenceDocumentType): EvidenceUploaderRole {
-  if (type === "Invoice" || type === "CP clause") return "Owner";
-  if (type === "PDA / FDA" || type === "Port document") return "Agent";
-  return "Charterer";
-}
-
-function buildDocument(
-  id: string,
-  name: string,
-  type: EvidenceDocumentType,
-  uploaderRole: EvidenceUploaderRole,
-  source: "generated-dashboard" | "manual-upload",
-): EvidenceVaultDocument {
-  return {
-    id,
-    name,
-    type,
-    uploaderRole,
-    source,
-    uploadedAt: "28 Mar 2026, 09:20 HRS",
   };
 }
 
