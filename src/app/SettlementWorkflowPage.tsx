@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import {
   assessSettlementDraft,
+  deriveSettlementSeedContext,
   getDisputeReasonLabel,
   getSettlementPartyModel,
   loadEvidenceVaultDocuments,
@@ -20,7 +21,9 @@ import {
 import { AppShell, CTAButton, Surface } from "./ui";
 
 type SettlementStatus =
+  | "closed_no_dispute"
   | "review_required"
+  | "awaiting_quantification"
   | "ready_to_split"
   | "disputed_portion_staged";
 
@@ -82,6 +85,10 @@ export function SettlementWorkflowPage() {
   }, [lockedSource]);
 
   const activeSource = lockedSource ?? source;
+  const seedContext = useMemo(
+    () => deriveSettlementSeedContext(activeSource.linkedEvidence),
+    [activeSource.linkedEvidence],
+  );
   const parties = useMemo(
     () => getSettlementPartyModel(activeSource.draft.claimSide),
     [activeSource.draft.claimSide],
@@ -95,11 +102,12 @@ export function SettlementWorkflowPage() {
       buildSettlementView(
         activeSource,
         parties,
+        seedContext,
         assessment.disputedAmount,
         assessment.isReady,
         Boolean(stage),
       ),
-    [activeSource, parties, assessment.disputedAmount, assessment.isReady, stage],
+    [activeSource, parties, seedContext, assessment.disputedAmount, assessment.isReady, stage],
   );
 
   useEffect(() => {
@@ -146,7 +154,7 @@ export function SettlementWorkflowPage() {
     <AppShell
       eyebrow="Settlement Workflow"
       title="Split & Neutralize"
-      description="Generated recap context and the evidence vault feed this demo workflow. Settlement only becomes available when the seeded party direction, payable amount, and evidence pack are coherent."
+      description="Generated recap context and the evidence vault feed this demo workflow. Settlement stays closed unless the recap actually points to a payment, deduction, cost, or claim dispute."
     >
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <Surface className="h-full">
@@ -158,21 +166,39 @@ export function SettlementWorkflowPage() {
               amount={settlement.claimedAmount}
               currency={settlement.currency}
               tone="border-white/10 bg-white/[0.03] text-white/88"
-              status="Seeded from recap context"
+              status={
+                !seedContext.disputeDetected
+                  ? "No dispute package opened"
+                  : seedContext.referenceAmount
+                    ? "Reference amount inferred from recap"
+                    : "Amount basis still needs confirmation"
+              }
             />
             <AmountCard
               label="Admitted payable"
               amount={settlement.admittedAmount}
               currency={settlement.currency}
               tone="border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
-              status={assessment.isReady ? "Ready to release" : "Pending intake correction"}
+              status={
+                !seedContext.disputeDetected
+                  ? "Settlement closed"
+                  : assessment.isReady
+                    ? "Ready to release"
+                    : "Pending review and quantification"
+              }
             />
             <AmountCard
               label="Disputed remainder"
               amount={settlement.disputedAmount}
               currency={settlement.currency}
               tone="border-amber-400/20 bg-amber-500/10 text-amber-200"
-              status={stage ? "Staged in demo flow" : "Awaiting split confirmation"}
+              status={
+                !seedContext.disputeDetected
+                  ? "No live dispute"
+                  : stage
+                    ? "Staged in demo flow"
+                    : "Awaiting split confirmation"
+              }
             />
           </div>
 
@@ -181,6 +207,13 @@ export function SettlementWorkflowPage() {
             <InfoCard label="Respondent" value={settlement.respondent} />
             <InfoCard label="Reason" value={settlement.reason} />
             <InfoCard label="Due date" value={settlement.dueDate} />
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
+            <div className="text-sm uppercase tracking-[0.22em] text-[#88c4ff]">
+              Generated dispute signal
+            </div>
+            <div className="mt-3 text-sm leading-7 text-white/75">{seedContext.summary}</div>
           </div>
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
@@ -212,7 +245,7 @@ export function SettlementWorkflowPage() {
                 ))
               ) : (
                 <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
-                  Settlement seed is coherent. Split can proceed in the demo flow.
+                  Settlement package is coherent. Split can proceed in the demo flow.
                 </div>
               )}
             </div>
@@ -247,7 +280,7 @@ export function SettlementWorkflowPage() {
                 Admit what is payable, isolate only what is disputed
               </div>
               <div className="mt-2 text-sm text-white/65">
-                This demo refuses loose arithmetic. Split only happens after seeded direction and evidence make sense.
+                This demo refuses loose arithmetic. Split only happens after a genuine dispute signal, amount basis, direction, and evidence all make sense.
               </div>
             </div>
           </div>
@@ -294,11 +327,19 @@ export function SettlementWorkflowPage() {
           <PanelTitle
             icon={Landmark}
             eyebrow="Disputed Portion Stage"
-            title={stage ? "Disputed remainder staged" : "No staged split yet"}
+            title={
+              !seedContext.disputeDetected
+                ? "Settlement closed"
+                : stage
+                  ? "Disputed remainder staged"
+                  : "No staged split yet"
+            }
             description={
-              stage
-                ? "The disputed remainder is staged in this demo flow. No real custody movement occurs."
-                : "Complete the intake gate, then confirm Split & Neutralize to stage the disputed remainder."
+              !seedContext.disputeDetected
+                ? "No monetary dispute trigger was detected from the recap context, so the settlement flow remains closed."
+                : stage
+                  ? "The disputed remainder is staged in this demo flow. No real custody movement occurs."
+                  : "Complete the intake gate, then confirm Split & Neutralize to stage the disputed remainder."
             }
           />
 
@@ -388,8 +429,8 @@ function WorkflowHeader({ title }: { title: string }) {
       </div>
       <h2 className="mt-4 break-words text-3xl font-bold">{title}</h2>
       <p className="mt-3 max-w-3xl text-sm leading-7 text-white/68">
-        This demo only stages a split after the commercial direction makes sense:
-        claimant, respondent, payer, payee, admitted amount, and evidence pack all need to align.
+        Settlement only opens after the recap points to a real monetary dispute:
+        claimant, respondent, payer, payee, amount basis, and evidence pack all need to align.
       </p>
     </div>
   );
@@ -586,6 +627,7 @@ function loadSettlementSource(): SettlementSource {
 function buildSettlementView(
   source: SettlementSource,
   parties: ReturnType<typeof getSettlementPartyModel>,
+  seedContext: ReturnType<typeof deriveSettlementSeedContext>,
   disputedAmount: number,
   isReady: boolean,
   isStaged: boolean,
@@ -595,21 +637,29 @@ function buildSettlementView(
     source.draft.reasonKey === "custom"
       ? source.draft.customReason.trim() || "Custom review note"
       : reasonLabel.labelEn;
+  const status: SettlementStatus = isStaged
+    ? "disputed_portion_staged"
+    : !seedContext.disputeDetected
+      ? "closed_no_dispute"
+      : disputedAmount <= 0
+        ? "awaiting_quantification"
+        : isReady
+          ? "ready_to_split"
+          : "review_required";
+  const title = !seedContext.disputeDetected
+    ? "No Dispute Package Opened"
+    : source.draft.title;
 
   return {
     id: source.draft.id,
-    title: source.draft.title,
+    title,
     claimedAmount: source.draft.claimedAmount,
     admittedAmount: source.draft.admittedAmount,
     disputedAmount,
     currency: source.draft.currency,
     dueDate: source.draft.dueDate || "Pending confirmation",
     reason,
-    status: isStaged
-      ? "disputed_portion_staged"
-      : isReady
-        ? "ready_to_split"
-        : "review_required",
+    status,
     claimant: `${parties.claimantRole} - ${parties.claimantName}`,
     respondent: `${parties.respondentRole} - ${parties.respondentName}`,
     payer: `${parties.payerRole} - ${parties.payerName}`,
@@ -641,8 +691,12 @@ function buildInitialTimeline(source: SettlementSource): TimelineEvent[] {
 
 function getStatusLabel(status: SettlementStatus) {
   switch (status) {
+    case "closed_no_dispute":
+      return "Closed - no dispute signal";
     case "review_required":
       return "Review required";
+    case "awaiting_quantification":
+      return "Awaiting quantification";
     case "ready_to_split":
       return "Ready to split";
     case "disputed_portion_staged":
