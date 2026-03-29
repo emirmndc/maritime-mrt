@@ -21,6 +21,7 @@ import {
   deriveDisputedAmount,
   deriveSettlementSeedContext,
   disputeReasonCatalog,
+  getClaimSideConstraint,
   getDisputeReasonLabel,
   getEvidenceRequirements,
   getSuggestedClaimSide,
@@ -130,12 +131,23 @@ export function GeneratedDashboardPage() {
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>(
     () => currentSettlement.evidenceIds.length > 0 ? currentSettlement.evidenceIds : settlementSeed.evidenceIds,
   );
-  const [packageMessage, setPackageMessage] = useState<string>("");
   const [amountsNeedReconfirm, setAmountsNeedReconfirm] = useState(false);
+  const [amountReconfirmProgress, setAmountReconfirmProgress] = useState({
+    claimed: false,
+    admitted: false,
+  });
   const suggestedEvidenceIds = useMemo(
     () => getSuggestedEvidenceIds(reasonKey, vaultDocuments),
     [reasonKey, vaultDocuments],
   );
+  const claimSideConstraint = useMemo(
+    () => getClaimSideConstraint(reasonKey),
+    [reasonKey],
+  );
+  const effectiveOpeningMode =
+    openingMode === "generated-signal" && !settlementSeed.disputeDetected
+      ? "manual-review"
+      : openingMode;
 
   useEffect(() => {
     if (openingMode === "generated-signal" && !settlementSeed.disputeDetected) {
@@ -154,6 +166,22 @@ export function GeneratedDashboardPage() {
       setCustomReason(settlementSeed.summary);
     }
   }, [customReason, reasonKey, settlementSeed.summary]);
+
+  useEffect(() => {
+    if (claimSideConstraint && claimSide !== claimSideConstraint.lockedSide) {
+      setClaimSide(claimSideConstraint.lockedSide);
+    }
+  }, [claimSide, claimSideConstraint]);
+
+  useEffect(() => {
+    if (
+      amountsNeedReconfirm &&
+      amountReconfirmProgress.claimed &&
+      amountReconfirmProgress.admitted
+    ) {
+      setAmountsNeedReconfirm(false);
+    }
+  }, [amountReconfirmProgress, amountsNeedReconfirm]);
 
   const selectedEvidence = useMemo(
     () => vaultDocuments.filter((item) => selectedEvidenceIds.includes(item.id)),
@@ -192,15 +220,24 @@ export function GeneratedDashboardPage() {
     () => deriveDisputedAmount(claimedAmount, admittedAmount),
     [admittedAmount, claimedAmount],
   );
+  const pendingAmountReconfirmLabels = useMemo(() => {
+    const pending: string[] = [];
+
+    if (!amountReconfirmProgress.claimed) {
+      pending.push("Claimed exposure");
+    }
+
+    if (!amountReconfirmProgress.admitted) {
+      pending.push("Admitted payable amount");
+    }
+
+    return pending;
+  }, [amountReconfirmProgress]);
   const disputeIssues = useMemo(() => {
     const issues: string[] = [];
 
-    if (openingMode === "generated-signal" && !settlementSeed.disputeDetected) {
-      issues.push("No generated dispute signal is available for this voyage recap.");
-    }
-
     if (amountsNeedReconfirm) {
-      issues.push("Dispute reason changed. Reconfirm claimed and admitted amounts before opening the package.");
+      issues.push("Dispute reason changed. Retype both amount fields before opening the package.");
     }
 
     if (claimedAmount <= 0) {
@@ -244,10 +281,8 @@ export function GeneratedDashboardPage() {
     disputedAmount,
     dueDate,
     missingRequirementLabels,
-    openingMode,
     reasonKey,
     selectedEvidenceIds.length,
-    settlementSeed.disputeDetected,
   ]);
 
   function toggleEvidenceSelection(documentId: string) {
@@ -258,39 +293,53 @@ export function GeneratedDashboardPage() {
     );
   }
 
-  function handleReasonChange(nextReason: DisputeReasonKey) {
+  function applyReasonSelection(
+    nextReason: DisputeReasonKey,
+    options: { requireAmountRetype: boolean },
+  ) {
     const reasonChanged = nextReason !== reasonKey;
+    const nextClaimSideConstraint = getClaimSideConstraint(nextReason);
 
     setReasonKey(nextReason);
-    setClaimSide(getSuggestedClaimSide(nextReason, vaultDocuments));
+    setClaimSide(
+      nextClaimSideConstraint?.lockedSide ?? getSuggestedClaimSide(nextReason, vaultDocuments),
+    );
     setSelectedEvidenceIds(getSuggestedEvidenceIds(nextReason, vaultDocuments));
-    setPackageMessage("");
 
-    if (reasonChanged && (claimedAmount > 0 || admittedAmount > 0)) {
+    if (
+      options.requireAmountRetype &&
+      reasonChanged &&
+      (claimedAmount > 0 || admittedAmount > 0)
+    ) {
       setAmountsNeedReconfirm(true);
+      setAmountReconfirmProgress({ claimed: false, admitted: false });
       return;
     }
 
     setAmountsNeedReconfirm(false);
+    setAmountReconfirmProgress({ claimed: false, admitted: false });
+  }
+
+  function handleReasonChange(nextReason: DisputeReasonKey) {
+    applyReasonSelection(nextReason, { requireAmountRetype: true });
   }
 
   function applyGeneratedSuggestion() {
     setOpeningMode(settlementSeed.disputeDetected ? "generated-signal" : "manual-review");
-    handleReasonChange(settlementSeed.reasonKey);
+    applyReasonSelection(settlementSeed.reasonKey, { requireAmountRetype: false });
     setDueDate(defaultDueDate);
     setCustomReason(settlementSeed.reasonKey === "custom" ? settlementSeed.summary : "");
   }
 
   function handleOpenDisputePackage() {
     if (disputeIssues.length > 0) {
-      setPackageMessage(disputeIssues[0]);
       return;
     }
 
     const draft: SettlementDraft = {
       id: currentSettlement.id || "settlement-a102",
       title:
-        openingMode === "manual-review"
+        effectiveOpeningMode === "manual-review"
           ? `Manual Dispute Review - ${summaryRoute}`
           : `Settlement Review - ${summaryRoute}`,
       claimedAmount,
@@ -298,7 +347,7 @@ export function GeneratedDashboardPage() {
       currency: settlementSeed.currency,
       dueDate,
       claimSide,
-      openingMode,
+      openingMode: effectiveOpeningMode,
       reasonKey,
       customReason: reasonKey === "custom" ? customReason.trim() : "",
       evidenceIds: selectedEvidenceIds,
@@ -405,8 +454,8 @@ export function GeneratedDashboardPage() {
         <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
           <div>
             <HeaderTag
-              label={openingMode === "manual-review" ? "Manual review" : "Generated signal"}
-              tone={openingMode === "manual-review" ? "mixed" : "suggested"}
+              label={effectiveOpeningMode === "manual-review" ? "Manual review" : "Generated signal"}
+              tone={effectiveOpeningMode === "manual-review" ? "mixed" : "suggested"}
             />
             <SectionTitle
               icon={ArrowRightLeft}
@@ -449,7 +498,7 @@ export function GeneratedDashboardPage() {
                 }}
                 className={[
                   "rounded-2xl border px-4 py-4 text-left transition",
-                  openingMode === "generated-signal"
+                  effectiveOpeningMode === "generated-signal"
                     ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
                     : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.05]",
                   !settlementSeed.disputeDetected ? "cursor-not-allowed opacity-45" : "",
@@ -466,7 +515,7 @@ export function GeneratedDashboardPage() {
                 onClick={() => setOpeningMode("manual-review")}
                 className={[
                   "rounded-2xl border px-4 py-4 text-left transition",
-                  openingMode === "manual-review"
+                  effectiveOpeningMode === "manual-review"
                     ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
                     : "border-white/10 bg-white/[0.03] text-white/75 hover:bg-white/[0.05]",
                 ].join(" ")}
@@ -525,7 +574,9 @@ export function GeneratedDashboardPage() {
                   value={claimedAmount}
                   onChange={(event) => {
                     setClaimedAmount(Number(event.target.value) || 0);
-                    setAmountsNeedReconfirm(false);
+                    if (amountsNeedReconfirm) {
+                      setAmountReconfirmProgress((current) => ({ ...current, claimed: true }));
+                    }
                   }}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
                 />
@@ -540,7 +591,9 @@ export function GeneratedDashboardPage() {
                   value={admittedAmount}
                   onChange={(event) => {
                     setAdmittedAmount(Number(event.target.value) || 0);
-                    setAmountsNeedReconfirm(false);
+                    if (amountsNeedReconfirm) {
+                      setAmountReconfirmProgress((current) => ({ ...current, admitted: true }));
+                    }
                   }}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none"
                 />
@@ -549,17 +602,29 @@ export function GeneratedDashboardPage() {
 
             {amountsNeedReconfirm ? (
               <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-                <div className="font-semibold">Amounts need reconfirmation</div>
+                <div className="font-semibold">Retype both amount fields</div>
                 <div className="mt-2 leading-7 text-amber-100/85">
-                  The dispute reason changed. Recheck the claimed and admitted figures for this new basis before opening the package.
+                  The dispute reason changed. Re-enter both amount fields for this new basis before opening the package.
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAmountsNeedReconfirm(false)}
-                  className="mt-4 rounded-full border border-amber-300/20 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-white/[0.08]"
-                >
-                  Reconfirm current amounts
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["Claimed exposure", "Admitted payable amount"].map((label) => {
+                    const confirmed = !pendingAmountReconfirmLabels.includes(label);
+
+                    return (
+                      <span
+                        key={label}
+                        className={[
+                          "rounded-full px-3 py-1 text-xs font-semibold",
+                          confirmed
+                            ? "bg-emerald-500/15 text-emerald-100"
+                            : "bg-white/[0.06] text-amber-100/85",
+                        ].join(" ")}
+                      >
+                        {confirmed ? `${label} confirmed` : `${label} pending`}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             ) : null}
 
@@ -570,12 +635,16 @@ export function GeneratedDashboardPage() {
                   <button
                     key={role}
                     type="button"
+                    disabled={Boolean(claimSideConstraint && role !== claimSideConstraint.lockedSide)}
                     onClick={() => setClaimSide(role)}
                     className={[
                       "rounded-2xl border px-4 py-3 text-left transition",
                       claimSide === role
                         ? "border-[#4f97e8]/35 bg-[#3373B7]/10 text-white"
                         : "border-white/10 bg-white/[0.02] text-white/75 hover:bg-white/[0.05]",
+                      claimSideConstraint && role !== claimSideConstraint.lockedSide
+                        ? "cursor-not-allowed opacity-45 hover:bg-white/[0.02]"
+                        : "",
                     ].join(" ")}
                   >
                     <div className="font-semibold">{role}</div>
@@ -585,6 +654,11 @@ export function GeneratedDashboardPage() {
                   </button>
                 ))}
               </div>
+              {claimSideConstraint ? (
+                <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+                  {claimSideConstraint.message}
+                </div>
+              ) : null}
             </div>
 
             {reasonKey === "custom" ? (
@@ -701,7 +775,7 @@ export function GeneratedDashboardPage() {
                 className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f] shadow-[0_14px_34px_rgba(51,115,183,0.35)] transition hover:-translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <ArrowRightLeft className="h-4 w-4" />
-                {openingMode === "manual-review" ? "Open manual dispute package" : "Open settlement package"}
+                {effectiveOpeningMode === "manual-review" ? "Open manual dispute package" : "Open settlement package"}
               </button>
               <button
                 type="button"
@@ -713,11 +787,6 @@ export function GeneratedDashboardPage() {
             </div>
 
             <div className="mt-4 grid gap-2">
-              {packageMessage ? (
-                <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
-                  {packageMessage}
-                </div>
-              ) : null}
               {disputeIssues.length > 0 ? (
                 disputeIssues.map((issue) => (
                   <div
