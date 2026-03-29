@@ -93,6 +93,11 @@ type ClaimSideInference = {
   confidence: "low" | "medium" | "high";
 };
 
+export type ClaimSideConstraint = {
+  lockedSide: ClaimPartyRole;
+  message: string;
+};
+
 const EVIDENCE_KEY = "mrt-evidence-vault";
 const LEGACY_EVIDENCE_KEY = "generated-dashboard-evidence-vault";
 const SETTLEMENT_DRAFT_KEY = "generated-dashboard-settlement-draft";
@@ -172,6 +177,11 @@ const demoDirectionRules: Partial<
     message: "Laytime / demurrage difference is expected to open from the Owner side in this demo.",
   },
 };
+
+type GeneratedSettlementSignal = Pick<
+  SettlementSeedContext,
+  "disputeDetected" | "summary" | "referenceAmount" | "currency"
+>;
 
 export function loadEvidenceVaultDocuments(): EvidenceVaultDocument[] {
   if (typeof window === "undefined") return [];
@@ -340,21 +350,19 @@ export function deriveSettlementSeedContext(
 ): SettlementSeedContext {
   const generated = loadGeneratedVoyage();
   const corpus = buildDisputeCorpus(generated);
+  const generatedSignal = deriveGeneratedSettlementSignal();
   const reasonKey = inferDisputeReason(corpus, evidenceDocuments);
-  const disputeDetected = hasDisputeSignal(corpus);
-  const referenceAmount = null;
-  const currency = parseCurrencyAmount(generated?.freight_term).currency ?? "USD";
-  const summary = disputeDetected
+  const summary = generatedSignal.disputeDetected
     ? buildDisputeSummary(generated, reasonKey)
-    : "No payment or claim dispute signal was detected in the generated recap context.";
+    : generatedSignal.summary;
 
   return {
-    disputeDetected,
+    disputeDetected: generatedSignal.disputeDetected,
     reasonKey,
     claimSide: getSuggestedClaimSide(reasonKey, evidenceDocuments),
     summary,
-    referenceAmount,
-    currency,
+    referenceAmount: generatedSignal.referenceAmount,
+    currency: generatedSignal.currency,
     evidenceIds: getSuggestedEvidenceIds(reasonKey, evidenceDocuments),
   };
 }
@@ -377,7 +385,22 @@ export function getSuggestedClaimSide(
   reasonKey: DisputeReasonKey,
   evidenceDocuments: EvidenceVaultDocument[] = loadEvidenceVaultDocuments(),
 ) {
+  const claimSideConstraint = getClaimSideConstraint(reasonKey);
+  if (claimSideConstraint) {
+    return claimSideConstraint.lockedSide;
+  }
+
   return inferClaimSide(reasonKey, buildDisputeCorpus(loadGeneratedVoyage()), evidenceDocuments).side;
+}
+
+export function getClaimSideConstraint(reasonKey: DisputeReasonKey): ClaimSideConstraint | null {
+  const demoRule = demoDirectionRules[reasonKey];
+  if (!demoRule) return null;
+
+  return {
+    lockedSide: demoRule.claimSide,
+    message: demoRule.message,
+  };
 }
 
 export function getSettlementPartyModel(
@@ -409,8 +432,8 @@ export function assessSettlementDraft(
   draft: SettlementDraft,
   selectedEvidence: EvidenceVaultDocument[],
 ): SettlementAssessment {
-  const seedContext = deriveSettlementSeedContext();
-  const disputeOpen = seedContext.disputeDetected || draft.openingMode === "manual-review";
+  const generatedSignal = deriveGeneratedSettlementSignal();
+  const disputeOpen = generatedSignal.disputeDetected || draft.openingMode === "manual-review";
   const issues: string[] = [];
   const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
   const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide, selectedEvidence);
@@ -624,500 +647,4 @@ function buildFallbackDocuments(reasonKey: DisputeReasonKey): EvidenceVaultDocum
     case "invoice_mismatch":
       return [
         buildDocument("seed-invoice-1", "Commercial invoice - disputed line items.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-invoice-2", "Invoice comments thread.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-invoice-3", "Recap payment excerpt.eml", "Recap", "Charterer", "generated-dashboard"),
-      ];
-    case "off_hire_deduction":
-      return [
-        buildDocument("seed-offhire-1", "Off-hire clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-        buildDocument("seed-offhire-2", "Downtime SOF extract.pdf", "SOF", "Agent", "generated-dashboard"),
-        buildDocument("seed-offhire-3", "Off-hire deduction negotiation.msg", "Email", "Charterer", "generated-dashboard"),
-      ];
-    case "bunker_difference":
-      return [
-        buildDocument("seed-bunker-1", "Bunker supply invoice.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-bunker-2", "Bunker reconciliation thread.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-bunker-3", "Bunker adjustment clause.pdf", "CP clause", "Owner", "generated-dashboard"),
-      ];
-    case "freight_shortfall":
-      return [
-        buildDocument("seed-freight-1", "Freight invoice balance due.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-freight-2", "Voyage recap freight terms.eml", "Recap", "Charterer", "generated-dashboard"),
-        buildDocument("seed-freight-3", "Freight balance chase.msg", "Email", "Owner", "generated-dashboard"),
-        buildDocument("seed-freight-4", "Freight clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-      ];
-    case "laytime_demurrage_difference":
-      return [
-        buildDocument("seed-laytime-1", "Statement of facts.pdf", "SOF", "Agent", "generated-dashboard"),
-        buildDocument("seed-laytime-2", "Demurrage clause extract.pdf", "CP clause", "Owner", "generated-dashboard"),
-        buildDocument("seed-laytime-3", "Laytime calculation exchange.msg", "Email", "Charterer", "generated-dashboard"),
-      ];
-    case "custom":
-      return [
-        buildDocument("seed-custom-1", "Claims invoice pack.pdf", "Invoice", "Owner", "generated-dashboard"),
-        buildDocument("seed-custom-2", "Claims correspondence.msg", "Email", "Charterer", "generated-dashboard"),
-        buildDocument("seed-custom-3", "Voyage recap extract.eml", "Recap", "Charterer", "generated-dashboard"),
-      ];
-  }
-}
-
-function buildSeedSettlementDraft(): SettlementDraft {
-  const generated = loadGeneratedVoyage();
-  const evidence = buildSeedDocuments();
-  const seedContext = deriveSettlementSeedContext(evidence);
-
-  return {
-    id: "settlement-a102",
-    title: seedContext.disputeDetected
-      ? generated?.route
-        ? `Settlement Review - ${generated.route}`
-        : "Settlement Review - Voyage #A102"
-      : generated?.route
-        ? `No Dispute Package Opened - ${generated.route}`
-        : "No Dispute Package Opened - Voyage #A102",
-    claimedAmount: 0,
-    admittedAmount: 0,
-    currency: seedContext.currency,
-    dueDate: generated?.next_deadline || generated?.claim_deadline || "28 Mar 2026",
-    claimSide: seedContext.claimSide,
-    openingMode: "generated-signal",
-    reasonKey: seedContext.reasonKey,
-    customReason: seedContext.reasonKey === "custom" ? seedContext.summary : "",
-    evidenceIds: seedContext.evidenceIds,
-  };
-}
-
-function normalizeEvidenceDocument(raw: unknown): EvidenceVaultDocument | null {
-  if (!raw || typeof raw !== "object") return null;
-
-  const item = raw as Partial<EvidenceVaultDocument> & {
-    fileName?: string;
-    documentType?: EvidenceDocumentType;
-    evidenceType?: EvidenceDocumentType;
-    timestamp?: string;
-    fileUrl?: string;
-  };
-  const type = item.type ?? item.documentType ?? item.evidenceType;
-
-  if (
-    typeof item.id !== "string" ||
-    typeof (item.name ?? item.fileName) !== "string" ||
-    !isEvidenceDocumentType(type) ||
-    !isUploaderRole(item.uploaderRole)
-  ) {
-    return null;
-  }
-
-  return {
-    id: item.id,
-    name: item.name ?? item.fileName ?? "Unnamed document",
-    type,
-    uploaderRole: item.uploaderRole,
-    uploadedAt: typeof item.uploadedAt === "string" ? item.uploadedAt : item.timestamp || "Unknown",
-    source:
-      item.source === "generated-dashboard" || item.source === "manual-upload"
-        ? item.source
-        : "manual-upload",
-    fileDataUrl:
-      typeof item.fileDataUrl === "string"
-        ? item.fileDataUrl
-        : typeof item.fileUrl === "string"
-          ? item.fileUrl
-          : undefined,
-  };
-}
-
-function loadStoredEvidenceDocuments() {
-  if (typeof window === "undefined") return [];
-
-  const raw = sessionStorage.getItem(EVIDENCE_KEY) ?? sessionStorage.getItem(LEGACY_EVIDENCE_KEY);
-  if (!raw) return [];
-
-  try {
-    const parsed = JSON.parse(raw) as unknown[];
-    return parsed
-      .map((item) => normalizeEvidenceDocument(item))
-      .filter((item): item is EvidenceVaultDocument => Boolean(item));
-  } catch {
-    sessionStorage.removeItem(EVIDENCE_KEY);
-    sessionStorage.removeItem(LEGACY_EVIDENCE_KEY);
-    return [];
-  }
-}
-
-function dedupeEvidenceDocuments(documents: EvidenceVaultDocument[]) {
-  const seen = new Set<string>();
-
-  return documents.filter((document) => {
-    if (seen.has(document.id)) return false;
-    seen.add(document.id);
-    return true;
-  });
-}
-
-function normalizeSettlementDraft(raw: unknown): SettlementDraft {
-  if (!raw || typeof raw !== "object") {
-    return buildSeedSettlementDraft();
-  }
-
-  const item = raw as Partial<SettlementDraft> & {
-    totalAmount?: number;
-    disputedAmount?: number;
-    initiatedBy?: string;
-  };
-  const fallback = buildSeedSettlementDraft();
-  const seedContext = deriveSettlementSeedContext();
-  const isLegacyDraft = item.totalAmount !== undefined || item.disputedAmount !== undefined;
-  const openingMode = normalizeOpeningMode(item.openingMode, fallback.openingMode);
-
-  if ((!seedContext.disputeDetected && openingMode !== "manual-review") || isLegacyDraft) {
-    return fallback;
-  }
-
-  const claimedAmount = sanitizeNumber(item.claimedAmount, fallback.claimedAmount);
-  const admittedAmount = clampNumber(
-    sanitizeNumber(item.admittedAmount, fallback.admittedAmount),
-    0,
-    claimedAmount,
-  );
-
-  return {
-    id: typeof item.id === "string" ? item.id : fallback.id,
-    title: typeof item.title === "string" && item.title.trim() ? item.title : fallback.title,
-    claimedAmount,
-    admittedAmount,
-    currency: typeof item.currency === "string" && item.currency.trim() ? item.currency : fallback.currency,
-    dueDate: typeof item.dueDate === "string" ? item.dueDate : fallback.dueDate,
-    claimSide: normalizeClaimSide(item.claimSide ?? item.initiatedBy, fallback.claimSide),
-    openingMode,
-    reasonKey: isDisputeReasonKey(item.reasonKey) ? item.reasonKey : fallback.reasonKey,
-    customReason: typeof item.customReason === "string" ? item.customReason : "",
-    evidenceIds: Array.isArray(item.evidenceIds)
-      ? item.evidenceIds.filter((value): value is string => typeof value === "string")
-      : fallback.evidenceIds,
-  };
-}
-
-function clampSettlementDraft(draft: SettlementDraft): SettlementDraft {
-  const claimedAmount = Math.max(draft.claimedAmount, 0);
-  const admittedAmount = clampNumber(draft.admittedAmount, 0, claimedAmount);
-
-  return {
-    ...draft,
-    claimedAmount,
-    admittedAmount,
-    dueDate: draft.dueDate.trim(),
-  };
-}
-
-function mapGeneratedDocumentToEvidence(title: string, index: number) {
-  const lowered = title.toLowerCase();
-  let type: EvidenceDocumentType | null = null;
-
-  if (lowered.includes("invoice")) type = "Invoice";
-  else if (lowered.includes("sof")) type = "SOF";
-  else if (lowered.includes("clause") || lowered.includes("cp")) type = "CP clause";
-  else if (lowered.includes("email") || lowered.includes("correspondence")) type = "Email";
-  else if (lowered.includes("pda") || lowered.includes("fda") || lowered.includes("disbursement")) type = "PDA / FDA";
-  else if (lowered.includes("recap")) type = "Recap";
-  else if (lowered.includes("port") || lowered.includes("bill of lading") || lowered.includes("mate")) {
-    type = "Port document";
-  }
-
-  if (!type) return null;
-
-  return buildDocument(`generated-${index + 1}`, title, type, inferUploaderRole(type), "generated-dashboard");
-}
-
-function inferUploaderRole(type: EvidenceDocumentType): EvidenceUploaderRole {
-  if (type === "Invoice" || type === "CP clause") return "Owner";
-  if (type === "PDA / FDA" || type === "Port document") return "Agent";
-  return "Charterer";
-}
-
-function buildDocument(
-  id: string,
-  name: string,
-  type: EvidenceDocumentType,
-  uploaderRole: EvidenceUploaderRole,
-  source: "generated-dashboard" | "manual-upload",
-): EvidenceVaultDocument {
-  return {
-    id,
-    name,
-    type,
-    uploaderRole,
-    source,
-    uploadedAt: "28 Mar 2026, 09:20 HRS",
-  };
-}
-
-function buildDisputeCorpus(generated: ReturnType<typeof loadGeneratedVoyage>) {
-  return [
-    generated?.commercial_risk,
-    ...(generated?.health_reasons ?? []),
-    ...(generated?.flags ?? []).flatMap((item) => [item.title, item.guidance]),
-    ...(generated?.risk_notes ?? []).map((note) =>
-      typeof note === "string" ? note : `${note.title} ${note.body}`,
-    ),
-    ...(generated?.documents ?? []).map((document) => document.title),
-  ]
-    .filter((value): value is string => Boolean(value?.trim()))
-    .join(" ")
-    .toLowerCase();
-}
-
-function hasDisputeSignal(corpus: string) {
-  if (!corpus.trim()) return false;
-
-  return [
-    "dispute",
-    "claim",
-    "shortfall",
-    "mismatch",
-    "difference",
-    "deduction",
-    "underpaid",
-    "unpaid",
-    "off-hire",
-    "demurrage",
-    "laytime",
-    "bunker",
-    "port cost",
-    "overcharge",
-    "reimbursement",
-    "invoice",
-  ].some((keyword) => corpus.includes(keyword));
-}
-
-function inferDisputeReason(
-  corpus: string,
-  evidenceDocuments: EvidenceVaultDocument[],
-): DisputeReasonKey {
-  if (corpus.includes("off-hire") || corpus.includes("off hire")) return "off_hire_deduction";
-  if (corpus.includes("bunker") || corpus.includes("fuel")) return "bunker_difference";
-  if (corpus.includes("demurrage") || corpus.includes("laytime")) {
-    return "laytime_demurrage_difference";
-  }
-  if (
-    corpus.includes("freight") &&
-    (corpus.includes("shortfall") || corpus.includes("underpaid") || corpus.includes("unpaid"))
-  ) {
-    return "freight_shortfall";
-  }
-  if (corpus.includes("invoice") || corpus.includes("mismatch") || corpus.includes("debit note")) {
-    return "invoice_mismatch";
-  }
-  if (
-    corpus.includes("port cost") ||
-    corpus.includes("disbursement") ||
-    corpus.includes("pda") ||
-    corpus.includes("fda") ||
-    corpus.includes("reimbursement")
-  ) {
-    return "port_cost_difference";
-  }
-
-  if (evidenceDocuments.some((document) => document.type === "PDA / FDA" || document.type === "Port document")) {
-    return "port_cost_difference";
-  }
-  if (evidenceDocuments.some((document) => document.type === "SOF")) {
-    return "laytime_demurrage_difference";
-  }
-  if (evidenceDocuments.some((document) => document.name.toLowerCase().includes("bunker"))) {
-    return "bunker_difference";
-  }
-  if (evidenceDocuments.some((document) => document.name.toLowerCase().includes("freight"))) {
-    return "freight_shortfall";
-  }
-  if (evidenceDocuments.some((document) => document.type === "Invoice" || document.type === "Email")) {
-    return "invoice_mismatch";
-  }
-
-  return "custom";
-}
-
-function inferClaimSide(
-  reasonKey: DisputeReasonKey,
-  corpus: string,
-  evidenceDocuments: EvidenceVaultDocument[],
-): ClaimSideInference {
-  let ownerScore = 0;
-  let chartererScore = 0;
-
-  switch (reasonKey) {
-    case "freight_shortfall":
-      ownerScore += 4;
-      break;
-    case "laytime_demurrage_difference":
-      ownerScore += 3;
-      break;
-    case "off_hire_deduction":
-      chartererScore += 4;
-      break;
-    case "port_cost_difference":
-      ownerScore += 2;
-      break;
-    case "bunker_difference":
-      ownerScore += 1;
-      chartererScore += 1;
-      break;
-    case "invoice_mismatch":
-      ownerScore += 1;
-      chartererScore += 1;
-      break;
-    case "custom":
-      break;
-  }
-
-  if (corpus.includes("underpaid") || corpus.includes("unpaid") || corpus.includes("freight shortfall")) {
-    ownerScore += 2;
-  }
-  if (corpus.includes("off-hire") || corpus.includes("deduction") || corpus.includes("overcharge")) {
-    chartererScore += 2;
-  }
-  if (corpus.includes("reimbursement") || corpus.includes("demurrage")) {
-    ownerScore += 1;
-  }
-
-  evidenceDocuments.forEach((document) => {
-    const lowerName = document.name.toLowerCase();
-
-    if (document.type === "Invoice" && document.uploaderRole === "Owner") {
-      ownerScore += 2;
-    }
-    if (document.type === "Email" && document.uploaderRole === "Charterer") {
-      chartererScore += 1;
-    }
-    if (document.type === "PDA / FDA" || document.type === "Port document") {
-      ownerScore += reasonKey === "port_cost_difference" ? 2 : 1;
-    }
-    if (document.type === "SOF") {
-      if (reasonKey === "off_hire_deduction") chartererScore += 2;
-      if (reasonKey === "laytime_demurrage_difference") ownerScore += 2;
-    }
-    if (lowerName.includes("deduction") || lowerName.includes("counterclaim")) {
-      chartererScore += 2;
-    }
-    if (lowerName.includes("freight") || lowerName.includes("demurrage") || lowerName.includes("reimbursement")) {
-      ownerScore += 2;
-    }
-    if (lowerName.includes("bunker")) {
-      if (document.uploaderRole === "Owner") ownerScore += 1;
-      if (document.uploaderRole === "Charterer") chartererScore += 1;
-    }
-  });
-
-  const side: ClaimPartyRole = ownerScore >= chartererScore ? "Owner" : "Charterer";
-  const spread = Math.abs(ownerScore - chartererScore);
-
-  return {
-    side,
-    confidence: spread >= 3 ? "high" : spread >= 1 ? "medium" : "low",
-  };
-}
-
-function derivePaymentDirection(reasonKey: DisputeReasonKey, claimSide: ClaimPartyRole) {
-  const respondentRole: ClaimPartyRole = claimSide === "Owner" ? "Charterer" : "Owner";
-
-  if (reasonKey === "off_hire_deduction" && claimSide === "Charterer") {
-    return {
-      payerRole: "Owner" as ClaimPartyRole,
-      payeeRole: "Charterer" as ClaimPartyRole,
-    };
-  }
-
-  return {
-    payerRole: respondentRole,
-    payeeRole: claimSide,
-  };
-}
-
-function getDirectionIssue(
-  reasonKey: DisputeReasonKey,
-  claimSide: ClaimPartyRole,
-  evidenceDocuments: EvidenceVaultDocument[],
-) {
-  const demoRule = demoDirectionRules[reasonKey];
-  if (demoRule && claimSide !== demoRule.claimSide) {
-    return demoRule.message;
-  }
-
-  const inferred = inferClaimSide(reasonKey, "", evidenceDocuments);
-  if (inferred.confidence === "high" && inferred.side !== claimSide) {
-    return `${getDisputeReasonLabel(reasonKey).labelEn} currently points more naturally to the ${inferred.side} side based on the evidence pack.`;
-  }
-
-  return null;
-}
-
-function parseCurrencyAmount(text: string | undefined) {
-  if (!text) {
-    return { amount: null as number | null, currency: null as string | null };
-  }
-
-  const match = text.match(/\b(USD|EUR|GBP)\s*([0-9][0-9,]*(?:\.\d+)?)\b/i);
-  if (!match) {
-    return { amount: null as number | null, currency: null as string | null };
-  }
-
-  const amount = Number(match[2].replace(/,/g, ""));
-  return {
-    amount: Number.isFinite(amount) ? amount : null,
-    currency: match[1].toUpperCase(),
-  };
-}
-
-function buildDisputeSummary(
-  generated: ReturnType<typeof loadGeneratedVoyage>,
-  reasonKey: DisputeReasonKey,
-) {
-  const reasonLabel = getDisputeReasonLabel(reasonKey).labelEn;
-  const commercialRisk = generated?.commercial_risk?.trim();
-
-  if (commercialRisk) {
-    return commercialRisk;
-  }
-
-  if (reasonKey === "port_cost_difference") {
-    return "Generated recap indicates a port-cost exposure that may need DA / invoice review.";
-  }
-
-  return `Generated recap indicates a ${reasonLabel.toLowerCase()} that may require settlement review.`;
-}
-
-function normalizeClaimSide(value: unknown, fallback: ClaimPartyRole): ClaimPartyRole {
-  return value === "Owner" || value === "Charterer" ? value : fallback;
-}
-
-function normalizeOpeningMode(
-  value: unknown,
-  fallback: SettlementOpeningMode,
-): SettlementOpeningMode {
-  return value === "generated-signal" || value === "manual-review" ? value : fallback;
-}
-
-function sanitizeNumber(value: unknown, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function clampNumber(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function isDisputeReasonKey(value: unknown): value is DisputeReasonKey {
-  return disputeReasonCatalog.some((item) => item.key === value);
-}
-
-function isEvidenceDocumentType(value: unknown): value is EvidenceDocumentType {
-  return evidenceTypeCatalog.some((item) => item.value === value);
-}
-
-function isUploaderRole(value: unknown): value is EvidenceUploaderRole {
-  return value === "Owner" || value === "Charterer" || value === "Agent";
-}
-
-function emitSettlementStoreUpdate() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event(SETTLEMENT_STORE_EVENT));
-}
+        buildDocument("seed-invoice-2
