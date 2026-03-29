@@ -126,7 +126,10 @@ export function GeneratedDashboardPage() {
       (settlementSeed.reasonKey === "custom" ? settlementSeed.summary : ""),
   );
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>(
-    () => currentSettlement.evidenceIds.length > 0 ? currentSettlement.evidenceIds : settlementSeed.evidenceIds,
+    () =>
+      currentSettlement.evidenceIds.length > 0
+        ? currentSettlement.evidenceIds
+        : settlementSeed.evidenceIds,
   );
   const [packageMessage, setPackageMessage] = useState<string>("");
 
@@ -152,10 +155,7 @@ export function GeneratedDashboardPage() {
     () => vaultDocuments.filter((item) => selectedEvidenceIds.includes(item.id)),
     [vaultDocuments, selectedEvidenceIds],
   );
-  const disputeRequirements = useMemo(
-    () => getEvidenceRequirements(reasonKey),
-    [reasonKey],
-  );
+  const disputeRequirements = useMemo(() => getEvidenceRequirements(reasonKey), [reasonKey]);
   const disputeRequirementChecks = useMemo(
     () =>
       disputeRequirements.map((requirement) => ({
@@ -165,10 +165,7 @@ export function GeneratedDashboardPage() {
     [disputeRequirements, selectedEvidence],
   );
   const missingRequirementLabels = useMemo(
-    () =>
-      disputeRequirementChecks
-        .filter((item) => !item.satisfied)
-        .map((item) => item.label),
+    () => disputeRequirementChecks.filter((item) => !item.satisfied).map((item) => item.label),
     [disputeRequirementChecks],
   );
   const disputedAmount = useMemo(
@@ -311,7 +308,12 @@ export function GeneratedDashboardPage() {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard tag="Extracted" label="Owner" value={generated.owner || "Pending review"} tone="extracted" />
+            <MetricCard
+              tag="Extracted"
+              label="Owner"
+              value={generated.owner || "Pending review"}
+              tone="extracted"
+            />
             <MetricCard
               tag="Extracted"
               label="Charterer"
@@ -425,7 +427,8 @@ export function GeneratedDashboardPage() {
               >
                 <div className="font-semibold">Use generated signal</div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  Opens the package from the recap-derived dispute signal and suggested evidence pack.
+                  Opens the package from the recap-derived dispute signal and suggested evidence
+                  pack.
                 </div>
               </button>
 
@@ -441,7 +444,8 @@ export function GeneratedDashboardPage() {
               >
                 <div className="font-semibold">Open manual review</div>
                 <div className="mt-2 text-sm leading-7 text-white/60">
-                  Lets claims users open a package even when the generated recap did not classify the dispute correctly.
+                  Lets claims users open a package even when the generated recap did not classify
+                  the dispute correctly.
                 </div>
               </button>
             </div>
@@ -451,9 +455,14 @@ export function GeneratedDashboardPage() {
                 Maritime logic
               </div>
               <div className="mt-3 space-y-2 text-sm leading-7 text-white/72">
-                <div>- A settlement package should only open when there is an actual monetary dispute.</div>
+                <div>
+                  - A settlement package should only open when there is an actual monetary dispute.
+                </div>
                 <div>- Contract freight is not auto-treated as the disputed amount.</div>
-                <div>- The package must identify claimant side, admitted payable amount, and disputed remainder separately.</div>
+                <div>
+                  - The package must identify claimant side, admitted payable amount, and disputed
+                  remainder separately.
+                </div>
               </div>
             </div>
           </div>
@@ -545,12 +554,7 @@ export function GeneratedDashboardPage() {
             ) : null}
 
             <div className="mt-5 grid gap-3 md:grid-cols-3">
-              <MetricCard
-                tag="Draft"
-                label="Currency"
-                value={settlementSeed.currency}
-                tone="review"
-              />
+              <MetricCard tag="Draft" label="Currency" value={settlementSeed.currency} tone="review" />
               <MetricCard
                 tag="Draft"
                 label="Disputed remainder"
@@ -625,7 +629,9 @@ export function GeneratedDashboardPage() {
                           <span
                             className={[
                               "rounded-full px-3 py-1 text-xs font-semibold",
-                              active ? "bg-emerald-500/15 text-emerald-200" : "bg-white/[0.04] text-white/60",
+                              active
+                                ? "bg-emerald-500/15 text-emerald-200"
+                                : "bg-white/[0.04] text-white/60",
                             ].join(" ")}
                           >
                             {active ? "Linked" : "Link"}
@@ -651,7 +657,9 @@ export function GeneratedDashboardPage() {
                 className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f] shadow-[0_14px_34px_rgba(51,115,183,0.35)] transition hover:-translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <ArrowRightLeft className="h-4 w-4" />
-                {openingMode === "manual-review" ? "Open manual dispute package" : "Open settlement package"}
+                {openingMode === "manual-review"
+                  ? "Open manual dispute package"
+                  : "Open settlement package"}
               </button>
               <button
                 type="button"
@@ -711,7 +719,11 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Suggested" tone="suggested" />
-          <SectionTitle icon={Clock3} label="3 next actions" subtitle="Suggested workflow follow-up" />
+          <SectionTitle
+            icon={Clock3}
+            label="3 next actions"
+            subtitle="Suggested workflow follow-up"
+          />
           <div className="mt-5 space-y-3">
             {nextActions.length === 0 ? (
               <EmptyBox text="No next actions were returned." />
@@ -754,7 +766,9 @@ export function GeneratedDashboardPage() {
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                 >
                   <div className="break-words font-semibold text-white/90">{document.title}</div>
-                  <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}>
+                  <div
+                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${documentTone[document.status]}`}
+                  >
                     {formatDocumentStatus(document.status)}
                   </div>
                   <TraceFooter confidence={document.confidence} sourceTrace={document.sourceTrace} />
@@ -819,7 +833,9 @@ export function GeneratedDashboardPage() {
                 key={item.label}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
-                <div className="text-xs uppercase tracking-[0.2em] text-white/45">{item.label}</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                  {item.label}
+                </div>
                 <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
                   {item.value}
                 </div>
@@ -830,7 +846,11 @@ export function GeneratedDashboardPage() {
 
         <Surface>
           <HeaderTag label="Demo state" tone="mixed" />
-          <SectionTitle icon={Clock3} label="Since last update" subtitle="No new events recorded (demo state)" />
+          <SectionTitle
+            icon={Clock3}
+            label="Since last update"
+            subtitle="No new events recorded (demo state)"
+          />
           <div className="mt-5 space-y-4">
             {(generated.changes_since_last_update || []).length > 0 ? (
               generated.changes_since_last_update.map((item) => (
@@ -947,9 +967,13 @@ function MetricCard({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>{tag}</div>
+      <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${toneClass}`}>
+        {tag}
+      </div>
       <div className="mt-2 text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">{value}</div>
+      <div className="mt-2 break-words text-sm font-semibold leading-6 text-white/90">
+        {value}
+      </div>
     </div>
   );
 }
@@ -1105,7 +1129,9 @@ function TaskDisclosure({
               <div className="mt-2 text-sm text-white/65">{description}</div>
             </div>
             <div className="text-sm font-semibold text-[#b8dcff] group-open:hidden">Open</div>
-            <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">Close</div>
+            <div className="hidden text-sm font-semibold text-[#b8dcff] group-open:block">
+              Close
+            </div>
           </div>
         </Surface>
       </summary>
@@ -1149,7 +1175,9 @@ function TaskColumn({
             </div>
             <p className="mt-3 text-sm leading-7 text-white/68">{item.detail}</p>
             <div className="mt-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-white/45">Why this matters</div>
+              <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                Why this matters
+              </div>
               <div className="mt-2 text-sm leading-7 text-white/78">{item.why_matters}</div>
             </div>
             <TraceFooter confidence={item.confidence} sourceTrace={item.sourceTrace} />
@@ -1159,12 +1187,18 @@ function TaskColumn({
               </summary>
               <div className="mt-4 grid gap-3 text-sm text-white/72">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Clause source</div>
-                  <div className="mt-2 break-words font-semibold text-white/88">{item.clause_source_title}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Clause source
+                  </div>
+                  <div className="mt-2 break-words font-semibold text-white/88">
+                    {item.clause_source_title}
+                  </div>
                   <div className="mt-1 leading-7">{item.clause_source_text}</div>
                 </div>
                 <div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">Risk if missed</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+                    Risk if missed
+                  </div>
                   <div className="mt-2 leading-7">{item.risk_if_missed}</div>
                 </div>
               </div>
@@ -1231,7 +1265,8 @@ function EvidenceVaultPanel({
             <HeaderTag label="Manual upload" tone="mixed" />
             <div className="mt-3 text-xl font-bold">Evidence Vault (Manual Upload)</div>
             <div className="mt-2 max-w-2xl text-sm leading-7 text-white/65">
-              Files stay off-chain at this stage. The system records only file name, uploader role, evidence type, and timestamp.
+              Files stay off-chain at this stage. The system records only file name, uploader role,
+              evidence type, and timestamp.
             </div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/60">
@@ -1260,7 +1295,9 @@ function EvidenceVaultPanel({
               ))}
             </div>
 
-            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">Evidence type</div>
+            <div className="mt-5 text-xs uppercase tracking-[0.2em] text-white/45">
+              Evidence type
+            </div>
             <select
               value={documentType}
               onChange={(event) => setDocumentType(event.target.value as EvidenceType)}
@@ -1292,7 +1329,9 @@ function EvidenceVaultPanel({
                 onDrop={handleDrop}
                 className={[
                   "flex cursor-pointer flex-col items-center justify-center rounded-2xl border px-5 py-8 text-center transition",
-                  isDragging ? "border-[#4f97e8]/40 bg-[#3373B7]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
+                  isDragging
+                    ? "border-[#4f97e8]/40 bg-[#3373B7]/10"
+                    : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]",
                 ].join(" ")}
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
