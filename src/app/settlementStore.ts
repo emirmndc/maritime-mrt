@@ -11,6 +11,7 @@ export type EvidenceDocumentType =
 
 export type EvidenceUploaderRole = "Owner" | "Charterer" | "Agent";
 export type ClaimPartyRole = "Owner" | "Charterer";
+export type SettlementOpeningMode = "generated-signal" | "manual-review";
 
 export type EvidenceVaultDocument = {
   id: string;
@@ -39,6 +40,7 @@ export type SettlementDraft = {
   currency: string;
   dueDate: string;
   claimSide: ClaimPartyRole;
+  openingMode: SettlementOpeningMode;
   reasonKey: DisputeReasonKey;
   customReason: string;
   evidenceIds: string[];
@@ -341,6 +343,7 @@ export function assessSettlementDraft(
   selectedEvidence: EvidenceVaultDocument[],
 ): SettlementAssessment {
   const seedContext = deriveSettlementSeedContext();
+  const disputeOpen = seedContext.disputeDetected || draft.openingMode === "manual-review";
   const issues: string[] = [];
   const disputedAmount = deriveDisputedAmount(draft.claimedAmount, draft.admittedAmount);
   const directionIssue = getDirectionIssue(draft.reasonKey, draft.claimSide);
@@ -352,31 +355,31 @@ export function assessSettlementDraft(
     .filter((item) => !item.satisfied)
     .map((item) => item.label);
 
-  if (!seedContext.disputeDetected) {
+  if (!disputeOpen) {
     issues.push(
       "No dispute signal was detected in the generated recap. Keep settlement closed until a real payment, cost, deduction, or claim issue is identified.",
     );
   }
 
-  if (seedContext.disputeDetected && draft.claimedAmount <= 0) {
+  if (disputeOpen && draft.claimedAmount <= 0) {
     issues.push("Set the claimed exposure before opening settlement.");
   }
 
-  if (seedContext.disputeDetected && draft.admittedAmount < 0) {
+  if (disputeOpen && draft.admittedAmount < 0) {
     issues.push("Admitted payable amount cannot be negative.");
   }
 
-  if (seedContext.disputeDetected && draft.admittedAmount > draft.claimedAmount) {
+  if (disputeOpen && draft.admittedAmount > draft.claimedAmount) {
     issues.push("Admitted payable amount cannot exceed claimed amount.");
   }
 
-  if (seedContext.disputeDetected && disputedAmount <= 0) {
+  if (disputeOpen && disputedAmount <= 0) {
     issues.push(
-      "A dispute signal exists, but the disputed portion has not been isolated yet. Confirm the payable amount before splitting.",
+      "The dispute package is open, but the disputed portion has not been isolated yet. Confirm the payable amount before splitting.",
     );
   }
 
-  if (seedContext.disputeDetected && !draft.dueDate.trim()) {
+  if (disputeOpen && !draft.dueDate.trim()) {
     issues.push("Set a due date or payment deadline.");
   }
 
@@ -457,6 +460,7 @@ function buildSeedSettlementDraft(): SettlementDraft {
     currency: seedContext.currency,
     dueDate: generated?.next_deadline || generated?.claim_deadline || "28 Mar 2026",
     claimSide: seedContext.claimSide,
+    openingMode: "generated-signal",
     reasonKey: seedContext.reasonKey,
     customReason: seedContext.reasonKey === "custom" ? seedContext.summary : "",
     evidenceIds: seedContext.evidenceIds,
@@ -544,8 +548,9 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
   const fallback = buildSeedSettlementDraft();
   const seedContext = deriveSettlementSeedContext();
   const isLegacyDraft = item.totalAmount !== undefined || item.disputedAmount !== undefined;
+  const openingMode = normalizeOpeningMode(item.openingMode, fallback.openingMode);
 
-  if (!seedContext.disputeDetected || isLegacyDraft) {
+  if ((!seedContext.disputeDetected && openingMode !== "manual-review") || isLegacyDraft) {
     return fallback;
   }
 
@@ -564,6 +569,7 @@ function normalizeSettlementDraft(raw: unknown): SettlementDraft {
     currency: typeof item.currency === "string" && item.currency.trim() ? item.currency : fallback.currency,
     dueDate: typeof item.dueDate === "string" ? item.dueDate : fallback.dueDate,
     claimSide: normalizeClaimSide(item.claimSide ?? item.initiatedBy, fallback.claimSide),
+    openingMode,
     reasonKey: isDisputeReasonKey(item.reasonKey) ? item.reasonKey : fallback.reasonKey,
     customReason: typeof item.customReason === "string" ? item.customReason : "",
     evidenceIds: Array.isArray(item.evidenceIds)
@@ -733,6 +739,13 @@ function getDirectionIssue(
 
 function normalizeClaimSide(value: unknown, fallback: ClaimPartyRole): ClaimPartyRole {
   return value === "Owner" || value === "Charterer" ? value : fallback;
+}
+
+function normalizeOpeningMode(
+  value: unknown,
+  fallback: SettlementOpeningMode,
+): SettlementOpeningMode {
+  return value === "generated-signal" || value === "manual-review" ? value : fallback;
 }
 
 function sanitizeNumber(value: unknown, fallback: number) {
