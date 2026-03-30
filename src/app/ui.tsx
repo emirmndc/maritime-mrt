@@ -15,33 +15,43 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#04070b] text-white">
-      <div className="mx-auto max-w-7xl px-5 py-6 md:px-8 lg:px-10">
-        <header className="sticky top-4 z-30 rounded-[28px] border border-white/10 bg-[#050913]/80 px-5 py-4 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.34)]">
+    <div className="min-h-screen bg-[#0b1016] text-slate-100">
+      <div className="mx-auto max-w-7xl px-4 py-4 md:px-6 lg:px-8">
+        <header className="sticky top-3 z-30 rounded-xl border border-white/8 bg-[#0f151d]/94 px-4 py-4 shadow-[0_14px_36px_rgba(0,0,0,0.22)] backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <button className="flex items-center gap-3 text-left" onClick={() => navigateTo("/")}>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff] overflow-hidden">
-                <MaritimeMark className="h-10 w-10" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-[#101a24] text-[#9fc8f7]">
+                <MaritimeMark className="h-8 w-8" />
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-[0.34em] text-white/45">MARITIME</div>
-                <div className="mt-1 text-lg font-bold tracking-[0.18em] text-white">Workflow App</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/42">
+                  MARITIME
+                </div>
+                <div className="mt-1 text-base font-semibold tracking-[0.14em] text-white">
+                  Workflow App
+                </div>
               </div>
             </button>
-            <nav className="flex flex-wrap gap-3 text-sm text-white/70">
+            <nav className="flex flex-wrap gap-2 text-sm text-white/68">
               <NavButton route="/app">App Home</NavButton>
               <NavButton route="/app/try-demo">Try Demo</NavButton>
+              <NavButton route="/app/generated-dashboard">Case Review</NavButton>
               <NavButton route="/app/settlement">Settlement</NavButton>
-              <NavButton route="/app/voyages">Voyages</NavButton>
             </nav>
           </div>
         </header>
 
-        <main className="pb-16 pt-12">
-          <div className="mb-10 max-w-4xl">
-            <div className="text-[12px] font-bold uppercase tracking-[0.38em] text-[#88c4ff]">{eyebrow}</div>
-            <h1 className="mt-3 text-4xl font-bold tracking-[-0.03em] md:text-6xl">{title}</h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-white/70 md:text-[22px] md:leading-9">{description}</p>
+        <main className="pb-16 pt-10">
+          <div className="mb-8 max-w-4xl">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8eb9e7]">
+              {eyebrow}
+            </div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white md:text-5xl">
+              {title}
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-white/66 md:text-lg md:leading-8">
+              {description}
+            </p>
           </div>
           {children}
         </main>
@@ -52,12 +62,8 @@ export function AppShell({
 
 function MaritimeMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 100 100"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="50" cy="50" r="50" fill="#3373B7" />
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <circle cx="50" cy="50" r="50" fill="#2f5f96" />
       <path
         fill="#F5F7FA"
         d="M21 24h20l13 38 14-38h20v52H73V45L61 74H47L35 45v31H21z"
@@ -69,7 +75,7 @@ function MaritimeMark({ className }: { className?: string }) {
 export function NavButton({ route, children }: { route: AppRoute; children: ReactNode }) {
   return (
     <button
-      className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 transition hover:border-[#4f97e8]/35 hover:bg-white/[0.06]"
+      className="rounded-lg border border-white/8 bg-[#121922] px-3 py-2 transition hover:border-white/14 hover:bg-[#151e29] hover:text-white"
       onClick={() => navigateTo(route)}
     >
       {children}
@@ -77,11 +83,17 @@ export function NavButton({ route, children }: { route: AppRoute; children: Reac
   );
 }
 
-export function Surface({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Surface({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={[
-        "rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(9,19,33,0.82))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)]",
+        "rounded-2xl border border-white/8 bg-[#111821] p-5 shadow-[0_12px_30px_rgba(0,0,0,0.18)] md:p-6",
         className,
       ].join(" ")}
     >
@@ -94,7 +106,7 @@ export function CTAButton({ route, children }: { route: AppRoute; children: Reac
   return (
     <button
       onClick={() => navigateTo(route)}
-      className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#78b7ff_0%,#3373B7_52%,#245d99_100%)] px-5 py-3 text-sm font-semibold text-[#06111f] shadow-[0_14px_34px_rgba(51,115,183,0.35)] transition hover:-translate-y-[1px]"
+      className="inline-flex items-center gap-2 rounded-lg border border-[#3f6893] bg-[#4b7dad] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5589bc]"
     >
       {children}
       <ArrowRight className="h-4 w-4" />
@@ -104,21 +116,21 @@ export function CTAButton({ route, children }: { route: AppRoute; children: Reac
 
 export function StatusPill({ status }: { status: TaskStatus | string }) {
   const map = {
-    pending: { icon: Clock3, label: "Pending", tone: "text-amber-300 bg-amber-500/10 border-amber-400/20" },
-    ready: { icon: CheckCircle2, label: "Ready", tone: "text-sky-300 bg-sky-500/10 border-sky-400/20" },
-    active: { icon: CircleDashed, label: "Active", tone: "text-violet-300 bg-violet-500/10 border-violet-400/20" },
-    complete: { icon: CheckCircle2, label: "Complete", tone: "text-emerald-300 bg-emerald-500/10 border-emerald-400/20" },
+    pending: { icon: Clock3, label: "Pending", tone: "text-amber-200 bg-amber-500/10 border-amber-400/20" },
+    ready: { icon: CheckCircle2, label: "Ready", tone: "text-sky-200 bg-sky-500/10 border-sky-400/20" },
+    active: { icon: CircleDashed, label: "Active", tone: "text-violet-200 bg-violet-500/10 border-violet-400/20" },
+    complete: { icon: CheckCircle2, label: "Complete", tone: "text-emerald-200 bg-emerald-500/10 border-emerald-400/20" },
   } as const;
 
   const entry = map[status as keyof typeof map] ?? {
     icon: ShieldAlert,
     label: status,
-    tone: "text-white bg-white/10 border-white/15",
+    tone: "text-white bg-white/8 border-white/12",
   };
   const Icon = entry.icon;
 
   return (
-    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${entry.tone}`}>
+    <span className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold ${entry.tone}`}>
       <Icon className="h-3.5 w-3.5" />
       {entry.label}
     </span>
