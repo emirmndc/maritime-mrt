@@ -90,8 +90,8 @@ export function SettlementWorkflowPage() {
     [activeSource.linkedEvidence],
   );
   const parties = useMemo(
-    () => getSettlementPartyModel(activeSource.draft.claimSide, activeSource.draft.reasonKey),
-    [activeSource.draft.claimSide, activeSource.draft.reasonKey],
+    () => getSettlementPartyModel(activeSource.draft.claimSide),
+    [activeSource.draft.claimSide],
   );
   const assessment = useMemo(
     () => assessSettlementDraft(activeSource.draft, activeSource.linkedEvidence),
@@ -103,12 +103,12 @@ export function SettlementWorkflowPage() {
       buildSettlementView(
         activeSource,
         parties,
-        disputeOpen,
+        seedContext,
         assessment.disputedAmount,
         assessment.isReady,
         Boolean(stage),
       ),
-    [activeSource, parties, disputeOpen, assessment.disputedAmount, assessment.isReady, stage],
+    [activeSource, parties, seedContext, assessment.disputedAmount, assessment.isReady, stage],
   );
 
   useEffect(() => {
@@ -155,7 +155,7 @@ export function SettlementWorkflowPage() {
     <AppShell
       eyebrow="Settlement Workflow"
       title="Split & Neutralize"
-      description="Generated recap context and the evidence vault feed this demo workflow. A package stays open when the recap carries a dispute signal or the dashboard opens a manual review package."
+      description="Generated recap context and the evidence vault feed this demo workflow. Settlement stays closed unless the recap actually points to a payment, deduction, cost, or claim dispute."
     >
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
         <Surface className="h-full">
@@ -210,7 +210,7 @@ export function SettlementWorkflowPage() {
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-5">
             <div className="text-sm uppercase tracking-[0.22em] text-[#88c4ff]">
-              Intake basis
+              Generated dispute signal
             </div>
             <div className="mt-3 text-sm leading-7 text-white/75">
               {seedContext.disputeDetected
@@ -230,7 +230,7 @@ export function SettlementWorkflowPage() {
               <InfoCard label="Payee" value={settlement.payee} />
             </div>
             <div className="mt-4 text-sm leading-7 text-white/68">
-              Direction follows the dispute posture on this package: the responding side is modeled as payer and the claimant side as payee.
+              Demo assumption: this screen models a freight-payment flow, so Charterer pays and Owner receives.
             </div>
           </div>
 
@@ -294,7 +294,7 @@ export function SettlementWorkflowPage() {
             <ThesisLine text="Claimed amount is the asserted exposure." />
             <ThesisLine text="Admitted payable amount is the portion you are willing to release." />
             <ThesisLine text="Disputed remainder is derived, not guessed." />
-            <ThesisLine text="Payment direction must stay coherent with the selected claimant side." />
+            <ThesisLine text="Freight shortfall cannot be staged from the Charterer side in this demo." />
           </div>
 
           <div className="mt-6 rounded-[24px] border border-white/10 bg-black/10 p-5">
@@ -632,12 +632,13 @@ function loadSettlementSource(): SettlementSource {
 function buildSettlementView(
   source: SettlementSource,
   parties: ReturnType<typeof getSettlementPartyModel>,
-  disputeOpen: boolean,
+  seedContext: ReturnType<typeof deriveSettlementSeedContext>,
   disputedAmount: number,
   isReady: boolean,
   isStaged: boolean,
 ): SettlementView {
   const reasonLabel = getDisputeReasonLabel(source.draft.reasonKey);
+  const disputeOpen = seedContext.disputeDetected || source.draft.openingMode === "manual-review";
   const reason =
     source.draft.reasonKey === "custom"
       ? source.draft.customReason.trim() || "Custom review note"
@@ -697,7 +698,7 @@ function buildInitialTimeline(source: SettlementSource): TimelineEvent[] {
 function getStatusLabel(status: SettlementStatus) {
   switch (status) {
     case "closed_no_dispute":
-      return "Closed - no active dispute package";
+      return "Closed - no dispute signal";
     case "review_required":
       return "Review required";
     case "awaiting_quantification":
@@ -713,8 +714,7 @@ function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 0,
   }).format(amount);
 }
 
