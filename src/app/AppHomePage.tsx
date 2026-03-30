@@ -1,104 +1,146 @@
-import { Database, FileText, Landmark, Route, Sparkles } from "lucide-react";
-import { CTAButton, AppShell, Surface, StatusPill } from "./ui";
+import { AppShell, CTAButton, Surface, StatusPill } from "./ui";
 import { getSupabaseStatusLabel } from "./supabase";
 
-const pillars = [
+const workflowTrack = [
   {
-    title: "Recap upload",
-    text: "Load recap text, PDF, or email into one operational workflow surface.",
-    icon: FileText,
+    step: "01",
+    title: "Load one recap",
+    text: "Start from one voyage recap and derive a bounded case instead of navigating a broad module catalog.",
   },
   {
-    title: "Clause to task engine",
-    text: "Turn payment, notice, NOR, and claim clauses into visible responsibilities.",
-    icon: Sparkles,
+    step: "02",
+    title: "Discipline the evidence",
+    text: "Keep evidence voyage-scoped, role-aware, and explicitly tied to the active package.",
   },
   {
-    title: "Voyage timeline",
-    text: "Track arrival, NOR, loading, B/L, discharge, and claim events in sequence.",
-    icon: Route,
+    step: "03",
+    title: "Isolate the disputed remainder",
+    text: "Separate admitted payable amount from the disputed portion before anything moves into settlement review.",
   },
-  {
-    title: "Connected data layer",
-    text: "Supabase is wired for the next step: auth, storage, documents, and events.",
-    icon: Database,
-  },
-  {
-    title: "Split & Neutralize",
-    text: "Release the undisputed portion and isolate only the disputed amount in a neutral vault workflow.",
-    icon: Landmark,
-  },
+];
+
+const liveRegister = [
+  "Recap-driven case review surface",
+  "Voyage-scoped evidence intake",
+  "Dispute package staging and settlement demo",
+];
+
+const boundaryRegister = [
+  "No live evidence network",
+  "No mainnet dispute release rail",
+  "No broad maritime operating system",
 ];
 
 export function AppHomePage() {
   return (
     <AppShell
-      eyebrow="MVP Workspace"
-      title="Recap in, tasks out, deadlines visible."
-      description="This app section turns a voyage recap into an operational dashboard. The current build now surfaces parser output, voyage health, commercial risk, upcoming trigger, and action-led workflow cards."
+      eyebrow="Workflow Proof"
+      title="Port Cost Vault-first workflow proof"
+      description="The app should be read as one narrow operational path: recap intake, evidence discipline, disputed remainder logic, and a case file that can move into settlement review."
     >
-      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
         <Surface>
           <div className="flex flex-wrap items-center gap-3">
             <StatusPill status="ready" />
-            <span className="text-sm text-white/60">{getSupabaseStatusLabel()}</span>
+            <span className="text-sm text-white/58">{getSupabaseStatusLabel()}</span>
           </div>
-          <h2 className="mt-5 text-3xl font-bold">Start with one bounded workflow proof.</h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-8 text-white/70">
-            The first app pass focuses on one voyage dashboard: voyage status, owner and charterer actions, trigger tracking,
-            parser output, documents, message drafts, and review-oriented flags. Payments and legal decisioning remain out of scope.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <CTAButton route="/app/try-demo">Try the demo</CTAButton>
-            <CTAButton route="/app/settlement">Open settlement workflow</CTAButton>
-            <CTAButton route="/app/voyages">Open voyage list</CTAButton>
-            <CTAButton route="/app/generated-dashboard">Open generated dashboard</CTAButton>
-          </div>
-        </Surface>
 
-        <Surface>
-          <div className="text-sm uppercase tracking-[0.24em] text-[#88c4ff]">
-            How it works
+          <div className="mt-5 border-t border-white/8 pt-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8eb9e7]">
+              Default route
+            </div>
+            <div className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-white">
+              Start from one case, not from many modules
+            </div>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-white/66">
+              The current proof is intentionally narrow. It is closer to a case worksheet than to a
+              platform dashboard: DA advance review, invoice support, linked evidence, admitted
+              payable amount, and disputed remainder.
+            </p>
           </div>
-          <div className="mt-3 text-3xl font-bold">Start here before generating anything</div>
-          <div className="mt-2 text-white/65">
-            This demo is designed to turn one voyage recap into a structured review dashboard. Use the flow below so the output makes sense on first pass.
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <InfoCard label="Step 1" value="Open Try Demo and paste your voyage recap text." />
-            <InfoCard label="Step 2" value="Generate the dashboard from the recap using the AI parser." />
-            <InfoCard label="Step 3" value="Review owner tasks, charterer tasks, risks, and deadlines." />
-            <InfoCard label="Step 4" value="Use Voyages to reopen the latest generated result in this session." />
-          </div>
-          <div className="mt-6">
-            <CTAButton route="/app/try-demo">Start with Try Demo</CTAButton>
-          </div>
-        </Surface>
-      </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-        {pillars.map((pillar) => {
-          const Icon = pillar.icon;
-          return (
-            <Surface key={pillar.title}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#4f97e8]/20 bg-[#3373B7]/10 text-[#b8dcff]">
-                <Icon className="h-5 w-5" />
+          <div className="mt-6 border border-white/8 bg-[#0d141c] p-5">
+            {workflowTrack.map((item) => (
+              <div
+                key={item.step}
+                className="grid gap-3 border-t border-white/8 py-4 first:border-t-0 first:pt-0 md:grid-cols-[70px_1fr]"
+              >
+                <div className="text-sm font-semibold tracking-[0.2em] text-[#8eb9e7]">
+                  {item.step}
+                </div>
+                <div>
+                  <div className="text-base font-semibold text-white">{item.title}</div>
+                  <div className="mt-2 text-sm leading-7 text-white/64">{item.text}</div>
+                </div>
               </div>
-              <div className="mt-5 text-xl font-semibold">{pillar.title}</div>
-              <p className="mt-3 text-[15px] leading-7 text-white/68">{pillar.text}</p>
-            </Surface>
-          );
-        })}
+            ))}
+          </div>
+        </Surface>
+
+        <div className="grid gap-5">
+          <Surface>
+            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8eb9e7]">
+              Entry points
+            </div>
+            <div className="mt-3 text-2xl font-semibold tracking-[-0.02em] text-white">
+              Open the workflow at the right step
+            </div>
+            <div className="mt-3 text-sm leading-7 text-white/66">
+              Generate a case, inspect the package, then move only a coherent file into the
+              settlement demo.
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <CTAButton route="/app/try-demo">Try Demo</CTAButton>
+              <CTAButton route="/app/generated-dashboard" tone="secondary">
+                Open Case Review
+              </CTAButton>
+              <CTAButton route="/app/settlement" tone="secondary">
+                Open Settlement
+              </CTAButton>
+            </div>
+          </Surface>
+
+          <Surface>
+            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-white/48">
+              Scope boundary
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+              <RegisterCard title="Live in the proof" items={liveRegister} tone="live" />
+              <RegisterCard title="Not in scope now" items={boundaryRegister} tone="boundary" />
+            </div>
+          </Surface>
+        </div>
       </div>
     </AppShell>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
+function RegisterCard({
+  title,
+  items,
+  tone,
+}: {
+  title: string;
+  items: string[];
+  tone: "live" | "boundary";
+}) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="text-xs uppercase tracking-[0.2em] text-white/45">{label}</div>
-      <div className="mt-2 font-semibold">{value}</div>
+    <div className="border border-white/8 bg-[#0d141c] p-4">
+      <div
+        className={[
+          "text-xs font-semibold uppercase tracking-[0.22em]",
+          tone === "live" ? "text-[#8eb9e7]" : "text-white/50",
+        ].join(" ")}
+      >
+        {title}
+      </div>
+      <div className="mt-4 space-y-3 text-sm leading-7 text-white/74">
+        {items.map((item) => (
+          <div key={item} className="border-t border-white/8 pt-3 first:border-t-0 first:pt-0">
+            {item}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
