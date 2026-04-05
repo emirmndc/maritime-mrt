@@ -14,19 +14,20 @@ export default function MaritimeMRTWebsite() {
           'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
-      {/* HEADER */}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-4">
           <img
-            src="/maritime.png"
-            alt="MARITIME"
-            className="h-11 w-11 rounded-full object-cover"
+            src="/maritime-logo.png"
+            alt=""
+            aria-hidden="true"
+            className="h-11 w-11 rounded-full object-cover shrink-0"
           />
-          <div>
-            <div className="text-[15px] font-semibold tracking-[0.28em]">
+
+          <div className="leading-none">
+            <div className="text-[15px] font-semibold tracking-[0.28em] text-white/95">
               MARITIME
             </div>
-            <div className="text-[11px] text-white/50">
+            <div className="mt-2 text-[11px] uppercase tracking-[0.30em] text-white/50">
               MRT / Polygon
             </div>
           </div>
@@ -34,16 +35,15 @@ export default function MaritimeMRTWebsite() {
 
         <a
           href="#docs"
-          className="rounded-full bg-white px-5 py-2 text-black"
+          className="rounded-full bg-white px-5 py-2 text-black transition hover:opacity-90"
         >
           Docs
         </a>
       </header>
 
-      {/* HERO */}
-      <main className="text-center px-6 pt-16">
+      <main className="px-6 pt-16 text-center">
         <h1
-          className="text-6xl font-bold tracking-tight"
+          className="mx-auto max-w-5xl text-5xl font-black tracking-[-0.05em] sm:text-6xl md:text-7xl"
           style={{
             fontFamily:
               '"Arial Black", Inter, ui-sans-serif, system-ui, sans-serif',
@@ -53,7 +53,7 @@ export default function MaritimeMRTWebsite() {
         </h1>
 
         <p
-          className="mt-6 text-lg text-white/60 max-w-2xl mx-auto leading-8"
+          className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/60"
           style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
         >
           Shipping still runs on emails, PDFs, and spreadsheets. MRT focuses on
@@ -61,10 +61,9 @@ export default function MaritimeMRTWebsite() {
         </p>
       </main>
 
-      {/* DOCS */}
       <section
         id="docs"
-        className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="mx-auto grid max-w-6xl gap-4 px-6 py-20 md:grid-cols-2 lg:grid-cols-4"
       >
         {docs.map((doc) => (
           <a
@@ -72,9 +71,11 @@ export default function MaritimeMRTWebsite() {
             href={doc.href}
             target="_blank"
             rel="noreferrer"
-            className="border border-white/10 rounded-xl p-6 hover:bg-white/5 transition"
+            className="rounded-xl border border-white/10 p-6 transition hover:bg-white/5"
           >
-            <div className="text-xs text-white/40">DOCUMENT</div>
+            <div className="text-xs uppercase tracking-[0.24em] text-white/40">
+              Document
+            </div>
             <div className="mt-4 text-lg font-semibold">{doc.label}</div>
             <div className="mt-6 text-white/60">Open</div>
           </a>
