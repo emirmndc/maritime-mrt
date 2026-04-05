@@ -152,12 +152,12 @@ function AccentWord({
   return (
     <span
       className={[
-        "mx-[0.12em] inline-block bg-clip-text font-semibold tracking-[-0.05em] text-transparent",
+        "ml-[0.12em] inline bg-clip-text font-semibold tracking-[-0.04em] text-transparent",
         tone === "warm"
           ? "bg-[linear-gradient(135deg,#ffd4c7_0%,#ff9b78_55%,#ff8b69_100%)]"
           : "bg-[linear-gradient(135deg,#e1e6ff_0%,#9cb2ff_55%,#7e95ff_100%)]",
       ].join(" ")}
-      style={{ fontFamily: '"Sora", "Manrope", sans-serif' }}
+      style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
     >
       {children}
     </span>
@@ -488,11 +488,13 @@ export default function MaritimeMRTWebsite() {
                 Polygon-native maritime layer
               </div>
 
-              <h1 className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.9] tracking-[-0.055em] text-white sm:text-7xl xl:text-[6.6rem]">
+              <h1
+                className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] text-white sm:text-7xl xl:text-[6.6rem]"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 Maritime clarity
                 <br />
-                with a <AccentWord tone="warm">cleaner arrival</AccentWord>
-                .
+                with a <AccentWord tone="warm">cleaner arrival.</AccentWord>
               </h1>
 
               <p className="mt-7 max-w-3xl text-lg leading-8 text-white/68 sm:text-[1.35rem] sm:leading-10">
@@ -552,7 +554,10 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Story</SectionLabel>
-              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
+              <h2
+                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 No cards.
                 <br />
                 Just signal, <AccentWord>rhythm</AccentWord> and space.
@@ -572,11 +577,13 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Demo</SectionLabel>
-              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
+              <h2
+                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 One route.
                 <br />
-                One clear <AccentWord tone="warm">experience</AccentWord>
-                .
+                One clear <AccentWord tone="warm">experience.</AccentWord>
               </h2>
 
               <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
@@ -657,11 +664,13 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Proof</SectionLabel>
-              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
+              <h2
+                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 The trust layer
                 <br />
-                stays <AccentWord>visible</AccentWord>
-                .
+                stays <AccentWord>visible.</AccentWord>
               </h2>
 
               <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
@@ -684,11 +693,13 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Roadmap</SectionLabel>
-              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
+              <h2
+                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 Build the public face
                 <br />
-                before the <AccentWord tone="warm">sprawl</AccentWord>
-                .
+                before the <AccentWord tone="warm">sprawl.</AccentWord>
               </h2>
             </div>
 
@@ -706,7 +717,10 @@ export default function MaritimeMRTWebsite() {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#ffb29a]">
                   Ready
                 </div>
-                <div className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
+                <div
+                  className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl"
+                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+                >
                   Landing first. Demo second. Nothing extra in the way.
                 </div>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-white/64 sm:text-lg">
