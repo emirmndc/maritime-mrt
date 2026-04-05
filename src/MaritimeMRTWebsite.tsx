@@ -7,16 +7,21 @@ export default function MaritimeMRTWebsite() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#06070b] text-white">
+    <div
+      className="min-h-screen bg-[#06070b] text-white"
+      style={{
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      {/* HEADER */}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        
         <div className="flex items-center gap-4">
           <img
             src="/maritime.png"
             alt="MARITIME"
             className="h-11 w-11 rounded-full object-cover"
           />
-
           <div>
             <div className="text-[15px] font-semibold tracking-[0.28em]">
               MARITIME
@@ -35,18 +40,32 @@ export default function MaritimeMRTWebsite() {
         </a>
       </header>
 
+      {/* HERO */}
       <main className="text-center px-6 pt-16">
-        <h1 className="text-6xl font-bold tracking-tight">
+        <h1
+          className="text-6xl font-bold tracking-tight"
+          style={{
+            fontFamily:
+              '"Arial Black", Inter, ui-sans-serif, system-ui, sans-serif',
+          }}
+        >
           One clear workflow proof for shipping
         </h1>
 
-        <p className="mt-6 text-lg text-white/60 max-w-2xl mx-auto">
-          Shipping still runs on emails and spreadsheets. MRT focuses on one
-          inspectable workflow instead of pretending to solve everything at once.
+        <p
+          className="mt-6 text-lg text-white/60 max-w-2xl mx-auto leading-8"
+          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+        >
+          Shipping still runs on emails, PDFs, and spreadsheets. MRT focuses on
+          one inspectable workflow instead of pretending to solve everything at once.
         </p>
       </main>
 
-      <section id="docs" className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* DOCS */}
+      <section
+        id="docs"
+        className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {docs.map((doc) => (
           <a
             key={doc.label}
