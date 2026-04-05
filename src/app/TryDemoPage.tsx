@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -22,6 +23,28 @@ NOR to be tendered within laycan and at permitted tender location.
 SOF, NOR, laytime sheet, and supporting correspondence required for claim review.
 Demurrage rate: USD 6,000 PD.
 Claim deadline: 15 business days after discharge.`;
+
+function AccentWord({
+  children,
+  tone = "cool",
+}: {
+  children: ReactNode;
+  tone?: "cool" | "warm";
+}) {
+  return (
+    <span
+      className={[
+        "mx-[0.12em] inline-block bg-clip-text font-semibold tracking-[-0.05em] text-transparent",
+        tone === "warm"
+          ? "bg-[linear-gradient(135deg,#ffd4c7_0%,#ff9b78_55%,#ff8b69_100%)]"
+          : "bg-[linear-gradient(135deg,#e1e6ff_0%,#9cb2ff_55%,#7e95ff_100%)]",
+      ].join(" ")}
+      style={{ fontFamily: '"Sora", "Manrope", sans-serif' }}
+    >
+      {children}
+    </span>
+  );
+}
 
 export function TryDemoPage() {
   const [recapText, setRecapText] = useState("");
@@ -79,7 +102,7 @@ export function TryDemoPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#05060d] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(111,133,255,0.16),transparent_24%),radial-gradient(circle_at_80%_16%,rgba(255,147,118,0.12),transparent_20%),linear-gradient(180deg,#06070d_0%,#090912_46%,#06070e_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(111,133,255,0.16),transparent_24%),radial-gradient(circle_at_80%_16%,rgba(255,147,118,0.12),transparent_20%),radial-gradient(circle_at_28%_92%,rgba(255,145,112,0.1),transparent_22%),radial-gradient(circle_at_84%_90%,rgba(97,115,255,0.12),transparent_24%),linear-gradient(180deg,#06070d_0%,#090912_46%,#06070e_100%)]" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-screen"
         style={{
@@ -90,9 +113,10 @@ export function TryDemoPage() {
       />
       <div className="pointer-events-none absolute -left-20 top-24 h-72 w-72 rounded-full bg-[#5168ff]/16 blur-[130px]" />
       <div className="pointer-events-none absolute right-[-80px] top-[440px] h-80 w-80 rounded-full bg-[#ff8f6f]/16 blur-[150px]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[-120px] h-[560px] bg-[radial-gradient(circle_at_22%_74%,rgba(255,145,112,0.11),transparent_22%),radial-gradient(circle_at_82%_84%,rgba(97,115,255,0.12),transparent_24%),linear-gradient(180deg,transparent_0%,rgba(10,10,18,0.16)_24%,rgba(11,11,21,0.78)_100%)]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-20 pt-5 sm:px-8 lg:px-10">
-        <header className="sticky top-4 z-30 rounded-full border border-white/10 bg-[#0a0b16]/82 px-4 py-3 backdrop-blur-xl shadow-[0_18px_50px_rgba(3,4,10,0.45)]">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+        <header className="sticky top-3 z-30 rounded-[34px] border border-white/10 bg-[linear-gradient(90deg,rgba(14,14,27,0.92),rgba(24,21,46,0.92),rgba(15,13,30,0.92))] px-6 py-4 backdrop-blur-xl shadow-[0_20px_60px_rgba(3,4,10,0.48)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
@@ -130,13 +154,7 @@ export function TryDemoPage() {
               <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.055em] text-white sm:text-7xl">
                 Voyage recap
                 <br />
-                to operational
-                <span
-                  className="font-normal italic text-[#dbe0ff]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  signal
-                </span>
+                to operational <AccentWord>signal</AccentWord>
                 .
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-white/66 sm:text-lg">
@@ -301,13 +319,7 @@ export function TryDemoPage() {
                 <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
                   Structured,
                   <br />
-                  reviewable,
-                  <span
-                    className="font-normal italic text-[#dbe0ff]"
-                    style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                  >
-                    assistive
-                  </span>
+                  reviewable, <AccentWord>assistive</AccentWord>
                   .
                 </h2>
                 <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
@@ -337,13 +349,7 @@ export function TryDemoPage() {
                   Flags
                 </div>
                 <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
-                  Risk signals and
-                  <span
-                    className="font-normal italic text-[#ffd3c5]"
-                    style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                  >
-                    cautions
-                  </span>
+                  Risk signals and <AccentWord tone="warm">cautions</AccentWord>
                   .
                 </h3>
               </div>
