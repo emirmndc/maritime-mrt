@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function MaritimeMRTWebsite() {
   const docs = [
     { label: "Whitepaper v1.5", href: "/docs/MARITIME_MRT_Whitepaper_v1.5.pdf" },
