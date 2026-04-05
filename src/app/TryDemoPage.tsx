@@ -34,12 +34,12 @@ function AccentWord({
   return (
     <span
       className={[
-        "mx-[0.12em] inline-block bg-clip-text font-semibold tracking-[-0.05em] text-transparent",
+        "ml-[0.12em] inline bg-clip-text font-semibold tracking-[-0.04em] text-transparent",
         tone === "warm"
           ? "bg-[linear-gradient(135deg,#ffd4c7_0%,#ff9b78_55%,#ff8b69_100%)]"
           : "bg-[linear-gradient(135deg,#e1e6ff_0%,#9cb2ff_55%,#7e95ff_100%)]",
       ].join(" ")}
-      style={{ fontFamily: '"Sora", "Manrope", sans-serif' }}
+      style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
     >
       {children}
     </span>
@@ -151,11 +151,13 @@ export function TryDemoPage() {
               <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#ffb29a]">
                 Demo
               </div>
-              <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.055em] text-white sm:text-7xl">
+              <h1
+                className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] text-white sm:text-7xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
                 Voyage recap
                 <br />
-                to operational <AccentWord>signal</AccentWord>
-                .
+                to operational <AccentWord>signal.</AccentWord>
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-white/66 sm:text-lg">
                 Paste recap text, generate a review-friendly structure, and keep
@@ -316,11 +318,13 @@ export function TryDemoPage() {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#ffb29a]">
                   Output
                 </div>
-                <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
+                <h2
+                  className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
+                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+                >
                   Structured,
                   <br />
-                  reviewable, <AccentWord>assistive</AccentWord>
-                  .
+                  reviewable, <AccentWord>assistive.</AccentWord>
                 </h2>
                 <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
                   Once generated, the output stays on this same page. No extra
@@ -348,9 +352,11 @@ export function TryDemoPage() {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#95a8ff]">
                   Flags
                 </div>
-                <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
-                  Risk signals and <AccentWord tone="warm">cautions</AccentWord>
-                  .
+                <h3
+                  className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl"
+                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+                >
+                  Risk signals and <AccentWord tone="warm">cautions.</AccentWord>
                 </h3>
               </div>
 
