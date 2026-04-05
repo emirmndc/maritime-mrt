@@ -127,7 +127,7 @@ function HeaderLink({ label, id }: { label: string; id: string }) {
     <button
       type="button"
       onClick={() => scrollToSection(id)}
-      className="text-sm text-white/58 transition hover:text-white"
+      className="rounded-full px-4 py-2 text-[15px] font-semibold tracking-[0.01em] text-white/68 transition hover:bg-white/[0.05] hover:text-white"
     >
       {label}
     </button>
@@ -139,6 +139,28 @@ function SectionLabel({ children }: { children: ReactNode }) {
     <div className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#f5a78f]">
       {children}
     </div>
+  );
+}
+
+function AccentWord({
+  children,
+  tone = "cool",
+}: {
+  children: ReactNode;
+  tone?: "cool" | "warm";
+}) {
+  return (
+    <span
+      className={[
+        "mx-[0.12em] inline-block bg-clip-text font-semibold tracking-[-0.05em] text-transparent",
+        tone === "warm"
+          ? "bg-[linear-gradient(135deg,#ffd4c7_0%,#ff9b78_55%,#ff8b69_100%)]"
+          : "bg-[linear-gradient(135deg,#e1e6ff_0%,#9cb2ff_55%,#7e95ff_100%)]",
+      ].join(" ")}
+      style={{ fontFamily: '"Sora", "Manrope", sans-serif' }}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -400,7 +422,7 @@ function RoadmapRow({
 export default function MaritimeMRTWebsite() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#05060d] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(114,128,255,0.18),transparent_26%),radial-gradient(circle_at_18%_12%,rgba(255,137,103,0.12),transparent_22%),linear-gradient(180deg,#06070d_0%,#0a0a15_48%,#070811_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(114,128,255,0.18),transparent_26%),radial-gradient(circle_at_18%_12%,rgba(255,137,103,0.12),transparent_22%),radial-gradient(circle_at_24%_88%,rgba(255,146,113,0.14),transparent_25%),radial-gradient(circle_at_78%_92%,rgba(95,113,255,0.16),transparent_28%),linear-gradient(180deg,#06070d_0%,#0a0a15_48%,#090914_76%,#070811_100%)]" />
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-screen"
         style={{
@@ -411,9 +433,10 @@ export default function MaritimeMRTWebsite() {
       />
       <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#445dff]/18 blur-[120px]" />
       <div className="pointer-events-none absolute right-[-110px] top-[420px] h-80 w-80 rounded-full bg-[#ff8e68]/20 blur-[150px]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[-120px] h-[700px] bg-[radial-gradient(circle_at_18%_72%,rgba(255,145,112,0.12),transparent_22%),radial-gradient(circle_at_82%_84%,rgba(97,115,255,0.14),transparent_24%),linear-gradient(180deg,transparent_0%,rgba(10,10,18,0.18)_24%,rgba(11,11,21,0.84)_100%)]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-20 pt-5 sm:px-8 lg:px-10">
-        <header className="sticky top-4 z-30 rounded-full border border-white/10 bg-[#0a0b16]/82 px-4 py-3 backdrop-blur-xl shadow-[0_18px_50px_rgba(3,4,10,0.45)]">
+      <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+        <header className="sticky top-3 z-30 w-full rounded-[34px] border border-white/10 bg-[linear-gradient(90deg,rgba(14,14,27,0.92),rgba(24,21,46,0.92),rgba(15,13,30,0.92))] px-6 py-4 backdrop-blur-xl shadow-[0_20px_60px_rgba(3,4,10,0.48)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
@@ -429,13 +452,13 @@ export default function MaritimeMRTWebsite() {
                 <div className="text-[10px] uppercase tracking-[0.34em] text-white/38">
                   MARITIME
                 </div>
-                <div className="mt-1 text-sm font-semibold tracking-[0.22em] text-white">
+                <div className="mt-1 text-base font-semibold tracking-[0.22em] text-white">
                   MRT
                 </div>
               </div>
             </button>
 
-            <nav className="hidden items-center gap-6 lg:flex">
+            <nav className="hidden items-center gap-2 lg:flex">
               <HeaderLink label="Story" id="story" />
               <HeaderLink label="Demo" id="demo" />
               <HeaderLink label="Proof" id="proof" />
@@ -468,13 +491,7 @@ export default function MaritimeMRTWebsite() {
               <h1 className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.9] tracking-[-0.055em] text-white sm:text-7xl xl:text-[6.6rem]">
                 Maritime clarity
                 <br />
-                with a{" "}
-                <span
-                  className="font-normal italic text-[#ffd6ca]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  cleaner arrival
-                </span>
+                with a <AccentWord tone="warm">cleaner arrival</AccentWord>
                 .
               </h1>
 
@@ -538,14 +555,7 @@ export default function MaritimeMRTWebsite() {
               <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
                 No cards.
                 <br />
-                Just signal,
-                <span
-                  className="font-normal italic text-[#dbe1ff]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  rhythm,
-                </span>
-                and space.
+                Just signal, <AccentWord>rhythm</AccentWord> and space.
               </h2>
             </div>
 
@@ -565,13 +575,7 @@ export default function MaritimeMRTWebsite() {
               <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
                 One route.
                 <br />
-                One clear
-                <span
-                  className="font-normal italic text-[#ffd4c9]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  experience
-                </span>
+                One clear <AccentWord tone="warm">experience</AccentWord>
                 .
               </h2>
 
@@ -656,13 +660,7 @@ export default function MaritimeMRTWebsite() {
               <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
                 The trust layer
                 <br />
-                stays
-                <span
-                  className="font-normal italic text-[#dbe1ff]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  visible
-                </span>
+                stays <AccentWord>visible</AccentWord>
                 .
               </h2>
 
@@ -689,13 +687,7 @@ export default function MaritimeMRTWebsite() {
               <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl">
                 Build the public face
                 <br />
-                before the
-                <span
-                  className="font-normal italic text-[#ffd6c7]"
-                  style={{ fontFamily: '"Cormorant Garamond", serif' }}
-                >
-                  sprawl
-                </span>
+                before the <AccentWord tone="warm">sprawl</AccentWord>
                 .
               </h2>
             </div>
@@ -707,8 +699,9 @@ export default function MaritimeMRTWebsite() {
             </div>
           </section>
 
-          <section className="mt-8 overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(8,9,17,0.92))] px-6 py-8 shadow-[0_28px_90px_rgba(4,5,12,0.46)] sm:px-8 sm:py-10">
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <section className="relative mt-8 overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(8,9,17,0.92))] px-6 py-8 shadow-[0_28px_90px_rgba(4,5,12,0.46)] sm:px-8 sm:py-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_26%,rgba(255,149,116,0.09),transparent_20%),radial-gradient(circle_at_78%_72%,rgba(96,116,255,0.12),transparent_24%)]" />
+            <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#ffb29a]">
                   Ready
