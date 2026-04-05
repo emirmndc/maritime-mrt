@@ -1,18 +1,60 @@
+import { useEffect, useState } from "react";
 import MaritimeMRTWebsite from "./MaritimeMRTWebsite";
-import AppHomePage from "./app/AppHomePage";
-import GeneratedDashboardPage from "./app/GeneratedDashboardPage";
-import { SettlementWorkflowPage } from "./app/SettlementWorkflowPage";
 import { TryDemoPage } from "./app/TryDemoPage";
-import { VoyageListPage } from "./app/VoyageListPage";
+import { appRoutes, type AppRoute } from "./app/router";
 
-export default function App() {
-  const path = window.location.pathname;
+const legacyDemoRoutes = new Set([
+  "/app",
+  "/app/try-demo",
+  "/app/generated-dashboard",
+  "/app/voyages",
+  "/app/settlement",
+]);
 
-  if (path === "/app") return <AppHomePage />;
-  if (path === "/app/generated-dashboard") return <GeneratedDashboardPage />;
-  if (path === "/app/settlement") return <SettlementWorkflowPage />;
-  if (path === "/app/try-demo") return <TryDemoPage />;
-  if (path === "/app/voyages") return <VoyageListPage />;
+function normalizeRoute(pathname: string): AppRoute {
+  const path = pathname.replace(/\/+$/, "") || "/";
+
+  if (path === "/demo") {
+    return "/demo";
+  }
+
+  if (legacyDemoRoutes.has(path)) {
+    return "/demo";
+  }
+
+  return "/";
+}
+
+function App() {
+  const [route, setRoute] = useState<AppRoute>(() => normalizeRoute(window.location.pathname));
+
+  useEffect(() => {
+    const handleRouteChange = () => setRoute(normalizeRoute(window.location.pathname));
+
+    window.addEventListener("popstate", handleRouteChange);
+    window.addEventListener("app:navigate", handleRouteChange as EventListener);
+
+    return () => {
+      window.removeEventListener("popstate", handleRouteChange);
+      window.removeEventListener("app:navigate", handleRouteChange as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+
+    if (currentPath !== route) {
+      window.history.replaceState({}, "", route);
+    }
+
+    document.title = appRoutes[route].title;
+  }, [route]);
+
+  if (route === "/demo") {
+    return <TryDemoPage />;
+  }
 
   return <MaritimeMRTWebsite />;
 }
+
+export default App;
