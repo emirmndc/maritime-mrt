@@ -1,4 +1,6 @@
-export default function MaritimeLanding() {
+import React from "react";
+
+export default function MaritimeMRTWebsite() {
   const docs = [
     { label: "Whitepaper v1.5", href: "#" },
     { label: "Roadmap v1.5", href: "#" },
@@ -40,7 +42,7 @@ export default function MaritimeLanding() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#05060a] text-white overflow-hidden">
+    <div className="min-h-screen overflow-hidden bg-[#05060a] text-white">
       <div className="relative">
         <BackgroundGlow />
 
@@ -50,16 +52,28 @@ export default function MaritimeLanding() {
               M
             </div>
             <div>
-              <div className="text-sm font-semibold tracking-[0.28em] text-white/95">MARITIME</div>
-              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">MRT / Polygon</div>
+              <div className="text-sm font-semibold tracking-[0.28em] text-white/95">
+                MARITIME
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">
+                MRT / Polygon
+              </div>
             </div>
           </div>
 
           <nav className="hidden items-center gap-8 text-sm text-white/70 md:flex">
-            <a href="#live" className="transition hover:text-white">Live Now</a>
-            <a href="#workflow" className="transition hover:text-white">Workflow</a>
-            <a href="#demo" className="transition hover:text-white">Demo</a>
-            <a href="#docs" className="transition hover:text-white">Docs</a>
+            <a href="#live" className="transition hover:text-white">
+              Live Now
+            </a>
+            <a href="#workflow" className="transition hover:text-white">
+              Workflow
+            </a>
+            <a href="#demo" className="transition hover:text-white">
+              Demo
+            </a>
+            <a href="#docs" className="transition hover:text-white">
+              Docs
+            </a>
           </nav>
 
           <a
@@ -86,8 +100,9 @@ export default function MaritimeLanding() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/68 md:text-lg">
-                Shipping settlements still move through emails, PDFs, spreadsheets, and delayed approvals.
-                MRT is narrowing the surface: a transparent token layer today, and one inspectable Port Cost Vault workflow proof next.
+                Shipping settlements still move through emails, PDFs, spreadsheets,
+                and delayed approvals. MRT is narrowing the surface: a transparent
+                token layer today, and one inspectable Port Cost Vault workflow proof next.
               </p>
 
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -114,8 +129,12 @@ export default function MaritimeLanding() {
                 <div className="rounded-[26px] border border-white/8 bg-[#090b12]/90 p-5 md:p-7">
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
                     <div>
-                      <div className="text-[11px] uppercase tracking-[0.3em] text-white/45">Bounded workflow proof</div>
-                      <div className="mt-2 text-xl font-semibold tracking-[-0.03em]">Port Cost Vault Case</div>
+                      <div className="text-[11px] uppercase tracking-[0.3em] text-white/45">
+                        Bounded workflow proof
+                      </div>
+                      <div className="mt-2 text-xl font-semibold tracking-[-0.03em]">
+                        Port Cost Vault Case
+                      </div>
                     </div>
                     <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
                       Demo Scenario
@@ -124,7 +143,9 @@ export default function MaritimeLanding() {
 
                   <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
                     <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-5 text-left">
-                      <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">Case summary</div>
+                      <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">
+                        Case summary
+                      </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
                         <Stat label="Vessel" value="M/V North Passage" />
                         <Stat label="Port" value="Samsun" />
@@ -137,8 +158,14 @@ export default function MaritimeLanding() {
                           <span>Neutral handling target</span>
                         </div>
                         <div className="mt-3 flex items-end justify-between gap-3">
-                          <div className="text-3xl font-bold tracking-[-0.04em]">$3,850</div>
-                          <div className="text-right text-xs text-white/45">Accepted amount continues separately.<br />Only the disputed portion is isolated.</div>
+                          <div className="text-3xl font-bold tracking-[-0.04em]">
+                            $3,850
+                          </div>
+                          <div className="text-right text-xs text-white/45">
+                            Accepted amount continues separately.
+                            <br />
+                            Only the disputed portion is isolated.
+                          </div>
                         </div>
                         <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/8">
                           <div className="h-full w-[26%] rounded-full bg-gradient-to-r from-cyan-300 via-sky-400 to-fuchsia-400" />
@@ -147,7 +174,9 @@ export default function MaritimeLanding() {
                     </div>
 
                     <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-5 text-left">
-                      <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">Evidence status</div>
+                      <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">
+                        Evidence status
+                      </div>
                       <div className="mt-4 space-y-3">
                         <EvidenceRow name="DA request" status="Submitted" />
                         <EvidenceRow name="Final invoice" status="Submitted" />
@@ -161,7 +190,10 @@ export default function MaritimeLanding() {
             </div>
           </section>
 
-          <section id="live" className="relative z-20 mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-2 md:px-8 md:py-10">
+          <section
+            id="live"
+            className="relative z-20 mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-2 md:px-8 md:py-10"
+          >
             <Card title="What is live now">
               <ul className="space-y-3 text-sm leading-6 text-white/70">
                 {liveNow.map((item) => (
@@ -172,6 +204,7 @@ export default function MaritimeLanding() {
                 ))}
               </ul>
             </Card>
+
             <Card title="What is not live yet">
               <ul className="space-y-3 text-sm leading-6 text-white/70">
                 {notLiveYet.map((item) => (
@@ -184,16 +217,23 @@ export default function MaritimeLanding() {
             </Card>
           </section>
 
-          <section id="workflow" className="relative z-20 mx-auto max-w-6xl px-6 py-14 md:px-8">
+          <section
+            id="workflow"
+            className="relative z-20 mx-auto max-w-6xl px-6 py-14 md:px-8"
+          >
             <div className="max-w-3xl">
-              <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">First workflow architecture</div>
+              <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">
+                First workflow architecture
+              </div>
               <h2 className="mt-4 text-3xl font-bold tracking-[-0.04em] md:text-5xl">
                 Narrower scope.
                 <br />
                 Cleaner proof.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/68">
-                The first public demo should not look like a giant platform. It should behave like one operational case with a visible ledger, evidence path, disputed portion logic, and controlled settlement sequence.
+                The first public demo should not look like a giant platform. It should
+                behave like one operational case with a visible ledger, evidence path,
+                disputed portion logic, and controlled settlement sequence.
               </p>
             </div>
 
@@ -203,42 +243,80 @@ export default function MaritimeLanding() {
                   key={item.title}
                   className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm"
                 >
-                  <div className="text-xs font-medium uppercase tracking-[0.28em] text-white/38">0{idx + 1}</div>
-                  <div className="mt-4 text-xl font-semibold tracking-[-0.03em]">{item.title}</div>
+                  <div className="text-xs font-medium uppercase tracking-[0.28em] text-white/38">
+                    0{idx + 1}
+                  </div>
+                  <div className="mt-4 text-xl font-semibold tracking-[-0.03em]">
+                    {item.title}
+                  </div>
                   <p className="mt-3 text-sm leading-6 text-white/65">{item.text}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section id="demo" className="relative z-20 mx-auto max-w-6xl px-6 py-10 md:px-8 md:py-16">
+          <section
+            id="demo"
+            className="relative z-20 mx-auto max-w-6xl px-6 py-10 md:px-8 md:py-16"
+          >
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <Card title="Why Port Cost Vault first">
                 <div className="space-y-4 text-sm leading-6 text-white/70">
-                  <p>It is operationally concrete, easier to simulate, and narrow enough to inspect without pretending the entire settlement stack already exists.</p>
-                  <p>The goal is not to replace charter parties or arbitration. The goal is to structure one case clearly enough that outsiders can understand the evidence path and the disputed portion handling logic.</p>
+                  <p>
+                    It is operationally concrete, easier to simulate, and narrow enough
+                    to inspect without pretending the entire settlement stack already exists.
+                  </p>
+                  <p>
+                    The goal is not to replace charter parties or arbitration. The goal is
+                    to structure one case clearly enough that outsiders can understand the
+                    evidence path and the disputed portion handling logic.
+                  </p>
                 </div>
               </Card>
 
               <Card title="Demo walkthrough">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <MiniStep number="01" title="Advance recorded" text="Port cost request enters the case ledger." />
-                  <MiniStep number="02" title="Invoice submitted" text="Supporting documents enter the evidence flow." />
-                  <MiniStep number="03" title="Partial acceptance" text="Accepted and disputed portions are separated." />
-                  <MiniStep number="04" title="Review window" text="Proposal, counter, and controlled resolution path." />
+                  <MiniStep
+                    number="01"
+                    title="Advance recorded"
+                    text="Port cost request enters the case ledger."
+                  />
+                  <MiniStep
+                    number="02"
+                    title="Invoice submitted"
+                    text="Supporting documents enter the evidence flow."
+                  />
+                  <MiniStep
+                    number="03"
+                    title="Partial acceptance"
+                    text="Accepted and disputed portions are separated."
+                  />
+                  <MiniStep
+                    number="04"
+                    title="Review window"
+                    text="Proposal, counter, and controlled resolution path."
+                  />
                 </div>
               </Card>
             </div>
           </section>
 
-          <section id="docs" className="relative z-20 mx-auto max-w-6xl px-6 py-12 md:px-8 md:py-16">
+          <section
+            id="docs"
+            className="relative z-20 mx-auto max-w-6xl px-6 py-12 md:px-8 md:py-16"
+          >
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">Public proofs</div>
-                <h2 className="mt-4 text-3xl font-bold tracking-[-0.04em] md:text-5xl">Read the core surface</h2>
+                <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">
+                  Public proofs
+                </div>
+                <h2 className="mt-4 text-3xl font-bold tracking-[-0.04em] md:text-5xl">
+                  Read the core surface
+                </h2>
               </div>
               <p className="max-w-xl text-sm leading-6 text-white/62">
-                The public site should make the distinction clear: transparent token infrastructure now, bounded workflow proof next.
+                The public site should make the distinction clear: transparent token
+                infrastructure now, bounded workflow proof next.
               </p>
             </div>
 
@@ -249,8 +327,12 @@ export default function MaritimeLanding() {
                   href={doc.href}
                   className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 transition hover:bg-white/[0.06]"
                 >
-                  <div className="text-[11px] uppercase tracking-[0.28em] text-white/38">Document</div>
-                  <div className="mt-3 text-lg font-semibold tracking-[-0.03em]">{doc.label}</div>
+                  <div className="text-[11px] uppercase tracking-[0.28em] text-white/38">
+                    Document
+                  </div>
+                  <div className="mt-3 text-lg font-semibold tracking-[-0.03em]">
+                    {doc.label}
+                  </div>
                   <div className="mt-4 text-sm text-white/52">Open</div>
                 </a>
               ))}
@@ -276,38 +358,60 @@ function BackgroundGlow() {
   );
 }
 
-function Card({ title, children }) {
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm md:p-7">
-      <div className="text-[11px] uppercase tracking-[0.28em] text-white/40">Section</div>
+      <div className="text-[11px] uppercase tracking-[0.28em] text-white/40">
+        Section
+      </div>
       <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em]">{title}</h3>
       <div className="mt-5">{children}</div>
     </div>
   );
 }
 
-function Stat({ label, value }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-3">
-      <div className="text-[10px] uppercase tracking-[0.24em] text-white/40">{label}</div>
+      <div className="text-[10px] uppercase tracking-[0.24em] text-white/40">
+        {label}
+      </div>
       <div className="mt-2 text-sm font-medium text-white/90">{value}</div>
     </div>
   );
 }
 
-function EvidenceRow({ name, status }) {
+function EvidenceRow({ name, status }: { name: string; status: string }) {
   return (
     <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
       <span className="text-sm text-white/82">{name}</span>
-      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/62">{status}</span>
+      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/62">
+        {status}
+      </span>
     </div>
   );
 }
 
-function MiniStep({ number, title, text }) {
+function MiniStep({
+  number,
+  title,
+  text,
+}: {
+  number: string;
+  title: string;
+  text: string;
+}) {
   return (
     <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
-      <div className="text-[10px] uppercase tracking-[0.26em] text-white/36">{number}</div>
+      <div className="text-[10px] uppercase tracking-[0.26em] text-white/36">
+        {number}
+      </div>
       <div className="mt-3 text-sm font-semibold text-white">{title}</div>
       <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
     </div>
