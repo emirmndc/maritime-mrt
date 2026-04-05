@@ -1,31 +1,65 @@
-﻿@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: rgba(255, 255, 255, 0.92);
-  background: #04070b;
+  color: rgba(245, 247, 255, 0.94);
+  background: #06070d;
 }
 
 html {
   scroll-behavior: smooth;
+  background: #06070d;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #04070b;
+  background:
+    radial-gradient(circle at top, rgba(112, 125, 255, 0.14), transparent 24%),
+    linear-gradient(180deg, #05060d 0%, #090912 48%, #05060d 100%);
+  color: rgba(245, 247, 255, 0.94);
+  font-family:
+    "Manrope",
+    "Segoe UI",
+    sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
 }
 
 * {
   box-sizing: border-box;
+}
+
+*::selection {
+  background: rgba(255, 144, 112, 0.34);
+  color: white;
 }
 
 #root {
