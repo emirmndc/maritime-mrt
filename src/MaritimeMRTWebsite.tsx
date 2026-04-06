@@ -21,6 +21,12 @@ const externalLinks = {
   twitter: "https://x.com/maritime_coin",
 };
 
+const latestWeeklyReport = {
+  label: "06.04.2026",
+  href:
+    "https://github.com/maritime-mrt/maritime-mrt/raw/main/WEEKLY%20REPORT/WEEKLY%20REPORTS%2006.04.2026.pdf",
+};
+
 const signalTape = [
   "Polygon PoS",
   "MARITIME / MRT",
@@ -167,19 +173,46 @@ function AccentWord({
 function PrimaryAction({
   children,
   onClick,
+  tone = "warm",
 }: {
   children: ReactNode;
   onClick: () => void;
+  tone?: "warm" | "cool";
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-full border border-[#ffb59b]/30 bg-[linear-gradient(135deg,rgba(255,167,143,0.96),rgba(255,122,92,0.9))] px-6 py-3 text-sm font-semibold text-[#180d12] shadow-[0_20px_40px_rgba(255,130,101,0.26)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_55px_rgba(255,130,101,0.3)]"
+      className={[
+        "inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5",
+        tone === "warm"
+          ? "border border-[#ffb59b]/30 bg-[linear-gradient(135deg,rgba(255,167,143,0.96),rgba(255,122,92,0.9))] text-[#180d12] shadow-[0_20px_40px_rgba(255,130,101,0.26)] hover:shadow-[0_28px_55px_rgba(255,130,101,0.3)]"
+          : "border border-[#9cb2ff]/28 bg-[linear-gradient(135deg,rgba(173,185,255,0.96),rgba(104,123,255,0.92))] text-[#08101f] shadow-[0_20px_40px_rgba(95,113,255,0.24)] hover:shadow-[0_28px_55px_rgba(95,113,255,0.3)]",
+      ].join(" ")}
     >
       {children}
       <MoveRight className="h-4 w-4" />
     </button>
+  );
+}
+
+function PrimaryLink({
+  children,
+  href,
+}: {
+  children: ReactNode;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-2 rounded-full border border-[#9cb2ff]/28 bg-[linear-gradient(135deg,rgba(173,185,255,0.96),rgba(104,123,255,0.92))] px-6 py-3 text-sm font-semibold text-[#08101f] shadow-[0_20px_40px_rgba(95,113,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_55px_rgba(95,113,255,0.3)]"
+    >
+      {children}
+      <ArrowUpRight className="h-4 w-4" />
+    </a>
   );
 }
 
@@ -467,6 +500,9 @@ export default function MaritimeMRTWebsite() {
 
             <div className="flex items-center gap-3">
               <SecondaryLink href={externalLinks.polygonscan}>PolygonScan</SecondaryLink>
+              <PrimaryLink href={latestWeeklyReport.href}>
+                Open last weekly report
+              </PrimaryLink>
               <PrimaryAction onClick={() => navigateTo("/demo")}>
                 Open demo
               </PrimaryAction>
