@@ -30,10 +30,6 @@ These wallets are published for transparency and operational clarity.
 - **LP Rewards (v1) Reward Wallet:** `0xD48D424146E61806b18E7262218358f19f9e9317`  
   Details: see `LP_REWARDS_v1.md`
 
-## Programs
-
-- **LP Rewards (v1):** [LP_REWARDS_v1.md](./LP_REWARDS_v1.md)
-
 ## Source Code
 
 The token contract source is in [`contracts/Maritime.sol`](./contracts/Maritime.sol).
