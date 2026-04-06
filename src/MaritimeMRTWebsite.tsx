@@ -27,6 +27,10 @@ const latestWeeklyReport = {
     "https://github.com/maritime-mrt/maritime-mrt/raw/main/WEEKLY%20REPORT/WEEKLY%20REPORTS%2006.04.2026.pdf",
 };
 
+const weeklyReportsArchive = {
+  href: "https://github.com/maritime-mrt/maritime-mrt/tree/main/WEEKLY%20REPORT",
+};
+
 const signalTape = [
   "Polygon PoS",
   "MARITIME / MRT",
@@ -769,6 +773,9 @@ export default function MaritimeMRTWebsite() {
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Open demo
                 </PrimaryAction>
+                <SecondaryLink href={weeklyReportsArchive.href}>
+                  View all weekly reports
+                </SecondaryLink>
                 <SecondaryLink href={externalLinks.dexscreener}>
                   View market
                 </SecondaryLink>
