@@ -22,9 +22,8 @@ const externalLinks = {
 };
 
 const latestWeeklyReport = {
-  label: "06.04.2026",
   href:
-    "https://github.com/maritime-mrt/maritime-mrt/raw/main/WEEKLY%20REPORT/WEEKLY%20REPORTS%2006.04.2026.pdf",
+    "https://github.com/maritime-mrt/maritime-mrt/raw/main/WEEKLY%20REPORT/latest-weekly-report.pdf",
 };
 
 const weeklyReportsArchive = {
