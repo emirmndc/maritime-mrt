@@ -128,6 +128,14 @@ export function TryDemoPage() {
             </button>
 
             <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigateTo("/off-hire-demo")}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:border-white/20 hover:bg-white/[0.06]"
+              >
+                Open off-hire demo
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
               <a
                 href="https://polygonscan.com/token/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE"
                 target="_blank"
@@ -161,8 +169,9 @@ export function TryDemoPage() {
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-white/66 sm:text-lg">
                 Paste recap text, generate a review-friendly structure, and keep
-                the outcome assistive. This page is the only product route left in
-                the site on purpose.
+                the outcome assistive. This is one of two bounded product demos:
+                the recap rail for operational signal, and the off-hire rail for
+                disputed deduction control.
               </p>
             </motion.div>
 
