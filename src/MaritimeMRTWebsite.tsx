@@ -6,6 +6,7 @@ import {
   Globe,
   MoveRight,
   Radar,
+  Scale,
   ShieldCheck,
   Waves,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const signalTape = [
   "No admin mint",
   "Transparent wallet roles",
   "Voyage recap demo live",
+  "Deduction rail demo live",
 ];
 
 const narrativeRows = [
@@ -72,6 +74,21 @@ const demoFlow = [
   {
     label: "Review together",
     text: "Results stay assistive and readable so commercial, ops, or claims teams can discuss the draft in one place.",
+  },
+];
+
+const offHireFlow = [
+  {
+    label: "Stack the claim",
+    text: "Break the dispute into off-hire, bunker, performance, commission, and extra-cost legs instead of one vague deduction line.",
+  },
+  {
+    label: "Neutralize cash",
+    text: "Undisputed value flows. Disputed value moves to a neutral vault so it cannot become leverage inside one party's pocket.",
+  },
+  {
+    label: "Execute in order",
+    text: "Owner response, counter-evidence, and final execution stay sequenced, attributed, and exportable without pretending to replace arbitration.",
   },
 ];
 
@@ -399,6 +416,36 @@ function FlowPoint({
   );
 }
 
+function SnapshotRow({
+  label,
+  value,
+  tone = "base",
+}: {
+  label: string;
+  value: string;
+  tone?: "base" | "cool" | "warm";
+}) {
+  return (
+    <div className="border-b border-white/10 py-4 last:border-b-0">
+      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+        {label}
+      </div>
+      <div
+        className={[
+          "mt-3 text-sm font-semibold leading-7",
+          tone === "cool"
+            ? "text-[#dbe1ff]"
+            : tone === "warm"
+              ? "text-[#ffd6ca]"
+              : "text-white/72",
+        ].join(" ")}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function ProofRow({
   label,
   value,
@@ -507,7 +554,7 @@ export default function MaritimeMRTWebsite() {
                 Open last weekly report
               </PrimaryLink>
               <PrimaryAction onClick={() => navigateTo("/demo")}>
-                Open demo
+                Open recap demo
               </PrimaryAction>
             </div>
           </div>
@@ -538,13 +585,13 @@ export default function MaritimeMRTWebsite() {
 
               <p className="mt-7 max-w-3xl text-lg leading-8 text-white/68 sm:text-[1.35rem] sm:leading-10">
                 The site is now reduced to what matters: a refined landing page,
-                a single live demo, and a public proof layer around the MRT token
-                on Polygon.
+                two bounded live demos, and a public proof layer around the MRT
+                token on Polygon.
               </p>
 
               <div className="mt-9 flex flex-wrap gap-3">
-                <PrimaryAction onClick={() => navigateTo("/demo")}>
-                  Enter the demo
+                <PrimaryAction onClick={() => scrollToSection("demo")}>
+                  Explore demos
                 </PrimaryAction>
                 <SecondaryLink href={externalLinks.quickswap}>
                   Trade on QuickSwap
@@ -620,20 +667,23 @@ export default function MaritimeMRTWebsite() {
                 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
-                One route.
+                Two bounded demos.
                 <br />
-                One clear <AccentWord tone="warm">experience.</AccentWord>
+                One clearer <AccentWord tone="warm">thesis.</AccentWord>
               </h2>
 
               <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
-                The old internal app tree is out of the way. Visitors now move
-                straight from the narrative into a single demo focused on recap
-                parsing and review-friendly output.
+                One route turns recap language into an operational signal. The
+                second turns off-hire and linked deductions into a neutral
+                owner-charterer dispute rail.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Launch recap demo
+                </PrimaryAction>
+                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                  Open off-hire demo
                 </PrimaryAction>
                 <SecondaryLink href={externalLinks.github}>
                   View GitHub
@@ -641,55 +691,101 @@ export default function MaritimeMRTWebsite() {
               </div>
             </div>
 
-            <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,13,26,0.9))] p-6 shadow-[0_30px_100px_rgba(4,5,12,0.52)] backdrop-blur-xl sm:p-8">
-              <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#95a8ff]">
-                <Waves className="h-4 w-4" />
-                Voyage recap to signal
-              </div>
+            <div className="space-y-6">
+              <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,13,26,0.9))] p-6 shadow-[0_30px_100px_rgba(4,5,12,0.52)] backdrop-blur-xl sm:p-8">
+                <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#95a8ff]">
+                  <Waves className="h-4 w-4" />
+                  Voyage recap to signal
+                </div>
 
-              <div className="border-t border-white/10">
-                {demoFlow.map((item) => (
-                  <FlowPoint key={item.label} {...item} />
-                ))}
-              </div>
+                <div className="border-t border-white/10">
+                  {demoFlow.map((item) => (
+                    <FlowPoint key={item.label} {...item} />
+                  ))}
+                </div>
 
-              <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                  <div className="text-sm font-semibold text-white">Demo preview</div>
-                  <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
-                    Assistive output
+                <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
+                  <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                    <div className="text-sm font-semibold text-white">Demo preview</div>
+                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
+                      Assistive output
+                    </div>
+                  </div>
+                  <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
+                      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+                        Input
+                      </div>
+                      <div className="mt-4 space-y-3 text-sm leading-7 text-white/58">
+                        <div>Owner: Northshore Bulk Pte. Ltd.</div>
+                        <div>Charterer: Golden Delta Foods</div>
+                        <div>Loadport: Novorise</div>
+                        <div>Disport: Southbay</div>
+                        <div>Deadline: 15 business days after discharge.</div>
+                      </div>
+                    </div>
+                    <div className="px-5 py-5">
+                      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+                        Output
+                      </div>
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div className="border-b border-white/10 pb-3 text-white/72">
+                          Route signal: Novorise to Southbay
+                        </div>
+                        <div className="border-b border-white/10 pb-3 text-white/72">
+                          Health: Attention required
+                        </div>
+                        <div className="border-b border-white/10 pb-3 text-white/72">
+                          Documents: SOF, NOR, laytime sheet
+                        </div>
+                        <div className="text-white/72">
+                          Review note: timing language remains assistive
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
-                      Input
-                    </div>
-                    <div className="mt-4 space-y-3 text-sm leading-7 text-white/58">
-                      <div>Owner: Northshore Bulk Pte. Ltd.</div>
-                      <div>Charterer: Golden Delta Foods</div>
-                      <div>Loadport: Novorise</div>
-                      <div>Disport: Southbay</div>
-                      <div>Deadline: 15 business days after discharge.</div>
+              </div>
+
+              <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,13,26,0.9))] p-6 shadow-[0_30px_100px_rgba(4,5,12,0.52)] backdrop-blur-xl sm:p-8">
+                <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#d8dcff]">
+                  <Scale className="h-4 w-4" />
+                  Owner-charterer deduction rail
+                </div>
+
+                <div className="border-t border-white/10">
+                  {offHireFlow.map((item) => (
+                    <FlowPoint key={item.label} {...item} />
+                  ))}
+                </div>
+
+                <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
+                  <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                    <div className="text-sm font-semibold text-white">Financial preview</div>
+                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
+                      Neutralized cash
                     </div>
                   </div>
-                  <div className="px-5 py-5">
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
-                      Output
+                  <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+                    <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
+                      <SnapshotRow label="Primary basis" value="Off-hire" />
+                      <SnapshotRow label="Linked legs" value="LSMGO, VLSFO, Extra Cost" />
+                      <SnapshotRow label="Gross due" value="270,000" />
+                      <SnapshotRow label="Claimed deduction" value="48,000" />
                     </div>
-                    <div className="mt-4 space-y-3 text-sm">
-                      <div className="border-b border-white/10 pb-3 text-white/72">
-                        Route signal: Novorise to Southbay
-                      </div>
-                      <div className="border-b border-white/10 pb-3 text-white/72">
-                        Health: Attention required
-                      </div>
-                      <div className="border-b border-white/10 pb-3 text-white/72">
-                        Documents: SOF, NOR, laytime sheet
-                      </div>
-                      <div className="text-white/72">
-                        Review note: timing language remains assistive
-                      </div>
+                    <div className="px-5 py-5">
+                      <SnapshotRow label="Accepted" value="31,500" />
+                      <SnapshotRow
+                        label="Disputed neutralized"
+                        value="16,500"
+                        tone="warm"
+                      />
+                      <SnapshotRow label="Owner response window" value="72h" />
+                      <SnapshotRow
+                        label="Status"
+                        value="Counter-evidence pending"
+                        tone="cool"
+                      />
                     </div>
                   </div>
                 </div>
@@ -770,7 +866,7 @@ export default function MaritimeMRTWebsite() {
 
               <div className="flex flex-wrap gap-3">
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
-                  Open demo
+                  Open recap demo
                 </PrimaryAction>
                 <SecondaryLink href={weeklyReportsArchive.href}>
                   View all weekly reports
