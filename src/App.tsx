@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import MaritimeMRTWebsite from "./MaritimeMRTWebsite";
+import { OffHireDemoPage } from "./app/OffHireDemoPage";
 import { TryDemoPage } from "./app/TryDemoPage";
 import { appRoutes, type AppRoute } from "./app/router";
 
@@ -16,6 +17,10 @@ function normalizeRoute(pathname: string): AppRoute {
 
   if (path === "/demo") {
     return "/demo";
+  }
+
+  if (path === "/off-hire-demo") {
+    return "/off-hire-demo";
   }
 
   if (legacyDemoRoutes.has(path)) {
@@ -52,6 +57,10 @@ function App() {
 
   if (route === "/demo") {
     return <TryDemoPage />;
+  }
+
+  if (route === "/off-hire-demo") {
+    return <OffHireDemoPage />;
   }
 
   return <MaritimeMRTWebsite />;
