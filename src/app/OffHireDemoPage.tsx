@@ -184,7 +184,7 @@ function AccentWord({
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#95a8ff]">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#f5a78f]">
       {children}
     </div>
   );
@@ -415,7 +415,7 @@ export function OffHireDemoPage() {
               </h2>
             </div>
 
-            <div className="border-t border-white/10 font-mono text-sm text-white/74">
+            <div className="border-t border-white/10 text-sm text-white/74">
               <FormulaRow
                 title="HIRE LEG"
                 formula="H_net = t x R x (1 - ac - bc)"
@@ -656,7 +656,12 @@ function FormulaRow({
       <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
         {title}
       </div>
-      <div className="mt-3 text-lg text-white">{formula}</div>
+      <div
+        className="mt-3 text-xl tracking-[-0.03em] text-white"
+        style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+      >
+        {formula}
+      </div>
       <div className="mt-3 leading-7 text-white/60">{values}</div>
       <div className="mt-3 text-base font-semibold text-[#ffd7cc]">{result}</div>
     </div>
