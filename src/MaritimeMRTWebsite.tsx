@@ -31,6 +31,16 @@ const weeklyReportsArchive = {
   href: "https://github.com/maritime-mrt/maritime-mrt/tree/main/WEEKLY%20REPORT",
 };
 
+const offHirePreview = {
+  caseTitle: "OFF-HIRE DISPUTE (Hold Cleaning)",
+  charterDeduction: "48,000 USD",
+  structuredClaim: "25,267.09 USD",
+  disputedVault: "16,500 USD",
+  ownerPosition: "Partially disputed",
+  period: "20 Oct 23:00 -> 22 Oct 12:00 (1.542 days)",
+  status: "Counter-evidence pending",
+};
+
 const signalTape = [
   "Polygon PoS",
   "MARITIME / MRT",
@@ -79,16 +89,16 @@ const demoFlow = [
 
 const offHireFlow = [
   {
-    label: "Stack the claim",
-    text: "Break the dispute into off-hire, bunker, performance, commission, and extra-cost legs instead of one vague deduction line.",
+    label: "Open the case",
+    text: "The dispute starts as a readable case file with period, deduction notice, and a visible owner position.",
+  },
+  {
+    label: "Structure the legs",
+    text: "Hire, VLSFO, LSMGO, and fixed-cost legs become separate lines instead of one vague off-hire number.",
   },
   {
     label: "Neutralize cash",
     text: "Undisputed value flows. Disputed value moves to a neutral vault so it cannot become leverage inside one party's pocket.",
-  },
-  {
-    label: "Execute in order",
-    text: "Owner response, counter-evidence, and final execution stay sequenced, attributed, and exportable without pretending to replace arbitration.",
   },
 ];
 
@@ -761,29 +771,41 @@ export default function MaritimeMRTWebsite() {
 
                 <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
                   <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                    <div className="text-sm font-semibold text-white">Financial preview</div>
+                    <div className="text-sm font-semibold text-white">Case preview</div>
                     <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
-                      Neutralized cash
+                      Neutral dispute rail
                     </div>
                   </div>
                   <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
                     <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
-                      <SnapshotRow label="Primary basis" value="Off-hire" />
-                      <SnapshotRow label="Linked legs" value="LSMGO, VLSFO, Extra Cost" />
-                      <SnapshotRow label="Gross due" value="270,000" />
-                      <SnapshotRow label="Claimed deduction" value="48,000" />
+                      <SnapshotRow label="Case" value={offHirePreview.caseTitle} />
+                      <SnapshotRow
+                        label="Charter deduction"
+                        value={offHirePreview.charterDeduction}
+                      />
+                      <SnapshotRow
+                        label="Off-hire period"
+                        value={offHirePreview.period}
+                      />
+                      <SnapshotRow
+                        label="Structured claim"
+                        value={offHirePreview.structuredClaim}
+                      />
                     </div>
                     <div className="px-5 py-5">
-                      <SnapshotRow label="Accepted" value="31,500" />
+                      <SnapshotRow
+                        label="Owner position"
+                        value={offHirePreview.ownerPosition}
+                      />
                       <SnapshotRow
                         label="Disputed neutralized"
-                        value="16,500"
+                        value={offHirePreview.disputedVault}
                         tone="warm"
                       />
                       <SnapshotRow label="Owner response window" value="72h" />
                       <SnapshotRow
                         label="Status"
-                        value="Counter-evidence pending"
+                        value={offHirePreview.status}
                         tone="cool"
                       />
                     </div>
