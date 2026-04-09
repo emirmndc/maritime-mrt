@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  ArrowUpRight,
   CheckCircle2,
   CircleAlert,
   FileText,
@@ -23,8 +22,8 @@ const money2 = new Intl.NumberFormat("en-US", {
 const caseHeader = {
   title: "OFF-HIRE DISPUTE",
   subtitle: "Hold Cleaning",
-  charterDeduction: 48000,
-  ownerPosition: "Partially disputed",
+  claimedOnAccount: 48000,
+  ownerPosition: "Owner response pending",
   period: "20 Oct 23:00 -> 22 Oct 12:00",
   days: 1.542,
 };
@@ -56,108 +55,149 @@ const lsmgoTotal = calculationBasis.lsmgoQty * calculationBasis.lsmgoPrice;
 const cve =
   caseHeader.days * ((calculationBasis.cveAnnualEquivalent / 365) * 12);
 const totalClaimed = hireNet + vlsfoTotal + lsmgoTotal + cve;
+const fuelTotal = vlsfoTotal + lsmgoTotal;
+
+const statusSummary = [
+  {
+    label: "Claimed on account",
+    value: `${money0.format(caseHeader.claimedOnAccount)} USD`,
+  },
+  {
+    label: "Currently evidenced",
+    value: `${money2.format(totalClaimed)} USD`,
+  },
+  {
+    label: "Disputed and neutralized",
+    value: `${money0.format(financialState.disputedVault)} USD`,
+  },
+  {
+    label: "Evidence package",
+    value: "Incomplete",
+  },
+];
+
+const pressureChips = [
+  "16,500 USD disputed",
+  "Owner response pending",
+  "Evidence incomplete",
+  "Fuel basis unverified",
+];
+
+const whatMattersNow = [
+  "16,500 USD remains disputed",
+  "Fuel legs remain challenged",
+  "Engine / consumption logs missing",
+  "ROB quantities unverified",
+  "Owner response pending",
+];
+
+const nextActions = [
+  "Upload engine / consumption logs",
+  "Confirm ROB quantity support",
+  "Attach fuel pricing basis",
+  "Submit owner response",
+];
+
+const disputeBreakdown = [
+  { label: "Hire leg", value: "Partially accepted" },
+  { label: "VLSFO leg", value: "Challenged" },
+  { label: "LSMGO leg", value: "Challenged" },
+  { label: "CVE", value: "Minor" },
+];
 
 const evidenceItems = [
   {
     label: "Off-hire notice chain",
     status: "COMPLETE",
-    note: "Notice path is visible in sequence.",
+    note: "Time leg notice path is attached.",
   },
   {
     label: "Noon reports",
     status: "COMPLETE",
-    note: "Interval support is present for the time leg.",
+    note: "Interval support is visible.",
   },
   {
     label: "ROB verification (fuel quantities)",
     status: "UNVERIFIED",
-    note: "Fuel deltas need stronger quantity confirmation.",
+    note: "Fuel quantities still need stronger support.",
   },
   {
     label: "Engine / consumption logs",
     status: "MISSING",
-    note: "Consumption support is not yet complete.",
+    note: "Consumption support is still missing.",
   },
   {
     label: "Price basis confirmation",
     status: "UNVERIFIED",
-    note: "Fuel pricing basis should be confirmed before the leg is treated as settled.",
+    note: "Fuel pricing basis is not yet confirmed.",
   },
   {
     label: "CP clause reference",
     status: "COMPLETE",
-    note: "Clause hook remains attached to the claim file.",
+    note: "Clause hook is attached to the file.",
   },
 ] as const;
 
-const disputeBreakdown = [
-  { label: "Hire leg", value: "Partially accepted" },
-  { label: "VLSFO", value: "Disputed" },
-  { label: "LSMGO", value: "Disputed" },
-  { label: "CVE", value: "Minor" },
+const formulaRows = [
+  {
+    title: "H_net",
+    formula: "t x R x (1 - ac - bc)",
+    detail: `1.542 x ${money0.format(
+      calculationBasis.hireRate,
+    )} x (1 - 3.75% - 1.25%)`,
+    result: `${money2.format(hireNet)} USD`,
+  },
+  {
+    title: "B_g",
+    formula: "Q x P",
+    detail: `VLSFO ${calculationBasis.vlsfoQty.toFixed(2)} x ${money0.format(
+      calculationBasis.vlsfoPrice,
+    )} | LSMGO ${calculationBasis.lsmgoQty.toFixed(2)} x ${money0.format(
+      calculationBasis.lsmgoPrice,
+    )}`,
+    result: `${money2.format(fuelTotal)} USD`,
+  },
+  {
+    title: "C_total",
+    formula: "H_net + B_vlsfo + B_lsmgo + CVE",
+    detail: `Includes ${money2.format(cve)} USD CVE allocation`,
+    result: `${money2.format(totalClaimed)} USD`,
+  },
 ];
 
-const ruleRows = [
+const guardrailRows = [
   {
     title: "Owner protection",
     body: "Charter cannot hold disputed cash without funding it.",
     tone: "warm",
   },
   {
-    title: "No evidence -> Claim cannot go live",
-    body: "The case can be drafted, but it should not become a live deduction claim.",
+    title: "No minimum evidence",
+    body: "Claim stays draft until the minimum package exists.",
     tone: "base",
   },
   {
-    title: "No funding -> Deduction not valid",
-    body: "Disputed value belongs in the neutral vault before the deduction is treated as serious.",
+    title: "No funding",
+    body: "Deduction is not valid until the disputed amount is neutralized.",
     tone: "base",
   },
   {
-    title: "No price basis -> Fuel claim incomplete",
-    body: "Fuel legs should stay incomplete until the pricing basis is attached and reviewable.",
-    tone: "base",
-  },
-  {
-    title: "No source -> Quantity unverified",
-    body: "ROB, BDN, survey, or engine support should stay attached to fuel quantity claims.",
+    title: "No price basis or no source",
+    body: "Fuel legs stay incomplete or unverified.",
     tone: "base",
   },
 ] as const;
 
 const flowRows = [
-  {
-    title: "Charter opens claim",
-    body: "The deduction is opened as a case file, not as a loose accounting line.",
-  },
-  {
-    title: "Claim is structured into legs",
-    body: "Hire, fuel, and fixed-cost elements are separated so the dispute is readable.",
-  },
-  {
-    title: "Disputed amount funded to vault",
-    body: "Cash leverage is removed by moving the disputed part into the neutral rail.",
-  },
-  {
-    title: "Owner responds with evidence",
-    body: "Acceptance, rejection, and counter-evidence enter the record in sequence.",
-  },
-  {
-    title: "Negotiation / escalation",
-    body: "The case can settle commercially or move outward to arbitration or court.",
-  },
-  {
-    title: "Controlled execution",
-    body: "Release follows agreement or binding outcome, not unilateral withdrawal.",
-  },
+  "Charter opens claim",
+  "Claim is structured into legs",
+  "Disputed amount funded to vault",
+  "Owner responds and negotiation starts",
+  "Controlled execution follows outcome",
 ];
 
 function format0(value: number) {
   return money0.format(value);
-}
-
-function format2(value: number) {
-  return money2.format(value);
 }
 
 function AccentWord({
@@ -232,29 +272,46 @@ export function OffHireDemoPage() {
         </header>
 
         <main className="pt-14 lg:pt-20">
-          <section className="grid gap-12 border-t border-white/10 pt-10 lg:grid-cols-[0.78fr_1.22fr] lg:pt-14">
+          <section className="grid gap-12 border-t border-white/10 pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:pt-14">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#ffb29a]">
-                Off-hire demo
+                Live case
               </div>
               <h1
-                className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] text-white sm:text-7xl"
+                className="mt-4 max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.055em] text-white sm:text-7xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
-                Owner-charterer
-                <br />
-                deduction <AccentWord>case file.</AccentWord>
+                {caseHeader.title}
               </h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-white/66 sm:text-lg">
-                MARITIME does not decide who is right. It stops disputed cash
-                from becoming leverage, structures the claim into legs, and
-                keeps the file readable from first notice to controlled
-                execution.
+              <div className="mt-4 text-xl font-semibold tracking-[-0.03em] text-[#ffd7cc] sm:text-3xl">
+                {caseHeader.subtitle}
+              </div>
+              <div
+                className="mt-8 text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
+                <AccentWord tone="warm">
+                  {format0(financialState.disputedVault)} USD
+                </AccentWord>{" "}
+                disputed
+              </div>
+              <div className="mt-4 text-lg font-semibold text-white/84 sm:text-2xl">
+                Owner response pending
+              </div>
+              <p className="mt-6 max-w-2xl text-base leading-8 text-white/64 sm:text-lg">
+                Hold cleaning claim with multi-leg deduction structure and a
+                funded neutral vault.
               </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                {pressureChips.map((chip) => (
+                  <StatusChip key={chip}>{chip}</StatusChip>
+                ))}
+              </div>
             </motion.div>
 
             <motion.div
@@ -266,87 +323,84 @@ export function OffHireDemoPage() {
               <div className="border-b border-white/10 px-6 py-5">
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-white/42">
                   <FileText className="h-3.5 w-3.5" />
-                  Case header
+                  Current status
                 </div>
-                <div
-                  className="mt-4 text-3xl font-semibold leading-tight text-white sm:text-[2.6rem]"
-                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-                >
-                  {caseHeader.title}
-                </div>
-                <div className="mt-2 text-base text-[#ffd6ca]">
-                  ({caseHeader.subtitle})
+                <div className="mt-4 text-sm leading-7 text-white/60">
+                  {caseHeader.period} ({caseHeader.days.toFixed(3)} days)
                 </div>
               </div>
 
-              <div className="grid gap-0 lg:grid-cols-[1fr_1fr]">
-                <div className="border-b border-white/10 px-6 py-6 lg:border-b-0 lg:border-r">
-                  <CaseRow
-                    label="Charter deduction"
-                    value={`${format0(caseHeader.charterDeduction)} USD`}
-                  />
-                  <CaseRow
-                    label="Owner position"
-                    value={caseHeader.ownerPosition}
-                  />
+              <div className="px-6 py-6">
+                <div className="border-t border-white/10">
+                  {statusSummary.map((row) => (
+                    <StatusRow key={row.label} label={row.label} value={row.value} />
+                  ))}
                 </div>
-                <div className="px-6 py-6">
-                  <CaseRow
-                    label="Off-hire period"
-                    value={`${caseHeader.period} (${caseHeader.days.toFixed(3)} days)`}
-                  />
+
+                <div className="mt-6 rounded-[24px] border border-white/10 bg-black/15 px-4 py-4 text-sm leading-7 text-white/64">
+                  Notice amount, current evidence pack, and neutralized balance
+                  are different layers of the same dispute. The notice opened at{" "}
+                  {format0(caseHeader.claimedOnAccount)} USD, the current working
+                  pack supports {money2.format(totalClaimed)} USD, and{" "}
+                  {format0(financialState.disputedVault)} USD remains locked while
+                  review continues.
                 </div>
               </div>
             </motion.div>
           </section>
 
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
+          <section className="grid gap-8 pt-14 lg:grid-cols-[1fr_1fr]">
+            <PriorityPanel
+              label="What Matters Now"
+              title="Pressure points"
+              items={whatMattersNow}
+            />
+            <PriorityPanel
+              label="Next Action"
+              title="Operational next moves"
+              items={nextActions}
+            />
+          </section>
+
+          <section className="grid gap-12 border-t border-white/10 pt-18 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
-              <SectionLabel>Financial Structure</SectionLabel>
+              <SectionLabel>Financial Posture</SectionLabel>
               <h2
                 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
                 G = N + A + D
               </h2>
-              <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
-                This is the live payment posture of the period. Gross due,
-                immediate net paid, accepted deduction, and disputed vault
-                funding should stay in balance.
+              <p className="mt-6 max-w-lg text-base leading-8 text-white/64 sm:text-lg">
+                Gross due, immediate net paid, accepted deduction, and disputed
+                vault funding should stay balanced.
               </p>
             </div>
 
             <div className="border-t border-white/10">
-              <CaseRow
+              <StatusRow
                 label="Gross hire due"
                 value={`${format0(financialState.grossHireDue)} USD`}
               />
-              <CaseRow
+              <StatusRow
                 label="Net paid"
                 value={`${format0(financialState.netPaid)} USD`}
               />
-              <CaseRow
+              <StatusRow
                 label="Accepted deduction"
                 value={`${format0(financialState.acceptedDeduction)} USD`}
               />
-              <CaseRow
-                label="Disputed (vault)"
+              <StatusRow
+                label="Disputed and neutralized"
                 value={`${format0(financialState.disputedVault)} USD`}
                 tone="warm"
               />
-
-              <div className="pt-6 text-sm leading-7 text-white/60">
-                The cash posture reflects a {format0(caseHeader.charterDeduction)} USD
-                deduction on account. The structured hold-cleaning leg file
-                below currently evidences {format2(totalClaimed)} USD with full
-                math visibility.
-              </div>
             </div>
           </section>
 
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
+          <section className="grid gap-12 border-t border-white/10 pt-18 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
-              <SectionLabel>Deduction Breakdown</SectionLabel>
+              <SectionLabel>Claim Breakdown</SectionLabel>
               <h2
                 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
@@ -355,8 +409,8 @@ export function OffHireDemoPage() {
                 <br />
                 not one vague <AccentWord tone="warm">deduction.</AccentWord>
               </h2>
-              <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
-                Total claimed deduction: {format2(totalClaimed)} USD
+              <p className="mt-6 max-w-lg text-base leading-8 text-white/64 sm:text-lg">
+                Structured claim currently evidenced: {money2.format(totalClaimed)} USD
               </p>
             </div>
 
@@ -364,19 +418,19 @@ export function OffHireDemoPage() {
               <LegRow
                 badge="[Hire Leg]"
                 title="Hire loss (net)"
-                summary={`Net hire loss: ${format2(hireNet)} USD`}
+                summary={`${money2.format(hireNet)} USD`}
                 details={[
                   `Duration: ${caseHeader.days.toFixed(3)} days`,
                   `Rate: ${format0(calculationBasis.hireRate)} USD/day`,
-                  `Gross: ${format2(hireGross)}`,
-                  `Less commissions: Address (3.75%) -${format2(addressCommission)}`,
-                  `Less commissions: Brokerage (1.25%) -${format2(brokerageCommission)}`,
+                  `Gross: ${money2.format(hireGross)}`,
+                  `Address commission (3.75%): -${money2.format(addressCommission)}`,
+                  `Brokerage commission (1.25%): -${money2.format(brokerageCommission)}`,
                 ]}
               />
               <LegRow
                 badge="[Fuel Leg - VLSFO]"
                 title="VLSFO consumption"
-                summary={`${format2(vlsfoTotal)} USD`}
+                summary={`${money2.format(vlsfoTotal)} USD`}
                 details={[
                   `Quantity: ${calculationBasis.vlsfoQty.toFixed(2)} MT`,
                   `Price: ${format0(calculationBasis.vlsfoPrice)} USD/MT`,
@@ -385,7 +439,7 @@ export function OffHireDemoPage() {
               <LegRow
                 badge="[Fuel Leg - LSMGO]"
                 title="LSMGO consumption"
-                summary={`${format2(lsmgoTotal)} USD`}
+                summary={`${money2.format(lsmgoTotal)} USD`}
                 details={[
                   `Quantity: ${calculationBasis.lsmgoQty.toFixed(2)} MT`,
                   `Price: ${format0(calculationBasis.lsmgoPrice)} USD/MT`,
@@ -393,154 +447,98 @@ export function OffHireDemoPage() {
               />
               <LegRow
                 badge="[Fixed Cost Leg - CVE]"
-                title="CVE (fixed expense allocation)"
-                summary={`${format2(cve)} USD`}
+                title="CVE allocation"
+                summary={`${money2.format(cve)} USD`}
                 details={[
                   `Basis: ${format0(calculationBasis.cveAnnualEquivalent)} USD annual equivalent`,
                 ]}
               />
+
+              <div className="mt-10 border-t border-white/10 pt-8">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+                  Calculation basis
+                </div>
+                <div className="mt-4 space-y-5">
+                  {formulaRows.map((row) => (
+                    <FormulaMiniRow key={row.title} {...row} />
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
+          <section className="grid gap-12 border-t border-white/10 pt-18 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
-              <SectionLabel>Formula Set</SectionLabel>
+              <SectionLabel>Case Support</SectionLabel>
               <h2
                 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
-                Transparent math,
+                Challenged legs
                 <br />
-                not soft <AccentWord>guesswork.</AccentWord>
+                and missing <AccentWord>support.</AccentWord>
               </h2>
             </div>
 
-            <div className="border-t border-white/10 text-sm text-white/74">
-              <FormulaRow
-                title="HIRE LEG"
-                formula="H_net = t x R x (1 - ac - bc)"
-                values={`t = ${caseHeader.days.toFixed(3)}, R = ${format0(
-                  calculationBasis.hireRate,
-                )}, ac = 3.75%, bc = 1.25%`}
-                result={`${format2(hireNet)} USD`}
-              />
-              <FormulaRow
-                title="FUEL LEG"
-                formula="B_g = Q x P"
-                values={`VLSFO: ${calculationBasis.vlsfoQty.toFixed(2)} x ${format0(
-                  calculationBasis.vlsfoPrice,
-                )} = ${format2(vlsfoTotal)} | LSMGO: ${calculationBasis.lsmgoQty.toFixed(
-                  2,
-                )} x ${format0(calculationBasis.lsmgoPrice)} = ${format2(lsmgoTotal)}`}
-                result="Fuel legs priced grade by grade"
-              />
-              <FormulaRow
-                title="FIXED COST LEG"
-                formula="CVE = t x (annual basis / 365 x 12)"
-                values={`t = ${caseHeader.days.toFixed(3)}, annual basis = ${format0(
-                  calculationBasis.cveAnnualEquivalent,
-                )}`}
-                result={`${format2(cve)} USD`}
-              />
-              <FormulaRow
-                title="TOTAL"
-                formula="C_total = H_net + B_vlsfo + B_lsmgo + CVE"
-                values="Structured case file total"
-                result={`${format2(totalClaimed)} USD`}
-              />
+            <div className="border-t border-white/10 pt-2">
+              <div className="py-6">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+                  What is being disputed
+                </div>
+                <div className="mt-4 border-t border-white/10">
+                  {disputeBreakdown.map((item) => (
+                    <StatusRow key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 py-6">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+                  Evidence required
+                </div>
+                <div className="mt-4 border-t border-white/10">
+                  {evidenceItems.map((item) => (
+                    <EvidenceRow key={item.label} {...item} />
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
+          <section className="grid gap-12 border-t border-white/10 pt-18 lg:grid-cols-[0.78fr_1.22fr]">
             <div>
-              <SectionLabel>What Is Being Disputed?</SectionLabel>
+              <SectionLabel>Guardrails</SectionLabel>
               <h2
                 className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
-                Disputed amount:
+                Hard edges
                 <br />
-                <AccentWord tone="warm">{format0(financialState.disputedVault)} USD</AccentWord>
-              </h2>
-              <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
-                The number matters less until the file shows which leg is being
-                challenged and at what level.
-              </p>
-            </div>
-
-            <div className="border-t border-white/10">
-              {disputeBreakdown.map((item) => (
-                <CaseRow key={item.label} label={item.label} value={item.value} />
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
-            <div>
-              <SectionLabel>Evidence Required</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
-                Evidence is not truth.
-                <br />
-                It is <AccentWord>discipline.</AccentWord>
+                around live <AccentWord tone="warm">money.</AccentWord>
               </h2>
             </div>
 
-            <div className="border-t border-white/10">
-              {evidenceItems.map((item) => (
-                <EvidenceRow key={item.label} {...item} />
-              ))}
+            <div className="border-t border-white/10 pt-2">
+              <div className="py-6">
+                {guardrailRows.map((row) => (
+                  <GuardrailRow key={row.title} {...row} />
+                ))}
+              </div>
+
+              <div className="border-t border-white/10 py-6">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+                  Workflow
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {flowRows.map((row, index) => (
+                    <FlowStep key={row} index={index + 1} text={row} />
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
 
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
-            <div>
-              <SectionLabel>Critical Rules</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
-                Serious only if the
-                <br />
-                boundaries stay <AccentWord tone="warm">hard.</AccentWord>
-              </h2>
-            </div>
-
-            <div className="border-t border-white/10">
-              {ruleRows.map((row) => (
-                <RuleRow key={row.title} {...row} />
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-12 border-t border-white/10 pt-20 lg:grid-cols-[0.78fr_1.22fr]">
-            <div>
-              <SectionLabel>Flow</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
-                Case first.
-                <br />
-                Execution <AccentWord>last.</AccentWord>
-              </h2>
-            </div>
-
-            <div className="border-t border-white/10">
-              {flowRows.map((row, index) => (
-                <FlowRow
-                  key={row.title}
-                  index={index + 1}
-                  title={row.title}
-                  body={row.body}
-                />
-              ))}
-            </div>
-          </section>
-
-          <section className="relative mt-8 overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(8,9,17,0.92))] px-6 py-8 shadow-[0_28px_90px_rgba(4,5,12,0.46)] sm:px-8 sm:py-10">
+          <section className="relative mt-10 overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(8,9,17,0.92))] px-6 py-8 shadow-[0_28px_90px_rgba(4,5,12,0.46)] sm:px-8 sm:py-10">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_26%,rgba(255,149,116,0.09),transparent_20%),radial-gradient(circle_at_78%_72%,rgba(96,116,255,0.12),transparent_24%)]" />
             <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
@@ -565,15 +563,13 @@ export function OffHireDemoPage() {
                   Open recap demo
                   <MoveRight className="h-4 w-4" />
                 </button>
-                <a
-                  href="https://github.com/maritime-mrt/maritime-mrt"
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => navigateTo("/")}
                   className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/[0.06]"
                 >
-                  View GitHub
-                  <ArrowUpRight className="h-4 w-4" />
-                </a>
+                  Back to landing
+                </button>
               </div>
             </div>
           </section>
@@ -583,7 +579,15 @@ export function OffHireDemoPage() {
   );
 }
 
-function CaseRow({
+function StatusChip({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/78">
+      {children}
+    </div>
+  );
+}
+
+function StatusRow({
   label,
   value,
   tone = "base",
@@ -593,17 +597,49 @@ function CaseRow({
   tone?: "base" | "warm";
 }) {
   return (
-    <div className="grid gap-4 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[220px_1fr]">
+    <div className="grid gap-4 border-b border-white/10 py-4 last:border-b-0 lg:grid-cols-[220px_1fr]">
       <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">
         {label}
       </div>
       <div
         className={[
           "text-base leading-8",
-          tone === "warm" ? "text-[#ffd7cc]" : "text-white/74",
+          tone === "warm" ? "text-[#ffd7cc]" : "text-white/76",
         ].join(" ")}
       >
         {value}
+      </div>
+    </div>
+  );
+}
+
+function PriorityPanel({
+  label,
+  title,
+  items,
+}: {
+  label: string;
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(10,11,21,0.9))] px-6 py-6 shadow-[0_24px_90px_rgba(4,5,12,0.38)]">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+        {label}
+      </div>
+      <div
+        className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[2rem]"
+        style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+      >
+        {title}
+      </div>
+      <div className="mt-6 space-y-4">
+        {items.map((item) => (
+          <div key={item} className="flex items-start gap-3 text-base leading-8 text-white/76">
+            <span className="mt-3 h-2 w-2 rounded-full bg-[#ff9b78]" />
+            <span>{item}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -640,30 +676,32 @@ function LegRow({
   );
 }
 
-function FormulaRow({
+function FormulaMiniRow({
   title,
   formula,
-  values,
+  detail,
   result,
 }: {
   title: string;
   formula: string;
-  values: string;
+  detail: string;
   result: string;
 }) {
   return (
-    <div className="border-b border-white/10 py-6 last:border-b-0">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+    <div className="grid gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0 lg:grid-cols-[92px_1fr_auto]">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8ea1ff]">
         {title}
       </div>
-      <div
-        className="mt-3 text-xl tracking-[-0.03em] text-white"
-        style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-      >
-        {formula}
+      <div>
+        <div
+          className="text-lg tracking-[-0.03em] text-white"
+          style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+        >
+          {formula}
+        </div>
+        <div className="mt-1 text-sm leading-7 text-white/56">{detail}</div>
       </div>
-      <div className="mt-3 leading-7 text-white/60">{values}</div>
-      <div className="mt-3 text-base font-semibold text-[#ffd7cc]">{result}</div>
+      <div className="text-base font-semibold text-[#ffd7cc]">{result}</div>
     </div>
   );
 }
@@ -687,7 +725,7 @@ function EvidenceRow({
   return (
     <div className="grid gap-4 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[1fr_auto]">
       <div>
-        <div className="text-base leading-8 text-white/74">{label}</div>
+        <div className="text-base leading-8 text-white/76">{label}</div>
         <div className="mt-1 text-sm leading-7 text-white/52">{note}</div>
       </div>
       <div
@@ -707,7 +745,7 @@ function EvidenceRow({
   );
 }
 
-function RuleRow({
+function GuardrailRow({
   title,
   body,
   tone,
@@ -717,7 +755,7 @@ function RuleRow({
   tone: "base" | "warm";
 }) {
   return (
-    <div className="grid gap-5 border-b border-white/10 py-7 last:border-b-0 lg:grid-cols-[280px_1fr]">
+    <div className="grid gap-5 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[240px_1fr]">
       <div
         className={[
           "text-xl font-semibold tracking-[-0.03em]",
@@ -726,33 +764,24 @@ function RuleRow({
       >
         {title}
       </div>
-      <div className="text-base leading-8 text-white/66 sm:text-lg">{body}</div>
+      <div className="text-base leading-8 text-white/64 sm:text-lg">{body}</div>
     </div>
   );
 }
 
-function FlowRow({
+function FlowStep({
   index,
-  title,
-  body,
+  text,
 }: {
   index: number;
-  title: string;
-  body: string;
+  text: string;
 }) {
   return (
-    <div className="grid gap-5 border-b border-white/10 py-7 last:border-b-0 lg:grid-cols-[90px_1fr]">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#8ea1ff]">
+    <div className="rounded-[22px] border border-white/10 bg-black/15 px-4 py-4">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8ea1ff]">
         {String(index).padStart(2, "0")}
       </div>
-      <div>
-        <div className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[1.9rem]">
-          {title}
-        </div>
-        <div className="mt-3 max-w-3xl text-base leading-8 text-white/66 sm:text-lg">
-          {body}
-        </div>
-      </div>
+      <div className="mt-3 text-base leading-7 text-white/76">{text}</div>
     </div>
   );
 }
