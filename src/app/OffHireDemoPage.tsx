@@ -26,8 +26,8 @@ const caseHeader = {
   period: "20 Oct 23:00 -> 22 Oct 12:00",
   days: 1.542,
   responseWindow: "72h",
-  status: "Owner response pending",
-  waitingOn: "Owner response + fuel support review",
+  status: "Partial owner response submitted",
+  openItem: "Remaining response on challenged fuel legs",
 };
 
 const financialState = {
@@ -63,7 +63,7 @@ const heroChips = [
   `${format0(financialState.disputedVault)} USD locked`,
   caseHeader.status,
   `Response window ${caseHeader.responseWindow}`,
-  "Fuel basis unverified",
+  caseHeader.openItem,
 ];
 
 const caseMeta = [
@@ -72,25 +72,41 @@ const caseMeta = [
     value: `${caseHeader.period} (${caseHeader.days.toFixed(3)} days)`,
   },
   { label: "Response window", value: caseHeader.responseWindow },
-  { label: "Waiting on", value: caseHeader.waitingOn },
+  { label: "Open item", value: caseHeader.openItem },
 ];
 
 const statusSummary = [
   {
-    label: "Claimed",
+    label: "Claimed on account",
     value: `${money0.format(caseHeader.claimedOnAccount)} USD`,
   },
   {
-    label: "Evidenced",
+    label: "Current file support",
     value: `${money2.format(totalClaimed)} USD`,
   },
   {
-    label: "Neutralized",
-    value: `${money0.format(financialState.disputedVault)} USD`,
+    label: "Commercially accepted so far",
+    value: `${money0.format(financialState.acceptedDeduction)} USD`,
   },
   {
-    label: "Status",
-    value: "Incomplete",
+    label: "Remaining disputed and neutralized",
+    value: `${money0.format(financialState.disputedVault)} USD`,
+  },
+];
+
+const thresholdSummary = [
+  { label: "Minimum evidence threshold", value: "Met" },
+  { label: "Full support package", value: "Incomplete" },
+];
+
+const rolePending = [
+  {
+    title: "Pending from owner",
+    items: ["Response on challenged fuel legs"],
+  },
+  {
+    title: "Pending from charter",
+    items: ["Engine / consumption logs", "Fuel pricing basis"],
   },
 ];
 
@@ -112,12 +128,14 @@ const pressureGroups = [
     ],
   },
   {
-    label: "Waiting",
+    label: "Pending from owner",
     tone: "waiting",
-    items: [
-      caseHeader.status,
-      "Fuel support review still open",
-    ],
+    items: ["Remaining response on challenged fuel legs"],
+  },
+  {
+    label: "Pending from charter",
+    tone: "waiting",
+    items: ["Engine logs + fuel pricing basis"],
   },
 ] as const;
 
@@ -139,9 +157,18 @@ const nextMoves = [
   },
   {
     step: "04",
-    title: "Submit owner response",
+    title: "Submit remaining owner response",
     note: "Pending release review",
   },
+] as const;
+
+const caseStates = [
+  { label: "Claim filed", tone: "done" },
+  { label: "Minimum evidence met", tone: "done" },
+  { label: "Neutral funding complete", tone: "done" },
+  { label: "Partial owner response submitted", tone: "active" },
+  { label: "Fuel review pending", tone: "active" },
+  { label: "Negotiation open", tone: "pending" },
 ] as const;
 
 const disputeBreakdown = [
@@ -386,10 +413,20 @@ export function OffHireDemoPage() {
                 </div>
 
                 <div className="mt-6 rounded-[24px] border border-white/10 bg-black/15 px-4 py-4 text-sm leading-7 text-white/64">
-                  Working file supports {money2.format(totalClaimed)} USD.
-                  {" "}
-                  {format0(financialState.disputedVault)} USD remains locked
-                  pending review.
+                  Accepted portion may reflect partial commercial treatment
+                  beyond the currently evidenced working pack.
+                </div>
+
+                <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
+                  {rolePending.map((group) => (
+                    <PendingCard key={group.title} title={group.title} items={group.items} />
+                  ))}
+                </div>
+
+                <div className="mt-6 border-t border-white/10">
+                  {thresholdSummary.map((row) => (
+                    <StatusRow key={row.label} label={row.label} value={row.value} />
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -565,6 +602,17 @@ export function OffHireDemoPage() {
 
               <div className="border-t border-white/10 py-6">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
+                  Case state
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {caseStates.map((state) => (
+                    <StatePill key={state.label} label={state.label} tone={state.tone} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 py-6">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8ea1ff]">
                   Workflow
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -663,6 +711,29 @@ function StatusRow({
         ].join(" ")}
       >
         {value}
+      </div>
+    </div>
+  );
+}
+
+function PendingCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-black/15 px-4 py-4">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#8ea1ff]">
+        {title}
+      </div>
+      <div className="mt-3 space-y-2">
+        {items.map((item) => (
+          <div key={item} className="text-sm leading-7 text-white/74">
+            {item}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -780,6 +851,32 @@ function ActionRow({
       >
         {note}
       </div>
+    </div>
+  );
+}
+
+function StatePill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "done" | "active" | "pending";
+}) {
+  const toneClass =
+    tone === "done"
+      ? "border border-emerald-400/20 bg-emerald-500/10 text-emerald-100"
+      : tone === "active"
+        ? "border border-[#8ea1ff]/20 bg-[#8ea1ff]/10 text-[#dce2ff]"
+        : "border border-white/12 bg-white/[0.04] text-white/74";
+
+  return (
+    <div
+      className={[
+        "rounded-full px-4 py-2 text-sm font-semibold",
+        toneClass,
+      ].join(" ")}
+    >
+      {label}
     </div>
   );
 }
