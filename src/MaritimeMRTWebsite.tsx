@@ -36,9 +36,9 @@ const offHirePreview = {
   charterDeduction: "48,000 USD",
   structuredClaim: "25,267.09 USD",
   disputedVault: "16,500 USD",
-  ownerPosition: "Partially disputed",
+  ownerPosition: "Partial owner response submitted",
   period: "20 Oct 23:00 -> 22 Oct 12:00 (1.542 days)",
-  status: "Counter-evidence pending",
+  status: "Fuel review pending",
 };
 
 const signalTape = [
@@ -285,14 +285,14 @@ function HeroSignalBoard() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
             <div className="text-[10px] uppercase tracking-[0.38em] text-white/42">
-              Live prototype
+              Sample parsed output
             </div>
             <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
-              Maritime signal surface
+              Recap demo surface
             </div>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[#8da4ff]/18 bg-[#7f97ff]/10 px-3 py-1.5 text-xs uppercase tracking-[0.22em] text-[#dbe3ff]">
-            Demo route only
+            Derived from recap demo route
           </div>
         </div>
 
@@ -330,22 +330,22 @@ function HeroSignalBoard() {
                 />
                 <div>
                   <div className="text-xs uppercase tracking-[0.24em] text-white/44">
-                    Polygon token layer
+                    Workflow proof
                   </div>
                   <div className="mt-1 text-lg font-semibold text-white">
-                    Market access and operational signal
+                    Public proof before deeper utility
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 space-y-4 text-sm leading-7 text-white/70">
                 <p>
-                  The landing is editorial on purpose: less dashboard clutter,
-                  more confidence, more air, more rhythm.
+                  See how recap text becomes route, counterparties, deadlines,
+                  and risk tone before any heavier workflow is introduced.
                 </p>
                 <p>
-                  The demo stays available, but it no longer sits inside a maze
-                  of half-built routes.
+                  Public docs, market links, and bounded demos stay visible
+                  without forcing visitors into an app maze.
                 </p>
               </div>
             </div>
@@ -353,7 +353,7 @@ function HeroSignalBoard() {
             <div className="border-t border-white/10 pt-5">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[#ffb29a]">
                 <Radar className="h-4 w-4" />
-                Clarity over noise
+                Inspectable demo output
               </div>
             </div>
           </div>
@@ -588,38 +588,42 @@ export default function MaritimeMRTWebsite() {
                 className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] text-white sm:text-7xl xl:text-[6.6rem]"
                 style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
               >
-                Maritime clarity
+                Voyage recap
                 <br />
-                with a <AccentWord tone="warm">cleaner arrival.</AccentWord>
+                to signal.
+                <br />
+                Off-hire deductions to a
+                <AccentWord tone="warm"> neutral rail.</AccentWord>
               </h1>
 
               <p className="mt-7 max-w-3xl text-lg leading-8 text-white/68 sm:text-[1.35rem] sm:leading-10">
-                The site is now reduced to what matters: a refined landing page,
-                two bounded live demos, and a public proof layer around the MRT
-                token on Polygon.
+                MARITIME keeps two bounded workflow proofs in public view: a
+                recap parser for operational signal and a neutral dispute rail
+                for owner-charterer deductions, with the MRT token surface and
+                public proof layer visible around them.
               </p>
 
               <div className="mt-9 flex flex-wrap gap-3">
-                <PrimaryAction onClick={() => scrollToSection("demo")}>
-                  Explore demos
+                <PrimaryAction onClick={() => navigateTo("/demo")}>
+                  Open recap demo
                 </PrimaryAction>
-                <SecondaryLink href={externalLinks.quickswap}>
-                  Trade on QuickSwap
-                </SecondaryLink>
+                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                  Open off-hire demo
+                </PrimaryAction>
               </div>
 
               <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 text-sm text-white/54">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-[#95a8ff]" />
-                  Fixed-supply ERC-20
+                  Bounded workflow demos
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-[#95a8ff]" />
-                  Polygon PoS
+                  Public proof layer
                 </div>
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-[#95a8ff]" />
-                  Public documents
+                  Polygon market surface
                 </div>
               </div>
             </motion.div>
@@ -695,8 +699,8 @@ export default function MaritimeMRTWebsite() {
                 <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
                   Open off-hire demo
                 </PrimaryAction>
-                <SecondaryLink href={externalLinks.github}>
-                  View GitHub
+                <SecondaryLink href={latestWeeklyReport.href}>
+                  Open weekly report
                 </SecondaryLink>
               </div>
             </div>
@@ -889,6 +893,9 @@ export default function MaritimeMRTWebsite() {
               <div className="flex flex-wrap gap-3">
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Open recap demo
+                </PrimaryAction>
+                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                  Open off-hire demo
                 </PrimaryAction>
                 <SecondaryLink href={weeklyReportsArchive.href}>
                   View all weekly reports
