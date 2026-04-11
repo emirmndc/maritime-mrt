@@ -17,7 +17,8 @@ const externalLinks = {
     "https://dapp.quickswap.exchange/swap/best/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE",
   polygonscan:
     "https://polygonscan.com/token/0x94966B292DD32cD3fb82A83e60a56cEB3322D8FE",
-  dexscreener: "https://dexscreener.com/polygon/0x3c959fd489cbf4060edf4c4b7133895c1e78edde",
+  dexscreener:
+    "https://dexscreener.com/polygon/0x3c959fd489cbf4060edf4c4b7133895c1e78edde",
   github: "https://github.com/maritime-mrt/maritime-mrt",
   twitter: "https://x.com/maritime_coin",
 };
@@ -46,7 +47,6 @@ const signalTape = [
   "MARITIME / MRT",
   "Fixed supply 100,000,000",
   "No admin mint",
-  "Transparent wallet roles",
   "Voyage recap demo live",
   "Deduction rail demo live",
 ];
@@ -123,7 +123,8 @@ const proofRows = [
   },
   {
     label: "Whitepaper",
-    value: "High-level thesis, transparency framing, and market-first roadmap context.",
+    value:
+      "High-level thesis, transparency framing, and market-first roadmap context.",
     href: "/docs/MARITIME_MRT_Whitepaper_v1.5.pdf",
     action: "Open whitepaper",
   },
@@ -163,7 +164,7 @@ function HeaderLink({ label, id }: { label: string; id: string }) {
     <button
       type="button"
       onClick={() => scrollToSection(id)}
-      className="rounded-full px-4 py-2 text-[15px] font-semibold tracking-[0.01em] text-white/68 transition hover:bg-white/[0.05] hover:text-white"
+      className="rounded-[12px] px-3 py-2 text-[15px] font-medium text-white/68 transition hover:bg-white/[0.04] hover:text-white"
     >
       {label}
     </button>
@@ -172,7 +173,7 @@ function HeaderLink({ label, id }: { label: string; id: string }) {
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#f5a78f]">
+    <div className="text-[12px] font-medium tracking-[0.12em] text-white/46">
       {children}
     </div>
   );
@@ -186,15 +187,7 @@ function AccentWord({
   tone?: "cool" | "warm";
 }) {
   return (
-    <span
-      className={[
-        "ml-[0.12em] inline bg-clip-text font-semibold tracking-[-0.04em] text-transparent",
-        tone === "warm"
-          ? "bg-[linear-gradient(135deg,#ffd4c7_0%,#ff9b78_55%,#ff8b69_100%)]"
-          : "bg-[linear-gradient(135deg,#e1e6ff_0%,#9cb2ff_55%,#7e95ff_100%)]",
-      ].join(" ")}
-      style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-    >
+    <span className={tone === "warm" ? "text-[#efb19a]" : "text-[#b9c7ff]"}>
       {children}
     </span>
   );
@@ -214,10 +207,10 @@ function PrimaryAction({
       type="button"
       onClick={onClick}
       className={[
-        "inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5",
+        "inline-flex items-center gap-2 rounded-[14px] px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5",
         tone === "warm"
-          ? "border border-[#ffb59b]/30 bg-[linear-gradient(135deg,rgba(255,167,143,0.96),rgba(255,122,92,0.9))] text-[#180d12] shadow-[0_20px_40px_rgba(255,130,101,0.26)] hover:shadow-[0_28px_55px_rgba(255,130,101,0.3)]"
-          : "border border-[#9cb2ff]/28 bg-[linear-gradient(135deg,rgba(173,185,255,0.96),rgba(104,123,255,0.92))] text-[#08101f] shadow-[0_20px_40px_rgba(95,113,255,0.24)] hover:shadow-[0_28px_55px_rgba(95,113,255,0.3)]",
+          ? "border border-[#e7b29e] bg-[#e7b29e] text-[#15161f] hover:bg-[#ebbca9]"
+          : "border border-[#9caef5] bg-[#9caef5] text-[#101520] hover:bg-[#adbcfb]",
       ].join(" ")}
     >
       {children}
@@ -238,7 +231,7 @@ function PrimaryLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-2 rounded-full border border-[#9cb2ff]/28 bg-[linear-gradient(135deg,rgba(173,185,255,0.96),rgba(104,123,255,0.92))] px-6 py-3 text-sm font-semibold text-[#08101f] shadow-[0_20px_40px_rgba(95,113,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_55px_rgba(95,113,255,0.3)]"
+      className="inline-flex items-center gap-2 rounded-[14px] border border-[#9caef5] bg-[#9caef5] px-5 py-3 text-sm font-semibold text-[#101520] transition hover:-translate-y-0.5 hover:bg-[#adbcfb]"
     >
       {children}
       <ArrowUpRight className="h-4 w-4" />
@@ -258,7 +251,7 @@ function SecondaryLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white/82 transition hover:border-white/20 hover:bg-white/[0.06]"
+      className="inline-flex items-center gap-2 rounded-[14px] border border-white/12 bg-transparent px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/22 hover:bg-white/[0.03]"
     >
       {children}
       <ArrowUpRight className="h-4 w-4" />
@@ -268,30 +261,28 @@ function SecondaryLink({
 
 function HeroSignalBoard() {
   return (
-    <div className="relative overflow-hidden rounded-[34px] border border-white/12 bg-[#0f1020]/82 shadow-[0_40px_120px_rgba(4,5,12,0.72)]">
+    <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0c0f18] shadow-[0_14px_40px_rgba(0,0,0,0.26)]">
       <div
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage: "url('/media/hero-texture.jpg')",
           backgroundPosition: "center",
           backgroundSize: "cover",
         }}
       />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,162,130,0.16),transparent_25%),radial-gradient(circle_at_18%_32%,rgba(121,159,255,0.18),transparent_28%),linear-gradient(180deg,rgba(7,8,18,0.32),rgba(7,8,18,0.88))]" />
-      <div className="absolute -left-16 bottom-8 h-40 w-40 rounded-full bg-[#5d78ff]/28 blur-[100px]" />
-      <div className="absolute -right-10 top-10 h-44 w-44 rounded-full bg-[#ff9c79]/25 blur-[105px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,20,0.35),rgba(10,12,20,0.92))]" />
 
-      <div className="relative z-10 px-6 pb-8 pt-6 sm:px-8">
+      <div className="relative z-10 px-6 pb-7 pt-6 sm:px-7">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.38em] text-white/42">
+            <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
               Sample parsed output
             </div>
             <div className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
               Recap demo surface
             </div>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#8da4ff]/18 bg-[#7f97ff]/10 px-3 py-1.5 text-xs uppercase tracking-[0.22em] text-[#dbe3ff]">
+          <div className="rounded-[12px] border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/72">
             Derived from recap demo route
           </div>
         </div>
@@ -320,16 +311,16 @@ function HeroSignalBoard() {
             />
           </div>
 
-          <div className="flex min-h-[320px] flex-col justify-between rounded-[28px] border border-white/10 bg-black/15 p-5 backdrop-blur-xl">
+          <div className="flex min-h-[300px] flex-col justify-between border-l border-white/10 pl-0 lg:pl-7">
             <div>
               <div className="flex items-center gap-3">
                 <img
                   src="/maritime-logo.png"
                   alt="Maritime logo"
-                  className="h-12 w-12 rounded-full border border-white/10 object-cover"
+                  className="h-12 w-12 rounded-[14px] border border-white/10 object-cover"
                 />
                 <div>
-                  <div className="text-xs uppercase tracking-[0.24em] text-white/44">
+                  <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
                     Workflow proof
                   </div>
                   <div className="mt-1 text-lg font-semibold text-white">
@@ -351,8 +342,8 @@ function HeroSignalBoard() {
             </div>
 
             <div className="border-t border-white/10 pt-5">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[#ffb29a]">
-                <Radar className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-sm font-medium text-white/70">
+                <Radar className="h-4 w-4 text-[#efb19a]" />
                 Inspectable demo output
               </div>
             </div>
@@ -374,13 +365,13 @@ function SignalLine({
 }) {
   return (
     <div className="border-b border-white/10 pb-5 last:border-b-0 last:pb-0">
-      <div className="text-[10px] uppercase tracking-[0.34em] text-white/38">
+      <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
         {label}
       </div>
-      <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-white sm:text-[1.7rem]">
+      <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-white sm:text-[1.65rem]">
         {value}
       </div>
-      <div className="mt-2 text-sm text-white/52">{hint}</div>
+      <div className="mt-2 text-sm text-white/54">{hint}</div>
     </div>
   );
 }
@@ -396,9 +387,9 @@ function NarrativeRow({
 }) {
   return (
     <div className="grid gap-5 border-b border-white/10 py-7 last:border-b-0 lg:grid-cols-[88px_1fr]">
-      <div className="text-[32px] leading-none text-white/16">{number}</div>
+      <div className="text-[28px] leading-none text-white/20">{number}</div>
       <div>
-        <div className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[2rem]">
+        <div className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[1.9rem]">
           {title}
         </div>
         <p className="mt-3 max-w-3xl text-base leading-8 text-white/64 sm:text-lg">
@@ -418,7 +409,7 @@ function FlowPoint({
 }) {
   return (
     <div className="grid gap-3 border-b border-white/10 py-6 last:border-b-0 lg:grid-cols-[160px_1fr]">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#ffb29a]">
+      <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
         {label}
       </div>
       <div className="text-base leading-8 text-white/68 sm:text-lg">{text}</div>
@@ -437,16 +428,16 @@ function SnapshotRow({
 }) {
   return (
     <div className="border-b border-white/10 py-4 last:border-b-0">
-      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+      <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
         {label}
       </div>
       <div
         className={[
-          "mt-3 text-sm font-semibold leading-7",
+          "mt-2 text-sm font-semibold leading-7",
           tone === "cool"
-            ? "text-[#dbe1ff]"
+            ? "text-[#cdd7ff]"
             : tone === "warm"
-              ? "text-[#ffd6ca]"
+              ? "text-[#efb19a]"
               : "text-white/72",
         ].join(" ")}
       >
@@ -474,11 +465,11 @@ function ProofRow({
       rel="noreferrer"
       className="group grid gap-5 border-b border-white/10 py-6 transition last:border-b-0 hover:border-white/16 lg:grid-cols-[150px_1fr_auto]"
     >
-      <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/42">
+      <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
         {label}
       </div>
       <div className="text-base leading-8 text-white/72 sm:text-lg">{value}</div>
-      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#ffd4c8] group-hover:text-white">
+      <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#efb19a] group-hover:text-white">
         {action}
         <ArrowUpRight className="h-4 w-4" />
       </div>
@@ -497,11 +488,11 @@ function RoadmapRow({
 }) {
   return (
     <div className="grid gap-5 border-b border-white/10 py-7 last:border-b-0 lg:grid-cols-[120px_1fr]">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#8ea1ff]">
+      <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
         {step}
       </div>
       <div>
-        <div className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[1.9rem]">
+        <div className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-[1.85rem]">
           {title}
         </div>
         <div className="mt-3 max-w-3xl text-base leading-8 text-white/66 sm:text-lg">
@@ -515,21 +506,18 @@ function RoadmapRow({
 export default function MaritimeMRTWebsite() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#05060d] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(114,128,255,0.18),transparent_26%),radial-gradient(circle_at_18%_12%,rgba(255,137,103,0.12),transparent_22%),radial-gradient(circle_at_24%_88%,rgba(255,146,113,0.14),transparent_25%),radial-gradient(circle_at_78%_92%,rgba(95,113,255,0.16),transparent_28%),linear-gradient(180deg,#06070d_0%,#0a0a15_48%,#090914_76%,#070811_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(114,128,255,0.08),transparent_26%),radial-gradient(circle_at_18%_12%,rgba(255,137,103,0.06),transparent_22%),linear-gradient(180deg,#06070d_0%,#0a0a15_52%,#070811_100%)]" />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-screen"
+        className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-screen"
         style={{
           backgroundImage: "url('/media/hero-texture.jpg')",
           backgroundPosition: "center top",
           backgroundSize: "cover",
         }}
       />
-      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#445dff]/18 blur-[120px]" />
-      <div className="pointer-events-none absolute right-[-110px] top-[420px] h-80 w-80 rounded-full bg-[#ff8e68]/20 blur-[150px]" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-[-120px] h-[700px] bg-[radial-gradient(circle_at_18%_72%,rgba(255,145,112,0.12),transparent_22%),radial-gradient(circle_at_82%_84%,rgba(97,115,255,0.14),transparent_24%),linear-gradient(180deg,transparent_0%,rgba(10,10,18,0.18)_24%,rgba(11,11,21,0.84)_100%)]" />
 
       <div className="relative z-10 mx-auto max-w-[1540px] px-4 pb-20 pt-4 sm:px-6 lg:px-8">
-        <header className="sticky top-3 z-30 w-full rounded-[34px] border border-white/10 bg-[linear-gradient(90deg,rgba(14,14,27,0.92),rgba(24,21,46,0.92),rgba(15,13,30,0.92))] px-6 py-4 backdrop-blur-xl shadow-[0_20px_60px_rgba(3,4,10,0.48)]">
+        <header className="sticky top-3 z-30 w-full rounded-[20px] border border-white/10 bg-[rgba(12,14,22,0.9)] px-6 py-4 backdrop-blur-md shadow-[0_12px_30px_rgba(0,0,0,0.2)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
@@ -539,15 +527,13 @@ export default function MaritimeMRTWebsite() {
               <img
                 src="/maritime-logo.png"
                 alt="Maritime logo"
-                className="h-11 w-11 rounded-full border border-white/10 object-cover"
+                className="h-11 w-11 rounded-[14px] border border-white/10 object-cover"
               />
               <div>
-                <div className="text-[10px] uppercase tracking-[0.34em] text-white/38">
+                <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
                   MARITIME
                 </div>
-                <div className="mt-1 text-base font-semibold tracking-[0.22em] text-white">
-                  MRT
-                </div>
+                <div className="mt-1 text-base font-semibold text-white">MRT</div>
               </div>
             </button>
 
@@ -559,7 +545,9 @@ export default function MaritimeMRTWebsite() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <SecondaryLink href={externalLinks.polygonscan}>PolygonScan</SecondaryLink>
+              <SecondaryLink href={externalLinks.polygonscan}>
+                PolygonScan
+              </SecondaryLink>
               <PrimaryLink href={latestWeeklyReport.href}>
                 Open last weekly report
               </PrimaryLink>
@@ -580,23 +568,19 @@ export default function MaritimeMRTWebsite() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55 }}
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#d7dcff]">
+              <div className="inline-flex items-center gap-2 rounded-[12px] border border-white/10 bg-white/[0.03] px-4 py-2 text-[12px] font-medium text-white/70">
                 Polygon-native maritime layer
               </div>
 
-              <h1
-                className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] text-white sm:text-7xl xl:text-[6.6rem]"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
+              <h1 className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.95] tracking-[-0.05em] text-white sm:text-7xl xl:text-[6.2rem]">
                 Voyage recap
                 <br />
                 to signal.
                 <br />
-                Off-hire deductions to a
-                <AccentWord tone="warm"> neutral rail.</AccentWord>
+                Off-hire deductions to a <AccentWord tone="warm">neutral rail.</AccentWord>
               </h1>
 
-              <p className="mt-7 max-w-3xl text-lg leading-8 text-white/68 sm:text-[1.35rem] sm:leading-10">
+              <p className="mt-7 max-w-3xl text-lg leading-8 text-white/68 sm:text-[1.28rem] sm:leading-10">
                 MARITIME keeps two bounded workflow proofs in public view: a
                 recap parser for operational signal and a neutral dispute rail
                 for owner-charterer deductions, with the MRT token surface and
@@ -607,22 +591,25 @@ export default function MaritimeMRTWebsite() {
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Open recap demo
                 </PrimaryAction>
-                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                <PrimaryAction
+                  tone="cool"
+                  onClick={() => navigateTo("/off-hire-demo")}
+                >
                   Open off-hire demo
                 </PrimaryAction>
               </div>
 
-              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 text-sm text-white/54">
+              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 text-sm text-white/56">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-[#95a8ff]" />
+                  <ShieldCheck className="h-4 w-4 text-[#b9c7ff]" />
                   Bounded workflow demos
                 </div>
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-[#95a8ff]" />
+                  <Globe className="h-4 w-4 text-[#b9c7ff]" />
                   Public proof layer
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#95a8ff]" />
+                  <FileText className="h-4 w-4 text-[#b9c7ff]" />
                   Polygon market surface
                 </div>
               </div>
@@ -637,11 +624,11 @@ export default function MaritimeMRTWebsite() {
             </motion.div>
           </section>
 
-          <section className="overflow-hidden rounded-full border border-white/10 bg-white/[0.03] px-5 py-4 backdrop-blur-lg">
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/54">
+          <section className="border-y border-white/10 py-4">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-[12px] font-medium text-white/52">
               {signalTape.map((item) => (
                 <div key={item} className="flex items-center gap-3">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#ff9d7a]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#efb19a]" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -654,13 +641,10 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Story</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
-                No cards.
+              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[1] tracking-[-0.05em] text-white sm:text-6xl">
+                Public proof,
                 <br />
-                Just signal, <AccentWord>rhythm</AccentWord> and space.
+                cleaner <AccentWord>signal</AccentWord> and space.
               </h2>
             </div>
 
@@ -677,10 +661,7 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Demo</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
+              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[1] tracking-[-0.05em] text-white sm:text-6xl">
                 Two bounded demos.
                 <br />
                 One clearer <AccentWord tone="warm">thesis.</AccentWord>
@@ -696,7 +677,10 @@ export default function MaritimeMRTWebsite() {
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Launch recap demo
                 </PrimaryAction>
-                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                <PrimaryAction
+                  tone="cool"
+                  onClick={() => navigateTo("/off-hire-demo")}
+                >
                   Open off-hire demo
                 </PrimaryAction>
                 <SecondaryLink href={latestWeeklyReport.href}>
@@ -705,10 +689,10 @@ export default function MaritimeMRTWebsite() {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,13,26,0.9))] p-6 shadow-[0_30px_100px_rgba(4,5,12,0.52)] backdrop-blur-xl sm:p-8">
-                <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#95a8ff]">
-                  <Waves className="h-4 w-4" />
+            <div className="space-y-10">
+              <div className="border-t border-white/10 pt-6">
+                <div className="mb-4 flex items-center gap-3 text-sm font-medium text-white/74">
+                  <Waves className="h-4 w-4 text-[#b9c7ff]" />
                   Voyage recap to signal
                 </div>
 
@@ -718,52 +702,44 @@ export default function MaritimeMRTWebsite() {
                   ))}
                 </div>
 
-                <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
-                  <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                    <div className="text-sm font-semibold text-white">Demo preview</div>
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
-                      Assistive output
+                <div className="mt-6 grid gap-0 border-t border-white/10 lg:grid-cols-[1.05fr_0.95fr]">
+                  <div className="border-b border-white/10 py-5 lg:border-b-0 lg:border-r lg:pr-6">
+                    <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
+                      Input
+                    </div>
+                    <div className="mt-4 space-y-3 text-sm leading-7 text-white/60">
+                      <div>Owner: Northshore Bulk Pte. Ltd.</div>
+                      <div>Charterer: Golden Delta Foods</div>
+                      <div>Loadport: Novorise</div>
+                      <div>Disport: Southbay</div>
+                      <div>Deadline: 15 business days after discharge.</div>
                     </div>
                   </div>
-                  <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-                    <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
-                      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
-                        Input
-                      </div>
-                      <div className="mt-4 space-y-3 text-sm leading-7 text-white/58">
-                        <div>Owner: Northshore Bulk Pte. Ltd.</div>
-                        <div>Charterer: Golden Delta Foods</div>
-                        <div>Loadport: Novorise</div>
-                        <div>Disport: Southbay</div>
-                        <div>Deadline: 15 business days after discharge.</div>
-                      </div>
+                  <div className="py-5 lg:pl-6">
+                    <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
+                      Output
                     </div>
-                    <div className="px-5 py-5">
-                      <div className="text-[10px] uppercase tracking-[0.28em] text-white/40">
-                        Output
+                    <div className="mt-4 space-y-3 text-sm">
+                      <div className="border-b border-white/10 pb-3 text-white/72">
+                        Route signal: Novorise to Southbay
                       </div>
-                      <div className="mt-4 space-y-3 text-sm">
-                        <div className="border-b border-white/10 pb-3 text-white/72">
-                          Route signal: Novorise to Southbay
-                        </div>
-                        <div className="border-b border-white/10 pb-3 text-white/72">
-                          Health: Attention required
-                        </div>
-                        <div className="border-b border-white/10 pb-3 text-white/72">
-                          Documents: SOF, NOR, laytime sheet
-                        </div>
-                        <div className="text-white/72">
-                          Review note: timing language remains assistive
-                        </div>
+                      <div className="border-b border-white/10 pb-3 text-white/72">
+                        Health: Attention required
+                      </div>
+                      <div className="border-b border-white/10 pb-3 text-white/72">
+                        Documents: SOF, NOR, laytime sheet
+                      </div>
+                      <div className="text-white/72">
+                        Review note: timing language remains assistive
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,13,26,0.9))] p-6 shadow-[0_30px_100px_rgba(4,5,12,0.52)] backdrop-blur-xl sm:p-8">
-                <div className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-[#d8dcff]">
-                  <Scale className="h-4 w-4" />
+              <div className="border-t border-white/10 pt-6">
+                <div className="mb-4 flex items-center gap-3 text-sm font-medium text-white/74">
+                  <Scale className="h-4 w-4 text-[#efb19a]" />
                   Owner-charterer deduction rail
                 </div>
 
@@ -773,46 +749,38 @@ export default function MaritimeMRTWebsite() {
                   ))}
                 </div>
 
-                <div className="mt-8 overflow-hidden rounded-[26px] border border-white/10 bg-black/20">
-                  <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                    <div className="text-sm font-semibold text-white">Case preview</div>
-                    <div className="text-[10px] uppercase tracking-[0.28em] text-white/38">
-                      Neutral dispute rail
-                    </div>
+                <div className="mt-6 grid gap-0 border-t border-white/10 lg:grid-cols-[1.05fr_0.95fr]">
+                  <div className="border-b border-white/10 py-5 lg:border-b-0 lg:border-r lg:pr-6">
+                    <SnapshotRow label="Case" value={offHirePreview.caseTitle} />
+                    <SnapshotRow
+                      label="Charter deduction"
+                      value={offHirePreview.charterDeduction}
+                    />
+                    <SnapshotRow
+                      label="Off-hire period"
+                      value={offHirePreview.period}
+                    />
+                    <SnapshotRow
+                      label="Structured claim"
+                      value={offHirePreview.structuredClaim}
+                    />
                   </div>
-                  <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-                    <div className="border-b border-white/10 px-5 py-5 lg:border-b-0 lg:border-r">
-                      <SnapshotRow label="Case" value={offHirePreview.caseTitle} />
-                      <SnapshotRow
-                        label="Charter deduction"
-                        value={offHirePreview.charterDeduction}
-                      />
-                      <SnapshotRow
-                        label="Off-hire period"
-                        value={offHirePreview.period}
-                      />
-                      <SnapshotRow
-                        label="Structured claim"
-                        value={offHirePreview.structuredClaim}
-                      />
-                    </div>
-                    <div className="px-5 py-5">
-                      <SnapshotRow
-                        label="Owner position"
-                        value={offHirePreview.ownerPosition}
-                      />
-                      <SnapshotRow
-                        label="Disputed neutralized"
-                        value={offHirePreview.disputedVault}
-                        tone="warm"
-                      />
-                      <SnapshotRow label="Owner response window" value="72h" />
-                      <SnapshotRow
-                        label="Status"
-                        value={offHirePreview.status}
-                        tone="cool"
-                      />
-                    </div>
+                  <div className="py-5 lg:pl-6">
+                    <SnapshotRow
+                      label="Owner position"
+                      value={offHirePreview.ownerPosition}
+                    />
+                    <SnapshotRow
+                      label="Disputed neutralized"
+                      value={offHirePreview.disputedVault}
+                      tone="warm"
+                    />
+                    <SnapshotRow label="Owner response window" value="72h" />
+                    <SnapshotRow
+                      label="Status"
+                      value={offHirePreview.status}
+                      tone="cool"
+                    />
                   </div>
                 </div>
               </div>
@@ -825,19 +793,16 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Proof</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
+              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[1] tracking-[-0.05em] text-white sm:text-6xl">
                 The trust layer
                 <br />
                 stays <AccentWord>visible.</AccentWord>
               </h2>
 
               <p className="mt-6 max-w-lg text-base leading-8 text-white/66 sm:text-lg">
-                Visitors should be able to verify the project without getting lost
-                in repo structure. The essentials are linked here in one cleaner
-                stream.
+                Visitors should be able to verify the project without getting
+                lost in repo structure. The essentials are linked here in one
+                cleaner stream.
               </p>
             </div>
 
@@ -854,10 +819,7 @@ export default function MaritimeMRTWebsite() {
           >
             <div>
               <SectionLabel>Roadmap</SectionLabel>
-              <h2
-                className="mt-4 max-w-xl text-4xl font-semibold leading-[0.96] tracking-[-0.05em] text-white sm:text-6xl"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
+              <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-[1] tracking-[-0.05em] text-white sm:text-6xl">
                 Build the public face
                 <br />
                 before the <AccentWord tone="warm">sprawl.</AccentWord>
@@ -871,17 +833,13 @@ export default function MaritimeMRTWebsite() {
             </div>
           </section>
 
-          <section className="relative mt-8 overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(8,9,17,0.92))] px-6 py-8 shadow-[0_28px_90px_rgba(4,5,12,0.46)] sm:px-8 sm:py-10">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_26%,rgba(255,149,116,0.09),transparent_20%),radial-gradient(circle_at_78%_72%,rgba(96,116,255,0.12),transparent_24%)]" />
-            <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <section className="mt-8 border-t border-white/10 py-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#ffb29a]">
+                <div className="text-[12px] font-medium tracking-[0.08em] text-white/46">
                   Ready
                 </div>
-                <div
-                  className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl"
-                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-                >
+                <div className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
                   Landing first. Demo second. Nothing extra in the way.
                 </div>
                 <p className="mt-4 max-w-2xl text-base leading-8 text-white/64 sm:text-lg">
@@ -894,7 +852,10 @@ export default function MaritimeMRTWebsite() {
                 <PrimaryAction onClick={() => navigateTo("/demo")}>
                   Open recap demo
                 </PrimaryAction>
-                <PrimaryAction tone="cool" onClick={() => navigateTo("/off-hire-demo")}>
+                <PrimaryAction
+                  tone="cool"
+                  onClick={() => navigateTo("/off-hire-demo")}
+                >
                   Open off-hire demo
                 </PrimaryAction>
                 <SecondaryLink href={weeklyReportsArchive.href}>
